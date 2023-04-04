@@ -46,9 +46,9 @@ w_3 = 1.5  # Angle deviation from 30°
 w_4 = 0.1  # Angle deviation from vector to target position
 # Resolution of the discretized velocity space
 res_speed = 0.25
-res_ang = 5
+res_ang = 3
 
-threshold = 4  # time to collision threshold in s for standby actions
+threshold = 5  # time to collision threshold in s for standby actions
 
 def calc_coord_gps_to_xy(coord_os, coord_ts):
     """ Function to calc GPS coordinates to xy-coordinates in meters to the OS;
@@ -912,7 +912,7 @@ def calc_new_vel(vel_des, search_area, vel_OS):
         speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
 
         vel_30 = vel_OS.copy()
-        vel_30[1] = (vel_30[1] + 30) % 360
+        vel_30[1] = (vel_30[1] - 30) % 360
         in_arcos_30 = (np.dot(vel_space_free_xy, vect_to_xy(vel_30))
                         )/(vel_space_free_mag*vel_30[0])
         in_arcos_30 = np.round_(in_arcos_30, decimals=10)
@@ -1081,7 +1081,7 @@ def calc_vel_final(ts_info, os_info, this, pos_os):
             new_vel = calc_new_vel_colreg(vel_des, free_vel, vel_OS)
             
             if np.any(new_vel):
-                new_vel_testo = np.vstack((new_vel_testo, new_vel))
+                new_vel_testo = np.vstack((new_vel_testo, new_vel, new_vel))
 
             else:
                 new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))

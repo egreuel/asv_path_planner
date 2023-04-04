@@ -49,7 +49,7 @@ class ClosedLoopNode(Node):
         self.spawn_turtle(11.0, 0.0, math.radians(135),"turtle3")
         #self.set_pos_sec(11.0,11.0, math.radians(-135))
         self.set_pos_thi(11.0, 0.0, math.radians(135))
-        self.spawn_turtle(5.0,5.0, math.radians(45),"turtle2")
+        self.spawn_turtle(0.0,0.0, math.radians(45),"turtle2")
         # self.spawn_turtle(5.0, 5.0, math.radians(45),"turtle3")
         self.set_pos_sec(0.0,0.0, math.radians(45))
         # self.set_pos_thi(5.0, 5.0, math.radians(45))
@@ -135,11 +135,11 @@ class ClosedLoopNode(Node):
         
         self.new_vel = velobst.calc_vel_final(self.TS, self.OS, False, np.array([0,0]))
         self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
-        print("Time: ",(perf_counter_ns()-self.start_time)/1000000)
-        if vel_OS[1] < self.new_vel[1] < ((vel_OS[1]+180) % 360):
+        print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+        if velobst.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
             rot = True # Clockwise
         else:
-            rot = False # Counter-Clockwise  
+            rot = False # Counter-Clockwise
         if rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
             cmd = Twist()
             cmd.linear.x = self.new_vel[0]
