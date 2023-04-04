@@ -48,7 +48,7 @@ w_4 = 0.1  # Angle deviation from vector to target position
 res_speed = 0.25
 res_ang = 3
 
-threshold = 5  # time to collision threshold in s for standby actions
+threshold = 3  # time to collision threshold in s for standby actions
 
 def calc_coord_gps_to_xy(coord_os, coord_ts):
     """ Function to calc GPS coordinates to xy-coordinates in meters to the OS;
