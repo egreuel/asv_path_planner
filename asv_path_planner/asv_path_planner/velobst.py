@@ -25,20 +25,20 @@ from scipy.stats import mode
 # pos_OS = np.array([43.934530, 15.441278])
 # ang_OS = 340  # °
 # speed_OS = 6  # m/s
-len_OS = 0.75  # Length OS in m
-wid_OS = 0.4  # Width OS in m
+len_OS = 3.0  # Length OS in m
+wid_OS = 1.75  # Width OS in m
 
 # ang_TS = 235  # °
 # speed_TS = 10  # m/s
 # len_TS = 10  # Length TS in m
 # wid_TS = 2  # Width TS in m
 
-max_TTC = 5  # Time to collison in s
+max_TTC = 15  # Time to collison in s
 safe_Fact = 3
 max_speed_OS = 3
 # Uncertainty handling
-unc_speed = 0.2  # m/s
-unc_angle = 3  # degrees
+unc_speed = 0.5  # m/s
+unc_angle = 5  # degrees
 # Weights for the cost-function to choose the new velocity
 w_1 = 1  # Angle deviation from desired velocity
 w_2 = 1.3  # Speed deviation from desried velocity
@@ -48,7 +48,7 @@ w_4 = 0.1  # Angle deviation from vector to target position
 res_speed = 0.25
 res_ang = 3
 
-threshold = 3  # time to collision threshold in s for standby actions
+threshold = 7.5  # time to collision threshold in s for standby actions
 
 def calc_coord_gps_to_xy(coord_os, coord_ts):
     """ Function to calc GPS coordinates to xy-coordinates in meters to the OS;
