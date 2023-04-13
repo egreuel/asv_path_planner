@@ -493,7 +493,7 @@ def calc_vel_obst(TS, ang_os_rad):
     if plotting:
         tang_points = np.array([[vert_hull_facing[0, 0], vert_hull_facing[0, 1]],
                             [vert_hull_facing[len(vert_hull_facing)-1, 0],
-                             vert_hull_facing[len(vert_hull_facing)-1, 1]]])*50
+                             vert_hull_facing[len(vert_hull_facing)-1, 1]]])*1
     
     # Collision Cone (CC)
     coll_cone = np.vstack((tang_points[0, :], (0,0), tang_points[1, :])) # (Just for plotting)

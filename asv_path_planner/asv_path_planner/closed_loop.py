@@ -22,10 +22,10 @@ class ClosedLoopNode(Node):
 
     def __init__(self):
         super().__init__("closed_loop")
-        # atexit.register(self.exit_handler)
+        atexit.register(self.exit_handler)
         self.os_pos = []
-        self.ts_pos = []
-        self.ts1_pos = []
+        self.ts_pos_1 = []
+        self.ts_pos_2 = []
         self.start_time = perf_counter_ns()
         self.wid_os = 1.75
         self.len_os = 3.0
@@ -88,6 +88,8 @@ class ClosedLoopNode(Node):
         if self.last_gps_time_1 is None:
             self.last_gps_time_1 = gps_time
 
+        self.ts_pos_1.append(self.gps_1)
+
         gps_time_diff = gps_time - self.last_gps_time_1
                 
         if gps_time_diff > 0.0:
@@ -120,6 +122,8 @@ class ClosedLoopNode(Node):
             self.last_gps_2 = self.gps_2
         if self.last_gps_time_2 is None:
             self.last_gps_time_2 = gps_time
+
+        self.ts_pos_2.append(self.gps_2)
 
         gps_time_diff = gps_time - self.last_gps_time_2
                 
@@ -160,6 +164,8 @@ class ClosedLoopNode(Node):
             self.last_gps = self.gps
         if self.last_gps_time is None:
             self.last_gps_time = gps_time
+
+        self.os_pos.append(self.gps)
 
         gps_time_diff = gps_time - self.last_gps_time
                 
@@ -218,39 +224,44 @@ class ClosedLoopNode(Node):
             msg.data = [vel_des[0]/self.max_speed_os, vel_des[0]/self.max_speed_os, 0.0]
         self.thruster_pub_os.publish(msg)
     
-    # def exit_handler(self):
-    #     os_position = np.array(self.os_pos)
-    #     ts_position = np.array(self.ts_pos)
-    #     #ts1_position = np.array(self.ts1_pos)
-    #     new_vel_xy = velobst.vect_to_xy(self.new_vel) 
+    def exit_handler(self):
+        os_position = np.array(self.os_pos)
+        ts_position = np.array(self.ts_pos_1)
+        #ts1_position = np.array(self.ts_pos_2)
+        new_vel_xy = velobst.vect_to_xy(self.new_vel) 
           
-    #     plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path")
-    #     plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
-    #     #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
-    #     plt.plot((0,self.pos_TP[0]+5),(0,self.pos_TP[1]+5),c="gray",zorder=0.02, alpha=1.0, label="global path")
-    #     plt.scatter(13.0,13.0,c="dimgray", marker="+", label="OS goal")
-    #     plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0], new_vel_xy[1],scale=1,
-    #                 scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
+        plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
+        plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
+        #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
+        plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
+        plt.scatter(self.gps_tp[0],self.gps_tp[1],c="dimgray", marker="+", label="OS goal")
+        plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
+                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
         
-    #     velobst.calc_vel_final(self.TS, self.OS, True, self.os_pos[-1])
-    #     plt.axis('scaled')
-    #     plt.axis([-0.5,14,-0.5,14])
-    #     plt.title("time = " + str(self.thetime) + " s")
-    #     plt.xlabel('x-coordinate [m]')
-    #     plt.ylabel('y-coordinate [m]')
-    #     # plt.legend(["OS path", "TS 1 path", "TS 2 path", "desired path", "target position", "new vel", "desired vel","OS","safety domain","TS"])
-        
-    #     #get handles and labels
-    #     handles, labels = plt.gca().get_legend_handles_labels()
+        # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
+        plt.axis('scaled')
+        plt.axis([14.996956254877997,15.008243476322948,44.997525162211005,45.00584886852189])
 
-    #     #specify order of items in legend
-    #     # order = [9,7,12,8,0,1,2,3,4,10,5,6,11]
-    #     order = [8,6,7,0,1,2,3,9,4,5,10]
-
-    #     #add legend to plot
-    #     #plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order]) 
+        plt.title("time = " + str(self.thetime) + " s")
+        plt.xlabel('Longitude [°]')
+        plt.ylabel('Latitude [°]')
+        # # plt.legend(["OS path", "TS 1 path", "TS 2 path", "desired path", "target position", "new vel", "desired vel","OS","safety domain","TS"])
         
-    #     plt.show()
+        # #get handles and labels
+        # handles, labels = plt.gca().get_legend_handles_labels()
+
+        # #specify order of items in legend
+        # # order = [9,7,12,8,0,1,2,3,4,10,5,6,11]
+        # order = [8,6,7,0,1,2,3,9,4,5,10]
+
+        #add legend to plot
+        #plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order]) 
+        current_values_x = plt.gca().get_xticks()
+        current_values_y = plt.gca().get_yticks()
+        plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
+        plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
+
+        plt.show()
 
 def main(args=None):
     rclpy.init(args=args)
