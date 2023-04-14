@@ -18,8 +18,6 @@ from scipy.stats import mode
 # Plotting
 # plotting = False
 
-
-
 # input values
 # either as GPS coordinates or realtive to OS from sensor measurments
 # pos_OS = np.array([43.934530, 15.441278])
@@ -35,7 +33,7 @@ wid_OS = 1.75  # Width OS in m
 
 max_TTC = 15  # Time to collison in s
 safe_Fact = 3
-max_speed_OS = 3
+max_speed_OS = 6
 # Uncertainty handling
 unc_speed = 0.5  # m/s
 unc_angle = 5  # degrees
@@ -445,6 +443,8 @@ def calc_vel_obst(TS, ang_os_rad):
     vert_hull = np.array(vert_hull)
     vert_hull = np.resize(vert_hull, (hull_safe.vertices.shape[0], 2))
     
+    
+
     # Find the tangent lines by checking which vertices has the greatest angle in between
     rel_angles = []
     # Calculate the angle between all vertices points
@@ -1016,6 +1016,7 @@ def calc_vel_final(ts_info, os_info, this, pos_os):
         
         # if check collision = TRUE --> check rule, calculate COLREG con, calc collision point (assigned to TS)
         if VO_check:
+            # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering // or hysteresis function
             VO_rule = check_colreg_rule_heading(vel_OS, vel_TS_ang)
             TSv = np.append(TSv, VO_rule)
             Col_con = calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])

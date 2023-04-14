@@ -24,8 +24,13 @@ class ClosedLoopNode(Node):
         super().__init__("closed_loop")
         atexit.register(self.exit_handler)
         self.os_pos = []
+        self.os_speed = []
+        self.os_ang = []
         self.ts_pos_1 = []
         self.ts_pos_2 = []
+        self.dist_os_ts_1 = []
+        self.dist_os_ts_2 = []
+        self.simu_time = []
         self.start_time = perf_counter_ns()
         self.wid_os = 1.75
         self.len_os = 3.0
@@ -39,7 +44,7 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = None
         self.last_gps_2 = None
         self.last_gps_time_2 = None
-        self.max_speed_os = 3.0
+        self.os_max_speed = 6.0
         # self.len_os = 0.5
         # self.wid_os = 0.2
         # self.max_ttc = 5
@@ -188,6 +193,17 @@ class ClosedLoopNode(Node):
         self.pos_ts_rel_1 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_1)
         # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
 
+        self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
+        self.simu_time.append(self.thetime)
+
+        # Calculate distance between OS and TS and save it in an list
+        self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
+        # self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2))
+         
+        # Save speed and orientation of the OS in a list
+        self.os_speed.append(self.speed_gps)
+        self.os_ang.append(self.ang_gps)  
+
         # Calculate the relative position of the target point to OS
         self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
         pos_TP_rel = velobst.calc_coord_gps_to_xy(self.gps, self.gps_tp)
@@ -207,7 +223,7 @@ class ClosedLoopNode(Node):
 
 
         self.new_vel = velobst.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
-        self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
+        
         print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
         if velobst.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
             rot = True # Clockwise
@@ -215,36 +231,45 @@ class ClosedLoopNode(Node):
             rot = False # Counter-Clockwise
         if rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]/self.max_speed_os,self.new_vel[0]/(self.max_speed_os*2), 0.0]
+            msg.data = [self.new_vel[0]/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
         elif not rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]/(self.max_speed_os*2), self.new_vel[0]/self.max_speed_os, 0.0]
+            msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]/self.os_max_speed, 0.0]
         else:
             msg = Float32MultiArray()
-            msg.data = [vel_des[0]/self.max_speed_os, vel_des[0]/self.max_speed_os, 0.0]
+            msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
         self.thruster_pub_os.publish(msg)
     
     def exit_handler(self):
         os_position = np.array(self.os_pos)
         ts_position = np.array(self.ts_pos_1)
         #ts1_position = np.array(self.ts_pos_2)
+        os_speed = np.array(self.os_speed)
+        os_ang = np.array(self.os_ang)
+        dist_os_ts_1 = np.array(self.dist_os_ts_1)
+        dist_os_ts_2 = np.array(self.dist_os_ts_2)
+        simu_time = np.array(self.simu_time)
         new_vel_xy = velobst.vect_to_xy(self.new_vel) 
-          
-        plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
-        plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
-        #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
-        plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
-        plt.scatter(self.gps_tp[0],self.gps_tp[1],c="dimgray", marker="+", label="OS goal")
-        plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
-                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
+
+        # plt.plot(simu_time, os_speed)
+        # plt.plot(simu_time, os_ang)
+        plt.plot(simu_time, dist_os_ts_1)
+
+        # plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
+        # plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
+        # #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
+        # plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
+        # plt.scatter(self.gps_tp[1],self.gps_tp[0],c="dimgray", marker="+", label="OS goal")
+        # plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
+        #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
         plt.axis('scaled')
-        plt.axis([14.996956254877997,15.008243476322948,44.997525162211005,45.00584886852189])
+        # plt.axis([14.996956254877997,15.008243476322948,44.997525162211005,45.00584886852189])
 
-        plt.title("time = " + str(self.thetime) + " s")
-        plt.xlabel('Longitude [°]')
-        plt.ylabel('Latitude [°]')
+        # plt.title("time = " + str(self.thetime) + " s")
+        # plt.xlabel('Longitude [°]')
+        # plt.ylabel('Latitude [°]')
         # # plt.legend(["OS path", "TS 1 path", "TS 2 path", "desired path", "target position", "new vel", "desired vel","OS","safety domain","TS"])
         
         # #get handles and labels
@@ -256,10 +281,10 @@ class ClosedLoopNode(Node):
 
         #add legend to plot
         #plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order]) 
-        current_values_x = plt.gca().get_xticks()
-        current_values_y = plt.gca().get_yticks()
-        plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
-        plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
+        # current_values_x = plt.gca().get_xticks()
+        # current_values_y = plt.gca().get_yticks()
+        # plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
+        # plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
 
         plt.show()
 
