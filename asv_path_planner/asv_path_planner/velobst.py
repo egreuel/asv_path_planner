@@ -801,22 +801,6 @@ def calc_colreg_con(vel_OS, vel_TS, vel_TS_xy, pos_TS_rel):
             # plt.annotate("$V_3$", (-22,-15),c="purple")
     return np.array(colreg_con)
 
-
-
-def merge_shapes(shape):
-    """ Merge the velocity obstacles or COLRGE constrains to get one shape """
-    added_poly = Polygon()
-    for x in shape:
-        if np.any(x):
-            shape_vert = x.tolist()
-            poly_shape = Polygon(shape_vert)
-            
-            added_poly = added_poly.union(poly_shape)
-
-    # added_shape = added_poly.exterior.coords
-
-    return added_poly
-
 def calc_free_vel_space(velobs, vel_space_free):
     """
     Calculate all velocities that are free of collision
