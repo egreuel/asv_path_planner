@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from asv_path_planner import velobst
+from .velobst_class import VO
 import atexit
 import numpy as np
 import math
@@ -32,8 +33,8 @@ class ClosedLoopNode(Node):
         self.dist_os_ts_2 = []
         self.simu_time = []
         self.start_time = perf_counter_ns()
-        self.wid_os = 1.75
         self.len_os = 3.0
+        self.wid_os = 1.75
         self.len_ts_1 = 1.75
         self.wid_ts_1 = 3.0
         self.len_ts_2 = 1.75
@@ -45,20 +46,6 @@ class ClosedLoopNode(Node):
         self.last_gps_2 = None
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
-        # self.len_os = 0.5
-        # self.wid_os = 0.2
-        # self.max_ttc = 5
-        # self.safe_fact = 3
-        # self.max_speed_os = 2
-        # self.unc_speed = 0.05
-        # self.unc_ang = 5
-        # self.w_1 = 1
-        # self.w_2 = 2
-        # self.w_3 = 0.5
-        # self.w_4 = 0.1
-        # self.n = 0.1
-        # self.m = 5
-        # self.threshold = 3
         # self.plotting = False
 
         self.gps_sub_tp = self.create_subscription(
@@ -189,8 +176,10 @@ class ClosedLoopNode(Node):
         self.last_gps_time = gps_time
         self.last_gps = self.gps
 
+        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 3, 0.5, 5, 0.25, 3)
+
         # Calculate relative position of TS to OS
-        self.pos_ts_rel_1 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_1)
+        self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
         # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
 
         self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
@@ -206,13 +195,13 @@ class ClosedLoopNode(Node):
 
         # Calculate the relative position of the target point to OS
         self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
-        pos_TP_rel = velobst.calc_coord_gps_to_xy(self.gps, self.gps_tp)
+        pos_TP_rel = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_tp)
         ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
         ang_TP = (ang_TP+360) % 360
-        ang_TP = velobst.calc_ang_n_to_e(ang_TP)
+        ang_TP = self.test_vo.calc_ang_n_to_e(ang_TP)
 
         vel_OS = np.array([self.speed_gps, self.ang_gps])
-        vel_OSxy = velobst.vect_to_xy(vel_OS)
+        vel_OSxy = self.test_vo.vect_to_xy(vel_OS)
         ang_OS_rad = np.deg2rad(self.ang_gps)
         vel_des = np.array([3.0, ang_TP])
         
@@ -222,23 +211,74 @@ class ClosedLoopNode(Node):
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
 
 
-        self.new_vel = velobst.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
+        self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
         
         print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-        if velobst.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
+        if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
             rot = True # Clockwise
         else:
             rot = False # Counter-Clockwise
-        if rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
+        if rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
             msg.data = [self.new_vel[0]/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-        elif not rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
+        elif not rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
             msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]/self.os_max_speed, 0.0]
         else:
             msg = Float32MultiArray()
             msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
         self.thruster_pub_os.publish(msg)
+
+        # # Calculate relative position of TS to OS
+        # self.pos_ts_rel_1 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_1)
+        # # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
+
+        # self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
+        # self.simu_time.append(self.thetime)
+
+        # # Calculate distance between OS and TS and save it in an list
+        # self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
+        # # self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2))
+         
+        # # Save speed and orientation of the OS in a list
+        # self.os_speed.append(self.speed_gps)
+        # self.os_ang.append(self.ang_gps)  
+
+        # # Calculate the relative position of the target point to OS
+        # self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
+        # pos_TP_rel = velobst.calc_coord_gps_to_xy(self.gps, self.gps_tp)
+        # ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
+        # ang_TP = (ang_TP+360) % 360
+        # ang_TP = velobst.calc_ang_n_to_e(ang_TP)
+
+        # vel_OS = np.array([self.speed_gps, self.ang_gps])
+        # vel_OSxy = velobst.vect_to_xy(vel_OS)
+        # ang_OS_rad = np.deg2rad(self.ang_gps)
+        # vel_des = np.array([3.0, ang_TP])
+        
+        # self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
+        # # self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
+        # # self.TS_all = np.vstack((self.TS_1, self.TS_2))
+        # self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
+
+
+        # self.new_vel = velobst.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
+        
+        # print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+        # if velobst.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
+        #     rot = True # Clockwise
+        # else:
+        #     rot = False # Counter-Clockwise
+        # if rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
+        #     msg = Float32MultiArray()
+        #     msg.data = [self.new_vel[0]/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
+        # elif not rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
+        #     msg = Float32MultiArray()
+        #     msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]/self.os_max_speed, 0.0]
+        # else:
+        #     msg = Float32MultiArray()
+        #     msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
+        # self.thruster_pub_os.publish(msg)
     
     def exit_handler(self):
         os_position = np.array(self.os_pos)
@@ -249,7 +289,7 @@ class ClosedLoopNode(Node):
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
-        new_vel_xy = velobst.vect_to_xy(self.new_vel) 
+        new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
         # plt.plot(simu_time, os_speed)
         # plt.plot(simu_time, os_ang)
