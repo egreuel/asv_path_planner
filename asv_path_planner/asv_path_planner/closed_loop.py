@@ -32,6 +32,7 @@ class ClosedLoopNode(Node):
         self.dist_os_ts_1 = []
         self.dist_os_ts_2 = []
         self.simu_time = []
+        self.elapsed_time = []
         self.start_time = perf_counter_ns()
         self.len_os = 3.0
         self.wid_os = 1.75
@@ -213,8 +214,12 @@ class ClosedLoopNode(Node):
         # self.TS_all = np.vstack((self.TS_1, self.TS_2))
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
 
-        self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
-        print(self.test_vo.coll_safety)
+        if distance.great_circle(self.gps, self.gps_1).meters < 50:
+            starting_time = perf_counter_ns()
+            self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
+            self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
+        else:
+            self.new_vel = vel_des
         print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
         if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
             rot = True # Clockwise
@@ -222,15 +227,13 @@ class ClosedLoopNode(Node):
             rot = False # Counter-Clockwise
         if rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
+            msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
         elif not rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
             msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]/self.os_max_speed, 0.0]
+            msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
         else:
             msg = Float32MultiArray()
             msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
-        msg = Float32MultiArray()
-        msg.data = [0.5, 0.5, 0.0]    
         self.thruster_pub_os.publish(msg)
 
         # # Calculate relative position of TS to OS
@@ -295,9 +298,28 @@ class ClosedLoopNode(Node):
         simu_time = np.array(self.simu_time)
         new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
+        min_length = min(len(os_speed), len(os_ang), len(simu_time), len(self.elapsed_time), len(dist_os_ts_1))
+        os_speed = os_speed[:min_length]
+        os_ang = os_ang[:min_length]
+        simu_time = simu_time[:min_length]
+        self.elapsed_time = self.elapsed_time[:min_length]
+        dist_os_ts_1 = dist_os_ts_1[:min_length]
+
         # plt.plot(simu_time, os_speed)
         # plt.plot(simu_time, os_ang)
-        plt.plot(simu_time, dist_os_ts_1)
+        # plt.plot(simu_time, dist_os_ts_1)
+        fig, axs = plt.subplots(2, 2)
+        axs[0, 0].plot(simu_time, dist_os_ts_1)
+        axs[0, 0].set_title('Distance OS_TS')
+        axs[0, 1].plot(simu_time, os_speed, 'tab:orange')
+        axs[0, 1].set_title('Speed OS')
+        axs[1, 0].plot(simu_time, os_ang, 'tab:green')
+        axs[1, 0].set_title('Orientation OS')
+        axs[1, 1].plot(simu_time, self.elapsed_time, 'tab:red')
+        axs[1, 1].set_title('Algorithm run time')
+
+        for ax in axs.flat:
+            ax.set(xlabel='x-label', ylabel='y-label')
 
         # plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
         # plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
@@ -308,7 +330,7 @@ class ClosedLoopNode(Node):
         #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
-        plt.axis('scaled')
+        #plt.axis('scaled')
         # plt.axis([14.996956254877997,15.008243476322948,44.997525162211005,45.00584886852189])
 
         # plt.title("time = " + str(self.thetime) + " s")

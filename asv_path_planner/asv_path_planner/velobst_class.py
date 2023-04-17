@@ -478,11 +478,11 @@ class VO:
         vert_hull = np.array(vert_hull)
         vert_hull = np.resize(vert_hull, (hull_safe.vertices.shape[0], 2))
         
-        ### just for testing 
-        testo_poly = Polygon(vert_hull)
-        if testo_poly.contains(Point(0,0)) and self.flag_coll:
-            self.coll_safety = True
-            self.flag_coll = False
+        # ### just for testing 
+        # testo_poly = Polygon(vert_hull)
+        # if testo_poly.contains(Point(0,0)) and self.flag_coll:
+        #     self.coll_safety = True
+        #     self.flag_coll = False
 
 
 
