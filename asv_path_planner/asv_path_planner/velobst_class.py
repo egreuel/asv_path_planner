@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import Polygon, LineString, Point
 # from shapely.ops import transform
 from geopy import distance
 from scipy.spatial import ConvexHull
@@ -23,7 +23,7 @@ class VO:
     w_1 = 1  # Angle deviation from desired velocity
     w_2 = 1.3  # Speed deviation from desried velocity
     w_3 = 1.5  # Angle deviation from 30°
-    w_4 = 0.1  # Angle deviation from vector to target position
+    w_4 = 0.1  # Angle deviation from vector to target position (##### delete probably #####)
 
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
         
@@ -46,7 +46,21 @@ class VO:
         # Resolution of the discretized velocity space
         self.res_speed = speed_res # m/s
         self.res_ang = ang_res # degrees
-        
+              
+        # Create last state check array
+        self.ts_vo_checks = np.empty((1, 15), dtype=object)
+
+        # Fill the array with None values
+        self.ts_vo_checks.fill(None)
+
+        # Variable to store the inital state of OS once a collision check is true
+        self.vel_OS_init = []
+        self.flag = True
+
+        # Variable to store if the saftey domain is violated
+        self.flag_coll = True
+        self.coll_safety = False
+
         # # Properties of OS
         # self.len_OS = 3.0  # Length OS in m
         # self.wid_OS = 1.75  # Width OS in m
@@ -464,7 +478,13 @@ class VO:
         vert_hull = np.array(vert_hull)
         vert_hull = np.resize(vert_hull, (hull_safe.vertices.shape[0], 2))
         
-        
+        ### just for testing 
+        testo_poly = Polygon(vert_hull)
+        if testo_poly.contains(Point(0,0)) and self.flag_coll:
+            self.coll_safety = True
+            self.flag_coll = False
+
+
 
         # Find the tangent lines by checking which vertices has the greatest angle in between
         rel_angles = []
@@ -981,7 +1001,7 @@ class VO:
         ang_OS_rad = os_info[2]
         vel_des = os_info[3]
         vel_des_xy = self.vect_to_xy(vel_des)
-
+        
         if plotting:
             plt.quiver(pos_OS_xy[0], pos_OS_xy[1], vel_des_xy[0], vel_des_xy[1],scale=1,
                         scale_units='xy', angles='xy', color='gray', zorder=6,width=0.005, hatch="||||", edgecolor="black", linewidth=0.5, label="v\u20D7 desired")
@@ -1007,9 +1027,18 @@ class VO:
             
             # if check collision = TRUE --> check rule, calculate COLREG con, calc collision point (assigned to TS)
             if VO_check:
-                # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering // or hysteresis function
-                VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
-                TSv = np.append(TSv, VO_rule)
+                # Save the inital velocity of OS the first time a collision is detected
+                if self.flag:
+                    self.vel_OS_init = vel_OS
+                    self.flag = False
+
+
+                # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering
+                if self.ts_vo_checks[0,10] == None:
+                    VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
+                    TSv = np.append(TSv, VO_rule)
+                else:
+                    TSv = np.append(TSv, self.ts_vo_checks[0,10])
                 Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
                 
                 TSv = np.append(TSv, [0])
@@ -1019,9 +1048,10 @@ class VO:
                     TSv[6], TSv[7])
                 TSv = np.append(TSv, Coll)
             else:
-                TSv = np.append(TSv, [0, 0, 0, 0, 0])
+                TSv = np.append(TSv, [None, None, None, None, None])
+                self.flag = True
             TS_VO_check = np.vstack((TS_VO_check, TSv))
-        
+            self.ts_vo_checks = TS_VO_check
         ### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points, points_colreg_lines, point_tipp, Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)
         
         # if np.any(TS_VO_check[:,9]):
@@ -1070,7 +1100,7 @@ class VO:
                 # if free_vel is empty, choose a velocity in the COLREG_con
 
                 # Calculate new velocity
-                new_vel = self.calc_new_vel_colreg(vel_des, free_vel, vel_OS)
+                new_vel = self.calc_new_vel_colreg(vel_des, free_vel, self.vel_OS_init)
                 
                 if np.any(new_vel):
                     new_vel_testo = np.vstack((new_vel_testo, new_vel, new_vel))
@@ -1081,7 +1111,7 @@ class VO:
             elif TS_vel[10] == 'Left crossing (Rule 15)' or TS_vel[10] == 'Being Overtaken (Rule 13)':
                 
                 if TS_vel[14] <= self.threshold:
-                    new_vel = self.calc_new_vel(vel_des, free_vel, vel_OS)
+                    new_vel = self.calc_new_vel(vel_des, free_vel, self.vel_OS_init)
                     if np.any(new_vel):
                         new_vel_testo = np.vstack((new_vel_testo, new_vel))
 
@@ -1113,3 +1143,6 @@ class VO:
                 new_vel_final = vel_OS.copy()
         
         return new_vel_final
+    
+    def get_prev_stat(self):
+        return self.ts_vo_checks

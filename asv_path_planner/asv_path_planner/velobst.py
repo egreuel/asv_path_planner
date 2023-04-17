@@ -1012,7 +1012,7 @@ def calc_vel_final(ts_info, os_info, this, pos_os):
                 TSv[6], TSv[7])
             TSv = np.append(TSv, Coll)
         else:
-            TSv = np.append(TSv, [0, 0, 0, 0, 0])
+            TSv = np.append(TSv, [None, None, None, None, None])
         TS_VO_check = np.vstack((TS_VO_check, TSv))
     
     ### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points, points_colreg_lines, point_tipp, Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)

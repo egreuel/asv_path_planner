@@ -46,6 +46,9 @@ class ClosedLoopNode(Node):
         self.last_gps_2 = None
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
+
+        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 3, 0.5, 5, 0.25, 3)
+
         # self.plotting = False
 
         self.gps_sub_tp = self.create_subscription(
@@ -176,8 +179,8 @@ class ClosedLoopNode(Node):
         self.last_gps_time = gps_time
         self.last_gps = self.gps
 
-        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 3, 0.5, 5, 0.25, 3)
-
+        
+        
         # Calculate relative position of TS to OS
         self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
         # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
@@ -210,9 +213,8 @@ class ClosedLoopNode(Node):
         # self.TS_all = np.vstack((self.TS_1, self.TS_2))
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
 
-
         self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
-        
+        print(self.test_vo.coll_safety)
         print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
         if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
             rot = True # Clockwise
@@ -227,6 +229,8 @@ class ClosedLoopNode(Node):
         else:
             msg = Float32MultiArray()
             msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
+        msg = Float32MultiArray()
+        msg.data = [0.5, 0.5, 0.0]    
         self.thruster_pub_os.publish(msg)
 
         # # Calculate relative position of TS to OS
