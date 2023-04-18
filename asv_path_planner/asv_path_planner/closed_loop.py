@@ -33,6 +33,7 @@ class ClosedLoopNode(Node):
         self.dist_os_ts_2 = []
         self.simu_time = []
         self.elapsed_time = []
+        self.delta_ang = []
         self.start_time = perf_counter_ns()
         self.len_os = 3.0
         self.wid_os = 1.75
@@ -104,7 +105,7 @@ class ClosedLoopNode(Node):
         self.last_gps_1 = self.gps_1
 
         msg = Float32MultiArray()
-        msg.data = [1.0, 1.0, 0.0]
+        msg.data = [0.5, 0.5, 0.0]
         self.thruster_pub_os_ts_1.publish(msg)
 
     def gps_callback_ts_2(self, pose: NavSatFix):
@@ -192,10 +193,11 @@ class ClosedLoopNode(Node):
         # Calculate distance between OS and TS and save it in an list
         self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
         # self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2))
-         
+        
         # Save speed and orientation of the OS in a list
         self.os_speed.append(self.speed_gps)
         self.os_ang.append(self.ang_gps)  
+        
 
         # Calculate the relative position of the target point to OS
         self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
@@ -208,33 +210,40 @@ class ClosedLoopNode(Node):
         vel_OSxy = self.test_vo.vect_to_xy(vel_OS)
         ang_OS_rad = np.deg2rad(self.ang_gps)
         vel_des = np.array([3.0, ang_TP])
-        
+        ang_diff = (self.ang_gps - 0 + 180 + 360) % 360 - 180
+        self.delta_ang.append(ang_diff)
         self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
         # self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
         # self.TS_all = np.vstack((self.TS_1, self.TS_2))
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
-
-        if distance.great_circle(self.gps, self.gps_1).meters < 50:
-            starting_time = perf_counter_ns()
-            self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
-            self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
-        else:
-            self.new_vel = vel_des
-        print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-        if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
-            rot = True # Clockwise
-        else:
-            rot = False # Counter-Clockwise
-        if rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
-            msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-        elif not rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
-            msg = Float32MultiArray()
-            msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
-        else:
+       
+        if self.thetime < 1.5:
             msg = Float32MultiArray()
             msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
-        self.thruster_pub_os.publish(msg)
+            self.thruster_pub_os.publish(msg)
+        else:
+            if distance.great_circle(self.gps, self.gps_1).meters < 50:
+                starting_time = perf_counter_ns()
+                self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
+                self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
+            else:
+                self.elapsed_time.append(0)
+                self.new_vel = vel_des
+            print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+            if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
+                rot = True # Clockwise
+            else:
+                rot = False # Counter-Clockwise
+            if rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
+                msg = Float32MultiArray()
+                msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
+            elif not rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
+                msg = Float32MultiArray()
+                msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
+            else:
+                msg = Float32MultiArray()
+                msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
+            self.thruster_pub_os.publish(msg)
 
         # # Calculate relative position of TS to OS
         # self.pos_ts_rel_1 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_1)
@@ -296,15 +305,15 @@ class ClosedLoopNode(Node):
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
-        new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
+        # new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
         min_length = min(len(os_speed), len(os_ang), len(simu_time), len(self.elapsed_time), len(dist_os_ts_1))
-        os_speed = os_speed[:min_length]
-        os_ang = os_ang[:min_length]
-        simu_time = simu_time[:min_length]
-        self.elapsed_time = self.elapsed_time[:min_length]
-        dist_os_ts_1 = dist_os_ts_1[:min_length]
-
+        os_speed = os_speed[15:min_length]
+        os_ang = os_ang[15:min_length]
+        simu_time = simu_time[15:min_length]
+        self.elapsed_time = self.elapsed_time[15:min_length]
+        dist_os_ts_1 = dist_os_ts_1[15:min_length]
+        self.delta_ang = self.delta_ang[15:min_length]
         # plt.plot(simu_time, os_speed)
         # plt.plot(simu_time, os_ang)
         # plt.plot(simu_time, dist_os_ts_1)
@@ -313,7 +322,7 @@ class ClosedLoopNode(Node):
         axs[0, 0].set_title('Distance OS_TS')
         axs[0, 1].plot(simu_time, os_speed, 'tab:orange')
         axs[0, 1].set_title('Speed OS')
-        axs[1, 0].plot(simu_time, os_ang, 'tab:green')
+        axs[1, 0].plot(simu_time, self.delta_ang, 'tab:green')
         axs[1, 0].set_title('Orientation OS')
         axs[1, 1].plot(simu_time, self.elapsed_time, 'tab:red')
         axs[1, 1].set_title('Algorithm run time')

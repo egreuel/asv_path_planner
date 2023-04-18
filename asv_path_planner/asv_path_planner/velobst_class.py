@@ -61,6 +61,9 @@ class VO:
         self.flag_coll = True
         self.coll_safety = False
 
+        # Variable to store the latest calculated new velocity
+        self.latest_new_vel = []
+
         # # Properties of OS
         # self.len_OS = 3.0  # Length OS in m
         # self.wid_OS = 1.75  # Width OS in m
@@ -483,7 +486,10 @@ class VO:
         # if testo_poly.contains(Point(0,0)) and self.flag_coll:
         #     self.coll_safety = True
         #     self.flag_coll = False
+        # else:
+        #     self.coll_safety = False
 
+        # if inside the safety domain, use the expanded hull 
 
 
         # Find the tangent lines by checking which vertices has the greatest angle in between
@@ -916,6 +922,7 @@ class VO:
                 
         else:
             print("Death!")
+            # new_vel = self.latest_new_vel
             new_vel = []
 
         return np.array(new_vel)
@@ -964,6 +971,7 @@ class VO:
             #                scale_units='xy', angles='xy', color='blue', zorder=4, width=0.003)
         else:
             print("Death")
+            # new_vel = self.latest_new_vel
             new_vel = []
         return np.array(new_vel)
 
@@ -1142,6 +1150,7 @@ class VO:
             else:
                 new_vel_final = vel_OS.copy()
         
+        # self.latest_new_vel = new_vel_final
         return new_vel_final
     
     def get_prev_stat(self):
