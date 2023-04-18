@@ -18,6 +18,7 @@ from time import perf_counter_ns
 from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
 from geopy import distance
+from scipy.interpolate import splrep, BSpline
 
 class ClosedLoopNode(Node):
 
@@ -105,7 +106,7 @@ class ClosedLoopNode(Node):
         self.last_gps_1 = self.gps_1
 
         msg = Float32MultiArray()
-        msg.data = [0.5, 0.5, 0.0]
+        msg.data = [1.0, 1.0, 0.0]
         self.thruster_pub_os_ts_1.publish(msg)
 
     def gps_callback_ts_2(self, pose: NavSatFix):
@@ -314,6 +315,7 @@ class ClosedLoopNode(Node):
         self.elapsed_time = self.elapsed_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
         self.delta_ang = self.delta_ang[15:min_length]
+        
         # plt.plot(simu_time, os_speed)
         # plt.plot(simu_time, os_ang)
         # plt.plot(simu_time, dist_os_ts_1)

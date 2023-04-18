@@ -482,12 +482,12 @@ class VO:
         vert_hull = np.resize(vert_hull, (hull_safe.vertices.shape[0], 2))
         
         # ### just for testing 
-        # testo_poly = Polygon(vert_hull)
-        # if testo_poly.contains(Point(0,0)) and self.flag_coll:
-        #     self.coll_safety = True
-        #     self.flag_coll = False
-        # else:
-        #     self.coll_safety = False
+        testo_poly = Polygon(vert_hull)
+        if testo_poly.contains(Point(0,0)) and self.flag_coll:
+            self.coll_safety = True
+            self.flag_coll = False
+        else:
+            self.coll_safety = False
 
         # if inside the safety domain, use the expanded hull 
 
@@ -875,7 +875,7 @@ class VO:
     def calc_new_vel_colreg(self, vel_des, search_area, vel_OS):
         """ Function to calculate the new velocity for encounters, where COLREG
         constrains are applied """
-        if np.any(search_area):
+        if np.any(search_area) and self.coll_safety == False:
             # Calculate new vel
             vel_space_free_xy = search_area
             vel_space_free_mag = np.sqrt(vel_space_free_xy[:,0] ** 2 + vel_space_free_xy[:,1] ** 2)
@@ -922,8 +922,8 @@ class VO:
                 
         else:
             print("Death!")
-            # new_vel = self.latest_new_vel
-            new_vel = []
+            new_vel = self.latest_new_vel
+            # new_vel = []
 
         return np.array(new_vel)
 
@@ -931,7 +931,7 @@ class VO:
     def calc_new_vel(self, vel_des, search_area, vel_OS):
         """ Function to calculate the new velocity for encounters, where no COLREG
         constrains are applied """
-        if np.any(search_area):
+        if np.any(search_area) and self.coll_safety == False:
             vel_space_free_xy = search_area
             vel_space_free_mag = np.sqrt(vel_space_free_xy[:,0] ** 2 + vel_space_free_xy[:,1] ** 2)
         
@@ -971,8 +971,8 @@ class VO:
             #                scale_units='xy', angles='xy', color='blue', zorder=4, width=0.003)
         else:
             print("Death")
-            # new_vel = self.latest_new_vel
-            new_vel = []
+            new_vel = self.latest_new_vel
+            # new_vel = []
         return np.array(new_vel)
 
     def extract_most_common_vel(self, arr, threshold):
@@ -1150,7 +1150,7 @@ class VO:
             else:
                 new_vel_final = vel_OS.copy()
         
-        # self.latest_new_vel = new_vel_final
+        self.latest_new_vel = new_vel_final
         return new_vel_final
     
     def get_prev_stat(self):
