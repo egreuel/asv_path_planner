@@ -35,6 +35,8 @@ class ClosedLoopNode(Node):
         self.simu_time = []
         self.elapsed_time = []
         self.delta_ang = []
+        self.speed_com = []
+        self.ang_com = []
         self.start_time = perf_counter_ns()
         self.len_os = 3.0
         self.wid_os = 1.75
@@ -49,6 +51,41 @@ class ClosedLoopNode(Node):
         self.last_gps_2 = None
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
+
+        # PID controll parameters
+        # ku = 0.6
+        # kp = 0.36
+        # Tu = 1.6 s
+        # ki = 0.45
+        # kd = 0.072
+        self.kp = 0.36
+        self.ki = 0.15
+        self.kd = 0.072
+        self.error = 0
+        self.der_error = 0
+        self.int_error = 0
+        self.last_error = 0
+        self.output = 0
+        self.error_1 = 0
+        self.der_error_1 = 0
+        self.int_error_1 = 0
+        self.last_error_1 = 0
+        self.output_1 = 0
+
+        # PD controll parameters
+        # ku = 0.6
+        # tu = 4.6 s
+        # kp = 0.36
+        # ki = 0.156
+        # kd = 0.207
+        self.kpd = 0.36
+        self.kid = 0.056
+        self.kdd = 0.207
+        self.ang_error = 0
+        self.ang_int_error = 0
+        self.ang_der_error = 0
+        self.ang_last_error = 0
+        self.ang_output = 0
 
         self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 3, 0.5, 5, 0.25, 3)
 
@@ -73,6 +110,53 @@ class ClosedLoopNode(Node):
             Float32MultiArray, "/marus_boat/pwm_out", 10)
 
         self.get_logger().info("Closed Loop started!")
+
+    def angle_diff(self, first_angle, second_angle):
+        diff = second_angle - first_angle
+        if diff > 180:
+            diff -= 360
+        elif diff < -180:
+            diff += 360
+        return diff
+
+    def compute_pid(self, setpoint, vel, time_step):
+        self.error = setpoint - vel  
+        self.int_error += self.error * time_step
+        self.der_error = (self.error - self.last_error) / time_step
+        self.last_error = self.error
+        self.output = self.kp*self.error + self.ki*self.int_error + self.kd*self.der_error
+        if self.output >= 1:
+            self.output = 1.0
+        elif self.output <= 0:
+            self.output = 0.0
+        return self.output
+    
+    def compute_pd(self, setpoint, ang, time_step):
+        self.ang_error = self.angle_diff(ang, setpoint)
+        self.ang_int_error += self.ang_error * time_step
+        self.ang_der_error = (self.ang_error - self.ang_last_error) / time_step
+        self.ang_last_error = self.ang_error
+        self.ang_output = self.kpd*self.ang_error + self.kid*self.ang_int_error + self.kdd*self.ang_der_error
+        
+        if self.ang_output >= 1:
+            self.ang_output = 1.0
+        elif self.ang_output <= -1:
+            self.ang_output = -1.0
+        return self.ang_output
+    
+    def compute_pid_1(self, setpoint, vel, time_step):
+        self.error_1 = setpoint - vel  
+        self.int_error_1 += self.error_1 * time_step
+        self.der_error_1 = (self.error_1 - self.last_error_1) / time_step
+        self.last_error_1 = self.error_1
+        self.output_1 = self.kp*self.error_1 + self.ki*self.int_error_1 + self.kd*self.der_error_1
+        if self.output_1 >= 1:
+            self.output_1 = 1.0
+        elif self.output_1 <= 0:
+            self.output_1 = 0.0
+        return self.output_1
+    
+    
 
     def gps_callback_ts_1(self, pose: NavSatFix):
         gps_time_sec = pose.header.stamp.sec
@@ -105,8 +189,9 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = gps_time
         self.last_gps_1 = self.gps_1
 
+        thrust = self.compute_pid_1(3.0, self.speed_gps_1, 0.020)
         msg = Float32MultiArray()
-        msg.data = [1.0, 1.0, 0.0]
+        msg.data = [thrust, thrust, 0.0]
         self.thruster_pub_os_ts_1.publish(msg)
 
     def gps_callback_ts_2(self, pose: NavSatFix):
@@ -219,9 +304,10 @@ class ClosedLoopNode(Node):
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
        
         if self.thetime < 1.5:
+            self.new_vel = vel_des
+            thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
             msg = Float32MultiArray()
-            msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
-            self.thruster_pub_os.publish(msg)
+            msg.data = [thrust, thrust, 0.0]
         else:
             if distance.great_circle(self.gps, self.gps_1).meters < 50:
                 starting_time = perf_counter_ns()
@@ -230,72 +316,32 @@ class ClosedLoopNode(Node):
             else:
                 self.elapsed_time.append(0)
                 self.new_vel = vel_des
-            print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-            if self.test_vo.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
-                rot = True # Clockwise
+            print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+                    
+            if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
+                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                print("Thrust", thrust)
+                rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                msg = Float32MultiArray()
+                msg.data = [thrust+rot, thrust-rot, 0.0]
+                # msg = Float32MultiArray()
+                # msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
+            elif self.angle_diff(vel_OS[1], self.new_vel[1]) < 5:
+                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                msg = Float32MultiArray()
+                msg.data = [thrust+rot, thrust-rot, 0.0]
+                # msg = Float32MultiArray()
+                # msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
             else:
-                rot = False # Counter-Clockwise
-            if rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
+                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
                 msg = Float32MultiArray()
-                msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-            elif not rot and self.test_vo.ang_betw_vect(self.new_vel, vel_OS) > 5:
-                msg = Float32MultiArray()
-                msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
-            else:
-                msg = Float32MultiArray()
-                msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
-            self.thruster_pub_os.publish(msg)
+                msg.data = [thrust, thrust, 0.0]
 
-        # # Calculate relative position of TS to OS
-        # self.pos_ts_rel_1 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_1)
-        # # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
-
-        # self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
-        # self.simu_time.append(self.thetime)
-
-        # # Calculate distance between OS and TS and save it in an list
-        # self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
-        # # self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2))
-         
-        # # Save speed and orientation of the OS in a list
-        # self.os_speed.append(self.speed_gps)
-        # self.os_ang.append(self.ang_gps)  
-
-        # # Calculate the relative position of the target point to OS
-        # self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
-        # pos_TP_rel = velobst.calc_coord_gps_to_xy(self.gps, self.gps_tp)
-        # ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
-        # ang_TP = (ang_TP+360) % 360
-        # ang_TP = velobst.calc_ang_n_to_e(ang_TP)
-
-        # vel_OS = np.array([self.speed_gps, self.ang_gps])
-        # vel_OSxy = velobst.vect_to_xy(vel_OS)
-        # ang_OS_rad = np.deg2rad(self.ang_gps)
-        # vel_des = np.array([3.0, ang_TP])
-        
-        # self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
-        # # self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
-        # # self.TS_all = np.vstack((self.TS_1, self.TS_2))
-        # self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
-
-
-        # self.new_vel = velobst.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
-        
-        # print("New vel: ", self.new_vel, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-        # if velobst.check_between_angles(self.new_vel[1], vel_OS[1], (vel_OS[1]+180) % 360):
-        #     rot = True # Clockwise
-        # else:
-        #     rot = False # Counter-Clockwise
-        # if rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
-        #     msg = Float32MultiArray()
-        #     msg.data = [self.new_vel[0]/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-        # elif not rot and velobst.ang_betw_vect(self.new_vel, vel_OS) > 5:
-        #     msg = Float32MultiArray()
-        #     msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]/self.os_max_speed, 0.0]
-        # else:
-        #     msg = Float32MultiArray()
-        #     msg.data = [vel_des[0]/self.os_max_speed, vel_des[0]/self.os_max_speed, 0.0]
-        # self.thruster_pub_os.publish(msg)
+                 
+        self.thruster_pub_os.publish(msg)
+        self.speed_com.append(self.new_vel[0])
+        self.ang_com.append(self.new_vel[1])
     
     def exit_handler(self):
         os_position = np.array(self.os_pos)
@@ -308,13 +354,17 @@ class ClosedLoopNode(Node):
         simu_time = np.array(self.simu_time)
         # new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
-        min_length = min(len(os_speed), len(os_ang), len(simu_time), len(self.elapsed_time), len(dist_os_ts_1))
+        # min_length = min(len(os_speed), len(os_ang), len(simu_time), len(dist_os_ts_1))
+        
+        min_length = min(len(os_speed), len(os_ang), len(simu_time), len(self.elapsed_time), len(dist_os_ts_1), len(self.delta_ang), len(self.speed_com), len(self.ang_com))
         os_speed = os_speed[15:min_length]
         os_ang = os_ang[15:min_length]
         simu_time = simu_time[15:min_length]
         self.elapsed_time = self.elapsed_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
         self.delta_ang = self.delta_ang[15:min_length]
+        self.speed_com = self.speed_com[15:min_length]
+        self.ang_com = self.ang_com[15:min_length]
         
         # plt.plot(simu_time, os_speed)
         # plt.plot(simu_time, os_ang)
@@ -323,10 +373,13 @@ class ClosedLoopNode(Node):
         axs[0, 0].plot(simu_time, dist_os_ts_1)
         axs[0, 0].set_title('Distance OS_TS')
         axs[0, 1].plot(simu_time, os_speed, 'tab:orange')
+        axs[0, 1].plot(simu_time, self.speed_com, 'tab:red')
         axs[0, 1].set_title('Speed OS')
-        axs[1, 0].plot(simu_time, self.delta_ang, 'tab:green')
+        axs[1, 0].plot(simu_time, os_ang, 'tab:green')
+        axs[1, 0].plot(simu_time, self.ang_com, 'tab:red')
         axs[1, 0].set_title('Orientation OS')
-        axs[1, 1].plot(simu_time, self.elapsed_time, 'tab:red')
+        # axs[1, 1].plot(simu_time, self.elapsed_time, 'tab:red')
+        axs[1, 1].plot(simu_time, simu_time, 'tab:red')
         axs[1, 1].set_title('Algorithm run time')
 
         for ax in axs.flat:

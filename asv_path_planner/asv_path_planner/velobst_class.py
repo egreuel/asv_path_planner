@@ -1148,10 +1148,7 @@ class VO:
             if not is_inside:
                 new_vel_final = vel_des.copy()
             else:
-                new_vel_final = vel_OS.copy()
+                new_vel_final = self.latest_new_vel
         
         self.latest_new_vel = new_vel_final
         return new_vel_final
-    
-    def get_prev_stat(self):
-        return self.ts_vo_checks
