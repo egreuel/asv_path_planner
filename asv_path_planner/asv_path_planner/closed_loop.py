@@ -5,6 +5,7 @@ import atexit
 import numpy as np
 import math
 import rclpy
+import csv
 from tf_transformations import euler_from_quaternion
 from rclpy.node import Node
 from turtlesim.msg import Pose
@@ -40,8 +41,8 @@ class ClosedLoopNode(Node):
         self.start_time = perf_counter_ns()
         self.len_os = 3.0
         self.wid_os = 1.75
-        self.len_ts_1 = 1.75
-        self.wid_ts_1 = 3.0
+        self.len_ts_1 = 3.5
+        self.wid_ts_1 = 6.0
         self.len_ts_2 = 1.75
         self.wid_ts_2 = 3.0
         self.last_gps = None
@@ -87,7 +88,7 @@ class ClosedLoopNode(Node):
         self.ang_last_error = 0
         self.ang_output = 0
 
-        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 3, 0.5, 5, 0.25, 3)
+        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 5, 0.5, 5, 0.25, 3)
 
         # self.plotting = False
 
@@ -156,7 +157,10 @@ class ClosedLoopNode(Node):
             self.output_1 = 0.0
         return self.output_1
     
-    
+    def gps_callback_tp(self, pose: NavSatFix):
+        gps_lat = pose.latitude
+        gps_lon = pose.longitude
+        # self.gps_tp = np.array([gps_lat, gps_lon])
 
     def gps_callback_ts_1(self, pose: NavSatFix):
         gps_time_sec = pose.header.stamp.sec
@@ -228,13 +232,6 @@ class ClosedLoopNode(Node):
         # msg = Float32MultiArray()
         # msg.data = [10.0, 10.0, 0.0]
         # self.thruster_pub_os_ts_1.publish(msg)
-
-
-    def gps_callback_tp(self, pose: NavSatFix):
-        gps_lat = pose.latitude
-        gps_lon = pose.longitude
-        # self.gps_tp = np.array([gps_lat, gps_lon])
-
 
     def gps_callback_os(self, pose: PoseWithCovarianceStamped):
         gps_time_sec = pose.header.stamp.sec
@@ -319,8 +316,7 @@ class ClosedLoopNode(Node):
             print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
                     
             if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
-                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
-                print("Thrust", thrust)
+                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)   
                 rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
                 msg = Float32MultiArray()
                 msg.data = [thrust+rot, thrust-rot, 0.0]
@@ -352,54 +348,132 @@ class ClosedLoopNode(Node):
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
-        # new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
+        new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
-        # min_length = min(len(os_speed), len(os_ang), len(simu_time), len(dist_os_ts_1))
+        fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time"]
+        rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.delta_ang, self.elapsed_time]
+        filename = "simulation_results_.csv"
+        # writing to csv file  
+        with open(filename, 'w') as csvfile:  
+            # creating a csv writer object  
+            csvwriter = csv.writer(csvfile)  
+                
+            # writing the fields  
+            csvwriter.writerow(fields)  
+                
+            # writing the data rows  
+            csvwriter.writerows(rows)
+             
+        min_length = min(len(simu_time), len(dist_os_ts_1), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.delta_ang), len(self.elapsed_time))
         
-        min_length = min(len(os_speed), len(os_ang), len(simu_time), len(self.elapsed_time), len(dist_os_ts_1), len(self.delta_ang), len(self.speed_com), len(self.ang_com))
-        os_speed = os_speed[15:min_length]
-        os_ang = os_ang[15:min_length]
         simu_time = simu_time[15:min_length]
-        self.elapsed_time = self.elapsed_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
-        self.delta_ang = self.delta_ang[15:min_length]
         self.speed_com = self.speed_com[15:min_length]
         self.ang_com = self.ang_com[15:min_length]
+        os_speed = os_speed[15:min_length]
+        os_ang = os_ang[15:min_length]
+        self.delta_ang = self.delta_ang[15:min_length]
+        self.elapsed_time = self.elapsed_time[15:min_length]
+
+        fig1 = plt.figure()
+        ax1 = fig1.add_subplot(111)
+        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS")
+        min_dist = min(dist_os_ts_1)
+        min_dist = round(min_dist, 2)
+        ind_min_dist = dist_os_ts_1.argmin()
+        time_min_dist = simu_time[ind_min_dist]
+        plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance {min_dist} m")
+        plt.title("Distance betweenn OS and TS")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Distance [m]")
+        plt.legend(loc="lower left", fontsize="7")
+        ax1.set_aspect(1.0/ax1.get_data_ratio(), adjustable='box')
         
-        # plt.plot(simu_time, os_speed)
-        # plt.plot(simu_time, os_ang)
-        # plt.plot(simu_time, dist_os_ts_1)
-        fig, axs = plt.subplots(2, 2)
-        axs[0, 0].plot(simu_time, dist_os_ts_1)
-        axs[0, 0].set_title('Distance OS_TS')
-        axs[0, 1].plot(simu_time, os_speed, 'tab:orange')
-        axs[0, 1].plot(simu_time, self.speed_com, 'tab:red')
-        axs[0, 1].set_title('Speed OS')
-        axs[1, 0].plot(simu_time, os_ang, 'tab:green')
-        axs[1, 0].plot(simu_time, self.ang_com, 'tab:red')
-        axs[1, 0].set_title('Orientation OS')
-        # axs[1, 1].plot(simu_time, self.elapsed_time, 'tab:red')
-        axs[1, 1].plot(simu_time, simu_time, 'tab:red')
-        axs[1, 1].set_title('Algorithm run time')
+        
+        fig2 = plt.figure()
+        ax2 = fig2.add_subplot(111)
+        plt.plot(simu_time, os_speed, c="green", label="Current speed (OS)")
+        plt.plot(simu_time, self.speed_com, c="red", label="Speed input command", linestyle="dashed")
+        plt.title("Speed OS")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Speed [m/s]")
+        plt.legend(loc="lower left", fontsize="7")
+        ax2.set_aspect(1.0/ax2.get_data_ratio(), adjustable='box')
+        
+        fig3 = plt.figure()
+        ax3 = fig3.add_subplot(111)
+        plt.plot(simu_time, os_ang, c="teal", label="Current orientation (OS)")
+        plt.plot(simu_time, self.ang_com, c="red", label="Orientation input command", linestyle="dashed")
+        plt.title("Orientation OS")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Oritentation [°]")
+        plt.legend(loc="lower left", fontsize="7")
+        ax3.set_aspect(1.0/ax3.get_data_ratio(), adjustable='box')
+        
+        fig4 = plt.figure()
+        ax4 = fig4.add_subplot(111)
+        plt.plot(simu_time, self.elapsed_time, c="red", label="Run time")
+        plt.title("Algorithm run time")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Run time [ms]")
+        plt.legend(loc="lower left", fontsize="7")
+        ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable='box')
+        
+        
+        
+        ### For Subplots
+        # fig, axs = plt.subplots(2, 2, constrained_layout = True)
+        # fig.suptitle("Results Head-on encounter with one TS", fontsize=15)
+        # axs[0, 0].plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS")
+        # axs[0, 0].set_title('Distance OS_TS')
+        # axs[0, 0].set(xlabel="Time [s]", ylabel="Distance [m]")
+        # min_dist = min(dist_os_ts_1)
+        # min_dist = round(min_dist, 2)
+        # ind_min_dist = dist_os_ts_1.argmin()
+        # time_min_dist = simu_time[ind_min_dist]
+        # axs[0, 0].scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance {min_dist} m")
+        # axs[0, 0].legend(loc="lower left", fontsize="7")
+        # axs[0, 0].set_box_aspect(1)
 
-        for ax in axs.flat:
-            ax.set(xlabel='x-label', ylabel='y-label')
+        # axs[0, 1].plot(simu_time, os_speed, c="green", label="Current speed (OS)")
+        # axs[0, 1].plot(simu_time, self.speed_com, c="red", label="Speed input command", linestyle="dashed")
+        # axs[0, 1].set_title('Speed OS')
+        # axs[0, 1].set(xlabel="Time [s]", ylabel="Speed [m/s]")
+        # axs[0, 1].legend(loc="lower right", fontsize="7")
+        # axs[0, 1].set_box_aspect(1)
 
-        # plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
-        # plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
-        # #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
-        # plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
-        # plt.scatter(self.gps_tp[1],self.gps_tp[0],c="dimgray", marker="+", label="OS goal")
-        # plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
-        #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
+        # axs[1, 0].plot(simu_time, os_ang, c="teal", label="Current orientation (OS)")
+        # axs[1, 0].plot(simu_time, self.ang_com, c="red", label="Orientation input command", linestyle="dashed")
+        # axs[1, 0].set_title('Orientation OS')
+        # axs[1, 0].set(xlabel="Time [s]", ylabel="Orientation [°]")
+        # axs[1, 0].legend(loc="upper left", fontsize="7")
+        # axs[1, 0].set_box_aspect(1)
+        
+        # axs[1, 1].plot(simu_time, self.elapsed_time, c="red", label="Run time")
+        # axs[1, 1].set_title('Algorithm run time')
+        # axs[1, 1].set(xlabel="Time [s]", ylabel="Run time [ms]")
+        # # axs[1, 1].legend(loc="upper left", fontsize="10")
+        # axs[1, 1].set_box_aspect(1)
+        # # fig.tight_layout()
+        ###
+
+        fig5 = plt.figure()
+        plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
+        plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
+        #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
+        plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
+        plt.scatter(self.gps_tp[1],self.gps_tp[0],c="dimgray", marker="+", label="OS goal")
+        plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
+                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
+        
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
-        #plt.axis('scaled')
-        # plt.axis([14.996956254877997,15.008243476322948,44.997525162211005,45.00584886852189])
+        plt.axis('scaled')
+        plt.axis([14.9970,15.0005,45.00089980439303,45.00269946908797])
 
-        # plt.title("time = " + str(self.thetime) + " s")
-        # plt.xlabel('Longitude [°]')
-        # plt.ylabel('Latitude [°]')
+        plt.title("time = " + str(self.thetime) + " s")
+        plt.xlabel('Longitude [°]')
+        plt.ylabel('Latitude [°]')
         # # plt.legend(["OS path", "TS 1 path", "TS 2 path", "desired path", "target position", "new vel", "desired vel","OS","safety domain","TS"])
         
         # #get handles and labels
@@ -409,8 +483,8 @@ class ClosedLoopNode(Node):
         # # order = [9,7,12,8,0,1,2,3,4,10,5,6,11]
         # order = [8,6,7,0,1,2,3,9,4,5,10]
 
-        #add legend to plot
-        #plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order]) 
+        # add legend to plot
+        # plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order]) 
         # current_values_x = plt.gca().get_xticks()
         # current_values_y = plt.gca().get_yticks()
         # plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
