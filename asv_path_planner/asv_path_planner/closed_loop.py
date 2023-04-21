@@ -52,7 +52,7 @@ class ClosedLoopNode(Node):
         self.last_gps_2 = None
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
-
+        self.ref_point = [45.001799636812144, 15.002536642856318]
         # PID controll parameters
         # ku = 0.6
         # kp = 0.36
@@ -72,21 +72,6 @@ class ClosedLoopNode(Node):
         self.int_error_1 = 0
         self.last_error_1 = 0
         self.output_1 = 0
-
-        # PD controll parameters
-        # ku = 0.6
-        # tu = 4.6 s
-        # kp = 0.36
-        # ki = 0.156
-        # kd = 0.207
-        self.kpd = 0.36
-        self.kid = 0.056
-        self.kdd = 0.207
-        self.ang_error = 0
-        self.ang_int_error = 0
-        self.ang_der_error = 0
-        self.ang_last_error = 0
-        self.ang_output = 0
 
         self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 5, 0.5, 5, 0.25, 3)
 
@@ -131,20 +116,7 @@ class ClosedLoopNode(Node):
         elif self.output <= 0:
             self.output = 0.0
         return self.output
-    
-    def compute_pd(self, setpoint, ang, time_step):
-        self.ang_error = self.angle_diff(ang, setpoint)
-        self.ang_int_error += self.ang_error * time_step
-        self.ang_der_error = (self.ang_error - self.ang_last_error) / time_step
-        self.ang_last_error = self.ang_error
-        self.ang_output = self.kpd*self.ang_error + self.kid*self.ang_int_error + self.kdd*self.ang_der_error
-        
-        if self.ang_output >= 1:
-            self.ang_output = 1.0
-        elif self.ang_output <= -1:
-            self.ang_output = -1.0
-        return self.ang_output
-    
+       
     def compute_pid_1(self, setpoint, vel, time_step):
         self.error_1 = setpoint - vel  
         self.int_error_1 += self.error_1 * time_step
@@ -174,7 +146,7 @@ class ClosedLoopNode(Node):
         if self.last_gps_time_1 is None:
             self.last_gps_time_1 = gps_time
 
-        self.ts_pos_1.append(self.gps_1)
+        # self.ts_pos_1.append(self.gps_1)
 
         gps_time_diff = gps_time - self.last_gps_time_1
                 
@@ -193,7 +165,7 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = gps_time
         self.last_gps_1 = self.gps_1
 
-        thrust = self.compute_pid_1(3.0, self.speed_gps_1, 0.020)
+        thrust = self.compute_pid_1(9.0, self.speed_gps_1, 0.020)
         msg = Float32MultiArray()
         msg.data = [thrust, thrust, 0.0]
         self.thruster_pub_os_ts_1.publish(msg)
@@ -210,7 +182,7 @@ class ClosedLoopNode(Node):
         if self.last_gps_time_2 is None:
             self.last_gps_time_2 = gps_time
 
-        self.ts_pos_2.append(self.gps_2)
+        # self.ts_pos_2.append(self.gps_2)
 
         gps_time_diff = gps_time - self.last_gps_time_2
                 
@@ -245,7 +217,7 @@ class ClosedLoopNode(Node):
         if self.last_gps_time is None:
             self.last_gps_time = gps_time
 
-        self.os_pos.append(self.gps)
+        # self.os_pos.append(self.gps)
 
         gps_time_diff = gps_time - self.last_gps_time
                 
@@ -270,6 +242,14 @@ class ClosedLoopNode(Node):
         self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
         # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
 
+        # Calculate relative position of all vesselt to the reference point
+        self.ref_os = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps)
+        self.ref_ts_1 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_1)
+        # self.ref_ts_2 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_2)
+        self.os_pos.append(self.ref_os)
+        self.ts_pos_1.append(self.ref_ts_1)
+        # self.ts_pos_2.append(self.ref_ts_2)
+
         self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
         self.simu_time.append(self.thetime)
 
@@ -283,7 +263,7 @@ class ClosedLoopNode(Node):
         
 
         # Calculate the relative position of the target point to OS
-        self.gps_tp = np.array([45.0017996649828, 14.999999999999998])
+        self.gps_tp = np.array([45.00179960159882, 15.003804964281368])
         pos_TP_rel = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_tp)
         ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
         ang_TP = (ang_TP+360) % 360
@@ -306,7 +286,7 @@ class ClosedLoopNode(Node):
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
         else:
-            if distance.great_circle(self.gps, self.gps_1).meters < 50:
+            if distance.great_circle(self.gps, self.gps_1).meters < 200:
                 starting_time = perf_counter_ns()
                 self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
                 self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
@@ -350,8 +330,8 @@ class ClosedLoopNode(Node):
         simu_time = np.array(self.simu_time)
         new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
 
-        fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time"]
-        rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.delta_ang, self.elapsed_time]
+        fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time", "OS pos", "TS pos"]
+        rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.delta_ang, self.elapsed_time, os_position, ts_position]
         filename = "simulation_results_.csv"
         # writing to csv file  
         with open(filename, 'w') as csvfile:  
@@ -377,47 +357,48 @@ class ClosedLoopNode(Node):
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
-        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS")
+        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS", linewidth=2.5)
         min_dist = min(dist_os_ts_1)
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
         time_min_dist = simu_time[ind_min_dist]
-        plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance {min_dist} m")
-        plt.title("Distance betweenn OS and TS")
+        plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance = {min_dist} m", linewidth=2.5)
+        # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
         plt.ylabel("Distance [m]")
-        plt.legend(loc="lower left", fontsize="7")
+        plt.legend(loc="upper right", fontsize="10")
         ax1.set_aspect(1.0/ax1.get_data_ratio(), adjustable='box')
         
         
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
-        plt.plot(simu_time, os_speed, c="green", label="Current speed (OS)")
-        plt.plot(simu_time, self.speed_com, c="red", label="Speed input command", linestyle="dashed")
-        plt.title("Speed OS")
+        plt.plot(simu_time, os_speed, c="green", label="Current speed (OS)", linewidth=2.5)
+        plt.plot(simu_time, self.speed_com, c="red", label="Desired speed (OS)", linestyle="dashed", linewidth=2.5)
+        # plt.title("Speed OS")
         plt.xlabel("Time [s]")
         plt.ylabel("Speed [m/s]")
-        plt.legend(loc="lower left", fontsize="7")
+        plt.legend(loc="lower right", fontsize="10")
         ax2.set_aspect(1.0/ax2.get_data_ratio(), adjustable='box')
         
         fig3 = plt.figure()
         ax3 = fig3.add_subplot(111)
-        plt.plot(simu_time, os_ang, c="teal", label="Current orientation (OS)")
-        plt.plot(simu_time, self.ang_com, c="red", label="Orientation input command", linestyle="dashed")
-        plt.title("Orientation OS")
+        plt.plot(simu_time, os_ang, c="teal", label="Current orientation (OS)", linewidth=2.5)
+        plt.plot(simu_time, self.ang_com, c="red", label="Desired orientation (OS)", linestyle="dashed", linewidth=2.5)
+        # plt.title("Orientation OS")
         plt.xlabel("Time [s]")
         plt.ylabel("Oritentation [°]")
-        plt.legend(loc="lower left", fontsize="7")
+        plt.legend(loc="lower left", fontsize="10")
         ax3.set_aspect(1.0/ax3.get_data_ratio(), adjustable='box')
         
-        fig4 = plt.figure()
-        ax4 = fig4.add_subplot(111)
-        plt.plot(simu_time, self.elapsed_time, c="red", label="Run time")
-        plt.title("Algorithm run time")
-        plt.xlabel("Time [s]")
-        plt.ylabel("Run time [ms]")
-        plt.legend(loc="lower left", fontsize="7")
-        ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable='box')
+        # Algorithm run time
+        # fig4 = plt.figure()
+        # ax4 = fig4.add_subplot(111)
+        # plt.plot(simu_time, self.elapsed_time, c="red", label="Run time")
+        # # plt.title("Algorithm run time")
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Run time [ms]")
+        # # plt.legend(loc="upper left", fontsize="10")
+        # ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable='box')
         
         
         
@@ -458,22 +439,29 @@ class ClosedLoopNode(Node):
         ###
 
         fig5 = plt.figure()
-        plt.plot(os_position[:,1], os_position[:,0], c="teal",zorder=0.5, linestyle="--", label="OS path")
-        plt.plot(ts_position[:,1], ts_position[:,0], c="red",zorder=0.05, linestyle="-.", label="TS 1 path")
+        ref_tp = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
+        plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path", linewidth=2.5)
+        plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
         #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
-        plt.plot((os_position[0,1],self.gps_tp[1]),(os_position[0,0],self.gps_tp[0]),c="gray",zorder=0.02, alpha=1.0, label="global path")
-        plt.scatter(self.gps_tp[1],self.gps_tp[0],c="dimgray", marker="+", label="OS goal")
-        plt.quiver(os_position[-1,1], os_position[-1,0], new_vel_xy[0]*(10**-4), new_vel_xy[1]*(10**-4),scale=1,
-                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.005, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
-        
+        plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
+        plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
+        plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0]*5, new_vel_xy[1],scale=1,
+                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.01, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
+        plt.legend(loc="upper left", fontsize="10")
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
-        plt.axis('scaled')
-        plt.axis([14.9970,15.0005,45.00089980439303,45.00269946908797])
+        plt.axis('square')
+        bot_left = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899825520364, 15.00126830157632]))
+        bot_right = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899769180805, 15.003804904724001]))
+        top_left = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699490216614, 15.001268341281854]))
+        top_right = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699433873545, 15.003805023840597]))
+        plt.axis([bot_left[0],bot_right[0]+5,bot_left[1]-2.5,top_left[1]+2.5])
+        
 
-        plt.title("time = " + str(self.thetime) + " s")
-        plt.xlabel('Longitude [°]')
-        plt.ylabel('Latitude [°]')
+        # plt.title("time = " + str(self.thetime) + " s")
+        # plt.title('Vehicle trajectories')
+        plt.xlabel('x [m]')
+        plt.ylabel('y [m]')
         # # plt.legend(["OS path", "TS 1 path", "TS 2 path", "desired path", "target position", "new vel", "desired vel","OS","safety domain","TS"])
         
         # #get handles and labels
@@ -489,6 +477,10 @@ class ClosedLoopNode(Node):
         # current_values_y = plt.gca().get_yticks()
         # plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
         # plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
+
+        if self.test_vo.coll_safety:
+            fig6 = plt.figure()
+            
 
         plt.show()
 
