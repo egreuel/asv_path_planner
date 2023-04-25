@@ -312,7 +312,7 @@ class VO:
 
     def check_colreg_rule_heading(self, vel_OS_2, vel_TS_2):
         """ Function to check COLREG rule (angle between vel_OS and
-        vel_TS heading) """
+        vel_TS heading// course over ground) """
         vel = vel_TS_2.copy()
         vel[1] = vel_TS_2[1] - 180
         if vel[0] <= 0:  # Threshhold for static objects
