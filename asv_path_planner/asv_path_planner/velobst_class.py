@@ -315,8 +315,8 @@ class VO:
         vel_TS heading// course over ground) """
         vel = vel_TS_2.copy()
         vel[1] = vel_TS_2[1] - 180
-        if vel[0] <= 0:  # Threshhold for static objects
-            colreg_rule_2 = 'Static Object, no COLREGS applied'
+        if vel[0] <= 0.1:  # Threshhold for static objects
+            colreg_rule_2 = 'Static object'
         else:
             phi_2 = self.calc_ang_vect(vel_OS_2, vel)
             if 15 <= phi_2 <= 112.5:
@@ -943,12 +943,16 @@ class VO:
             speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
 
             vel_30 = vel_OS.copy()
-            vel_30[1] = (vel_30[1] - 30) % 360
             in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
                             )/(vel_space_free_mag*vel_30[0])
             in_arcos_30 = np.round_(in_arcos_30, decimals=10)
             angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-   
+            
+            angles_30_free = (30-angles_30_free)*-1
+            angles_30_free[angles_30_free>0] = 0
+            angles_30_free = -angles_30_free
+            angles_30_free = np.round_(angles_30_free, decimals=8)
+
             # Normalize the values between 0-1, with 0 = 0 and 1 = max value
             norm_ang_des_free = angles_des_free / np.max(angles_des_free)
             norm_speed_des_free = speed_des_free / np.max(speed_des_free)
@@ -1105,8 +1109,6 @@ class VO:
             # for each TS with collision and COLREG rules where contrains have to be applied, calculate the new velocity in free velocity space
             if TS_vel[10] == 'Right crossing (Rule 15)' or TS_vel[10] == 'Head-on (Rule 14)' or TS_vel[10] == 'Overtaking (Rule 13)':
 
-                # if free_vel is empty, choose a velocity in the COLREG_con
-
                 # Calculate new velocity
                 new_vel = self.calc_new_vel_colreg(vel_des, free_vel, self.vel_OS_init)
                 
@@ -1125,6 +1127,15 @@ class VO:
 
                     else:
                         new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
+                else:
+                    new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
+            elif TS_vel[10] == 'Static object':
+                new_vel = self.calc_new_vel(vel_des, free_vel, self.vel_OS_init)
+                if np.any(new_vel):
+                    new_vel_testo = np.vstack((new_vel_testo, new_vel))
+
+                else:
+                    new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
 
 
         # Extract the final new velocity
@@ -1149,6 +1160,7 @@ class VO:
                 new_vel_final = vel_des.copy()
             else:
                 new_vel_final = self.latest_new_vel
+                
         
         self.latest_new_vel = new_vel_final
         return new_vel_final

@@ -39,12 +39,13 @@ class ClosedLoopNode(Node):
         self.speed_com = []
         self.ang_com = []
         self.start_time = perf_counter_ns()
-        self.len_os = 3.0
-        self.wid_os = 1.75
-        self.len_ts_1 = 3.5
-        self.wid_ts_1 = 6.0
-        self.len_ts_2 = 1.75
-        self.wid_ts_2 = 3.0
+        self.len_os = 6.0
+        self.wid_os = 3.5
+        self.len_ts_1 = 6.0
+        self.wid_ts_1 = 3.5
+        self.vel_ts_1 = 3.0
+        self.len_ts_2 = 6.0
+        self.wid_ts_2 = 3.5
         self.last_gps = None
         self.last_gps_time = None
         self.last_gps_1 = None
@@ -73,7 +74,9 @@ class ClosedLoopNode(Node):
         self.last_error_1 = 0
         self.output_1 = 0
 
-        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 5, 0.5, 5, 0.25, 3)
+        # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
+        # VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
+        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
 
         # self.plotting = False
 
@@ -165,7 +168,7 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = gps_time
         self.last_gps_1 = self.gps_1
 
-        thrust = self.compute_pid_1(9.0, self.speed_gps_1, 0.020)
+        thrust = self.compute_pid_1(self.vel_ts_1, self.speed_gps_1, 0.020)
         msg = Float32MultiArray()
         msg.data = [thrust, thrust, 0.0]
         self.thruster_pub_os_ts_1.publish(msg)
@@ -201,8 +204,9 @@ class ClosedLoopNode(Node):
         self.last_gps_time_2 = gps_time
         self.last_gps_2 = self.gps_2
 
+        # thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, 0.020)
         # msg = Float32MultiArray()
-        # msg.data = [10.0, 10.0, 0.0]
+        # msg.data = [thrust, thrust, 0.0]
         # self.thruster_pub_os_ts_1.publish(msg)
 
     def gps_callback_os(self, pose: PoseWithCovarianceStamped):
@@ -235,8 +239,6 @@ class ClosedLoopNode(Node):
             
         self.last_gps_time = gps_time
         self.last_gps = self.gps
-
-        
         
         # Calculate relative position of TS to OS
         self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
@@ -286,7 +288,7 @@ class ClosedLoopNode(Node):
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
         else:
-            if distance.great_circle(self.gps, self.gps_1).meters < 200:
+            if distance.great_circle(self.gps, self.gps_1).meters < 50:
                 starting_time = perf_counter_ns()
                 self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
                 self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
@@ -329,7 +331,7 @@ class ClosedLoopNode(Node):
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
         new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
-
+        vel_xy_ts_1 = self.test_vo.vect_to_xy([self.speed_gps_1, self.ang_gps_1])
         fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time", "OS pos", "TS pos"]
         rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.delta_ang, self.elapsed_time, os_position, ts_position]
         filename = "simulation_results_.csv"
@@ -366,18 +368,18 @@ class ClosedLoopNode(Node):
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
         plt.ylabel("Distance [m]")
-        plt.legend(loc="upper right", fontsize="10")
+        plt.legend(loc="best", fontsize="10")
         ax1.set_aspect(1.0/ax1.get_data_ratio(), adjustable='box')
         
         
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
-        plt.plot(simu_time, os_speed, c="green", label="Current speed (OS)", linewidth=2.5)
+        plt.plot(simu_time, os_speed, c="teal", label="Current speed (OS)", linewidth=2.5)
         plt.plot(simu_time, self.speed_com, c="red", label="Desired speed (OS)", linestyle="dashed", linewidth=2.5)
         # plt.title("Speed OS")
         plt.xlabel("Time [s]")
         plt.ylabel("Speed [m/s]")
-        plt.legend(loc="lower right", fontsize="10")
+        plt.legend(loc="best", fontsize="10")
         ax2.set_aspect(1.0/ax2.get_data_ratio(), adjustable='box')
         
         fig3 = plt.figure()
@@ -387,7 +389,7 @@ class ClosedLoopNode(Node):
         # plt.title("Orientation OS")
         plt.xlabel("Time [s]")
         plt.ylabel("Oritentation [°]")
-        plt.legend(loc="lower left", fontsize="10")
+        plt.legend(loc="best", fontsize="10")
         ax3.set_aspect(1.0/ax3.get_data_ratio(), adjustable='box')
         
         # Algorithm run time
@@ -439,15 +441,75 @@ class ClosedLoopNode(Node):
         ###
 
         fig5 = plt.figure()
+        # points_test = []
+        os_timestamp = np.empty((0,2))
+        ts_timestamp = np.empty((0,2))
         ref_tp = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
+        prev_timestamp = simu_time[0]
+        for timestamp, os_pos, ts_pos in zip(simu_time, os_position, ts_position):
+            time_diff = timestamp - prev_timestamp
+            if time_diff >= 7.0:
+                os_timestamp = np.vstack((os_timestamp, os_pos))
+                ts_timestamp = np.vstack((ts_timestamp, ts_pos))
+                prev_timestamp = timestamp
+        
+        
+        plt.scatter(os_timestamp[:,0], os_timestamp[:,1], c="black", marker="4", linewidth=1.5, s=50, label="time interval: 7 s")
         plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path", linewidth=2.5)
+        plt.scatter(ts_timestamp[:,0], ts_timestamp[:,1], c="black", marker="3", linewidth=1.5, s=50)
         plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
         #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
         plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
         plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
-        plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0]*5, new_vel_xy[1],scale=1,
-                    scale_units='xy', angles='xy', color='blue', zorder=6,width=0.01, hatch="----", edgecolor="black", linewidth=0.5, label="v\u20D7 new")
-        plt.legend(loc="upper left", fontsize="10")
+
+        # Calculate the vertices of the OS around it
+        vert_OS = np.array([[-0.5*self.wid_os, -0.5*self.len_os],
+                            [0.5*self.wid_os, -0.5*self.len_os],
+                            [0.5*self.wid_os, 0.5*self.len_os],
+                            [0, self.len_os],
+                            [-0.5*self.wid_os, 0.5*self.len_os]])
+
+        # Rotate the vertices in the direction the OS is facing
+        rot_M_OS = np.array([[np.cos(np.deg2rad(self.ang_gps)), -np.sin(np.deg2rad(self.ang_gps))],
+                            [np.sin(np.deg2rad(self.ang_gps)), np.cos(np.deg2rad(self.ang_gps))]])
+    
+        vert_OS = np.dot(vert_OS,rot_M_OS)
+
+        # Add the Position of the OS
+        vert_OS[:, 0] = vert_OS[:, 0]+os_position[-1,0]
+        vert_OS[:, 1] = vert_OS[:, 1]+os_position[-1,1]
+        plt.fill(vert_OS[:,0],vert_OS[:,1], "blue", hatch="----", edgecolor="black", linewidth=0.5, label="OS")
+
+        # Calculate the vertices of the TS around it
+        vert_TS = np.array([[-0.5*self.wid_ts_1, -0.5*self.len_ts_1],
+                            [0.5*self.wid_ts_1, -0.5*self.len_ts_1],
+                            [0.5*self.wid_ts_1, 0.5*self.len_ts_1],
+                            [0, self.len_ts_1],
+                            [-0.5*self.wid_ts_1, 0.5*self.len_ts_1]])
+
+        # Rotate the vertices in the direction the TS is facing
+        rot_M_TS = np.array([[np.cos(np.deg2rad(self.ang_gps_1)), -np.sin(np.deg2rad(self.ang_gps_1))],
+                            [np.sin(np.deg2rad(self.ang_gps_1)), np.cos(np.deg2rad(self.ang_gps_1))]])
+
+        vert_TS[:] = np.dot(vert_TS[:], rot_M_TS)
+        
+        # Add the Position of the TS
+        vert_TS[:, 0] = vert_TS[:, 0]+ts_position[-1,0]
+        vert_TS[:, 1] = vert_TS[:, 1]+ts_position[-1,1]
+        plt.fill(vert_TS[:,0],vert_TS[:,1], "orange", hatch="||||", edgecolor="black", linewidth=0.5, label="TS")
+
+        # plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0]*5, new_vel_xy[1],scale=1,
+        #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.01, hatch="----", edgecolor="black", linewidth=0.5, label="COG (OS)")
+        # if self.vel_ts_1 <= 0.1:
+        #     vert_TS = np.array([[ts_position[-1,0]-3.0,ts_position[-1,1]-1.75],
+        #                         [ts_position[-1,0]-3.0,ts_position[-1,1]+1.75],
+        #                         [ts_position[-1,0]+3.0,ts_position[-1,1]+1.75],
+        #                         [ts_position[-1,0]+3.0,ts_position[-1,1]-1.75]])
+        #     plt.fill(vert_TS[:,0],vert_TS[:,1], "orange", hatch="||||", edgecolor="black", linewidth=0.5, label="COG (TS)")
+        # else:
+        #     plt.quiver(ts_position[-1,0], ts_position[-1,1], vel_xy_ts_1[0]*5, vel_xy_ts_1[1]*5,scale=1,
+        #                 scale_units='xy', angles='xy', color='orange', zorder=6,width=0.01, hatch="||||", edgecolor="black", linewidth=0.5, label="COG (TS)")
+        plt.legend(loc="best", fontsize="10")
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
         plt.axis('square')
@@ -480,7 +542,9 @@ class ClosedLoopNode(Node):
 
         if self.test_vo.coll_safety:
             fig6 = plt.figure()
-            
+            plt.scatter(5, 5, c="red", marker="x", linewidths=2.5)
+            plt.axis([0,10,0,10])
+                       
 
         plt.show()
 
