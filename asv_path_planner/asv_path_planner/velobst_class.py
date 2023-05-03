@@ -62,7 +62,7 @@ class VO:
         self.coll_safety = False
 
         # Variable to store the latest calculated new velocity
-        self.latest_new_vel = []
+        self.latest_new_vel = np.empty((0,2))
 
         # # Properties of OS
         # self.len_OS = 3.0  # Length OS in m
@@ -943,15 +943,22 @@ class VO:
             speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
 
             vel_30 = vel_OS.copy()
+            vel_30[1] = (vel_30[1] + 30) % 360
             in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
                             )/(vel_space_free_mag*vel_30[0])
             in_arcos_30 = np.round_(in_arcos_30, decimals=10)
             angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-            
-            angles_30_free = (30-angles_30_free)*-1
-            angles_30_free[angles_30_free>0] = 0
-            angles_30_free = -angles_30_free
-            angles_30_free = np.round_(angles_30_free, decimals=8)
+
+            # vel_30 = vel_OS.copy()
+            # in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
+            #                 )/(vel_space_free_mag*vel_30[0])
+            # in_arcos_30 = np.round_(in_arcos_30, decimals=10)
+            # angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
+                                    
+            # angles_30_free = (30-angles_30_free)*-1
+            # angles_30_free[angles_30_free>0] = 0
+            # angles_30_free = -angles_30_free
+            # angles_30_free = np.round_(angles_30_free, decimals=8)
 
             # Normalize the values between 0-1, with 0 = 0 and 1 = max value
             norm_ang_des_free = angles_des_free / np.max(angles_des_free)
@@ -1157,6 +1164,8 @@ class VO:
                     
                     is_inside = True
             if not is_inside:
+                new_vel_final = vel_des.copy()
+            elif not np.any(self.latest_new_vel):
                 new_vel_final = vel_des.copy()
             else:
                 new_vel_final = self.latest_new_vel

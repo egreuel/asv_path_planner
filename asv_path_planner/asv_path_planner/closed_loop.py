@@ -46,6 +46,7 @@ class ClosedLoopNode(Node):
         self.vel_ts_1 = 3.0
         self.len_ts_2 = 6.0
         self.wid_ts_2 = 3.5
+        self.vel_ts_2 = 3.0
         self.last_gps = None
         self.last_gps_time = None
         self.last_gps_1 = None
@@ -54,6 +55,7 @@ class ClosedLoopNode(Node):
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
         self.ref_point = [45.001799636812144, 15.002536642856318]
+        self.flag = False
         # PID controll parameters
         # ku = 0.6
         # kp = 0.36
@@ -85,7 +87,7 @@ class ClosedLoopNode(Node):
 
         self.gps_sub_ts_1 = self.create_subscription(
             NavSatFix, "/marus_boat_2/gps", self.gps_callback_ts_1, 10)
-        self.thruster_pub_os_ts_1 = self.create_publisher(
+        self.thruster_pub_ts_1 = self.create_publisher(
             Float32MultiArray, "/marus_boat_2/pwm_out", 10)
 
         self.gps_sub_ts_2 = self.create_subscription(
@@ -171,7 +173,7 @@ class ClosedLoopNode(Node):
         thrust = self.compute_pid_1(self.vel_ts_1, self.speed_gps_1, 0.020)
         msg = Float32MultiArray()
         msg.data = [thrust, thrust, 0.0]
-        self.thruster_pub_os_ts_1.publish(msg)
+        self.thruster_pub_ts_1.publish(msg)
 
     def gps_callback_ts_2(self, pose: NavSatFix):
         gps_time_sec = pose.header.stamp.sec
@@ -204,10 +206,10 @@ class ClosedLoopNode(Node):
         self.last_gps_time_2 = gps_time
         self.last_gps_2 = self.gps_2
 
-        # thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, 0.020)
-        # msg = Float32MultiArray()
-        # msg.data = [thrust, thrust, 0.0]
-        # self.thruster_pub_os_ts_1.publish(msg)
+        thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, 0.020)
+        msg = Float32MultiArray()
+        msg.data = [thrust, thrust, 0.0]
+        self.thruster_pub_ts_2.publish(msg)
 
     def gps_callback_os(self, pose: PoseWithCovarianceStamped):
         gps_time_sec = pose.header.stamp.sec
@@ -242,22 +244,22 @@ class ClosedLoopNode(Node):
         
         # Calculate relative position of TS to OS
         self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
-        # self.pos_ts_rel_2 = velobst.calc_coord_gps_to_xy(self.gps, self.gps_2)
+        self.pos_ts_rel_2 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_2)
 
-        # Calculate relative position of all vesselt to the reference point
+        # Calculate relative position of all vessels to the reference point
         self.ref_os = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps)
         self.ref_ts_1 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_1)
-        # self.ref_ts_2 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_2)
+        self.ref_ts_2 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_2)
         self.os_pos.append(self.ref_os)
         self.ts_pos_1.append(self.ref_ts_1)
-        # self.ts_pos_2.append(self.ref_ts_2)
+        self.ts_pos_2.append(self.ref_ts_2)
 
         self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
         self.simu_time.append(self.thetime)
 
         # Calculate distance between OS and TS and save it in an list
         self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
-        # self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2))
+        self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2).meters)
         
         # Save speed and orientation of the OS in a list
         self.os_speed.append(self.speed_gps)
@@ -278,8 +280,18 @@ class ClosedLoopNode(Node):
         ang_diff = (self.ang_gps - 0 + 180 + 360) % 360 - 180
         self.delta_ang.append(ang_diff)
         self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
-        # self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
-        # self.TS_all = np.vstack((self.TS_1, self.TS_2))
+        self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
+        if distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+            self.TS_all = np.vstack((self.TS_1, self.TS_2))
+            self.flag = True
+        elif distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters > 50:
+            self.TS_all = self.TS_1
+            self.flag = True
+        elif distance.great_circle(self.gps, self.gps_1).meters > 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+            self.TS_all = self.TS_2
+            self.flag = True
+        else:
+            self.flag = False
         self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
        
         if self.thetime < 1.5:
@@ -288,9 +300,9 @@ class ClosedLoopNode(Node):
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
         else:
-            if distance.great_circle(self.gps, self.gps_1).meters < 50:
+            if self.flag:
                 starting_time = perf_counter_ns()
-                self.new_vel = self.test_vo.calc_vel_final(self.TS_1, self.OS, False, np.array([0,0]))
+                self.new_vel = self.test_vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
                 self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
             else:
                 self.elapsed_time.append(0)
@@ -324,7 +336,7 @@ class ClosedLoopNode(Node):
     def exit_handler(self):
         os_position = np.array(self.os_pos)
         ts_position = np.array(self.ts_pos_1)
-        #ts1_position = np.array(self.ts_pos_2)
+        ts_position_2 = np.array(self.ts_pos_2)
         os_speed = np.array(self.os_speed)
         os_ang = np.array(self.os_ang)
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
@@ -346,10 +358,11 @@ class ClosedLoopNode(Node):
             # writing the data rows  
             csvwriter.writerows(rows)
              
-        min_length = min(len(simu_time), len(dist_os_ts_1), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.delta_ang), len(self.elapsed_time))
+        min_length = min(len(simu_time), len(dist_os_ts_1), len(dist_os_ts_2), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.delta_ang), len(self.elapsed_time))
         
         simu_time = simu_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
+        dist_os_ts_2 = dist_os_ts_2[15:min_length]
         self.speed_com = self.speed_com[15:min_length]
         self.ang_com = self.ang_com[15:min_length]
         os_speed = os_speed[15:min_length]
@@ -359,12 +372,19 @@ class ClosedLoopNode(Node):
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
-        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS", linewidth=2.5)
+        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
+        plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
         min_dist = min(dist_os_ts_1)
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
         time_min_dist = simu_time[ind_min_dist]
         plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance = {min_dist} m", linewidth=2.5)
+        min_dist_2 = min(dist_os_ts_2)
+        min_dist_2 = round(min_dist_2, 2)
+        ind_min_dist_2 = dist_os_ts_2.argmin()
+        time_min_dist_2 = simu_time[ind_min_dist_2]
+        plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance = {min_dist_2} m", linewidth=2.5)
+
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
         plt.ylabel("Distance [m]")
@@ -444,13 +464,15 @@ class ClosedLoopNode(Node):
         # points_test = []
         os_timestamp = np.empty((0,2))
         ts_timestamp = np.empty((0,2))
+        ts_timestamp_2 = np.empty((0,2))
         ref_tp = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
         prev_timestamp = simu_time[0]
-        for timestamp, os_pos, ts_pos in zip(simu_time, os_position, ts_position):
+        for timestamp, os_pos, ts_pos, ts_pos2 in zip(simu_time, os_position, ts_position, ts_position_2):
             time_diff = timestamp - prev_timestamp
             if time_diff >= 7.0:
                 os_timestamp = np.vstack((os_timestamp, os_pos))
                 ts_timestamp = np.vstack((ts_timestamp, ts_pos))
+                ts_timestamp_2 = np.vstack((ts_timestamp_2, ts_pos2))
                 prev_timestamp = timestamp
         
         
@@ -458,7 +480,8 @@ class ClosedLoopNode(Node):
         plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path", linewidth=2.5)
         plt.scatter(ts_timestamp[:,0], ts_timestamp[:,1], c="black", marker="3", linewidth=1.5, s=50)
         plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
-        #plt.plot(ts1_position[:,0], ts1_position[:,1], c="red",zorder=0.05, linestyle=":", label="TS 1 path")
+        plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
+        plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
         plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
         plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
 
@@ -496,7 +519,25 @@ class ClosedLoopNode(Node):
         # Add the Position of the TS
         vert_TS[:, 0] = vert_TS[:, 0]+ts_position[-1,0]
         vert_TS[:, 1] = vert_TS[:, 1]+ts_position[-1,1]
-        plt.fill(vert_TS[:,0],vert_TS[:,1], "orange", hatch="||||", edgecolor="black", linewidth=0.5, label="TS")
+        plt.fill(vert_TS[:,0],vert_TS[:,1], "orange", hatch="||||", edgecolor="black", linewidth=0.5, label="TS 1")
+
+        # Calculate the vertices of the TS around it
+        vert_TS_2 = np.array([[-0.5*self.wid_ts_2, -0.5*self.len_ts_2],
+                            [0.5*self.wid_ts_2, -0.5*self.len_ts_2],
+                            [0.5*self.wid_ts_2, 0.5*self.len_ts_2],
+                            [0, self.len_ts_2],
+                            [-0.5*self.wid_ts_2, 0.5*self.len_ts_2]])
+
+        # Rotate the vertices in the direction the TS is facing
+        rot_M_TS_2 = np.array([[np.cos(np.deg2rad(self.ang_gps_2)), -np.sin(np.deg2rad(self.ang_gps_2))],
+                            [np.sin(np.deg2rad(self.ang_gps_2)), np.cos(np.deg2rad(self.ang_gps_2))]])
+
+        vert_TS_2[:] = np.dot(vert_TS_2[:], rot_M_TS_2)
+        
+        # Add the Position of the TS
+        vert_TS_2[:, 0] = vert_TS_2[:, 0]+ts_position_2[-1,0]
+        vert_TS_2[:, 1] = vert_TS_2[:, 1]+ts_position_2[-1,1]
+        plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
 
         # plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0]*5, new_vel_xy[1],scale=1,
         #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.01, hatch="----", edgecolor="black", linewidth=0.5, label="COG (OS)")
