@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import math
 
 from shapely.geometry import Polygon, LineString, Point
-# from shapely.ops import transform
 from geopy import distance
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
 from scipy.stats import mode
 
-# input: speed_OS[m/s], ang_OS[°], pos_OS[Lat,Lon], speed_TS[m/s], ang_TS[°],
-#        pos_TS[Lat,Lon], len_OS[m], wid_OS[m], len_TS[m], wid_TS[m]
+# input: vel_OS[speed(m/s), angle(° in NED frame)], len_OS[m], wid_OS[m], max_speed_OS [m/s], max_TTC[s], min_TTC[s], saftey_fact[],
+#        speed_TS[m/s], speed_TS_unc[m/s], ang_TS[° in NED frame], ang_TS_unc[°], speed_res[m/s], ang_res[°], pos_TS_rel[x,y], len_TS[m], wid_TS[m]
+
 # output: VO, absolute course
 
 # Plotting
@@ -23,8 +23,7 @@ class VO:
     w_1 = 1  # Angle deviation from desired velocity
     w_2 = 1.3  # Speed deviation from desried velocity
     w_3 = 1.5  # Angle deviation from 30°
-    w_4 = 0.1  # Angle deviation from vector to target position (##### delete probably #####)
-
+    
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
         
         # Properties of OS
@@ -63,28 +62,6 @@ class VO:
 
         # Variable to store the latest calculated new velocity
         self.latest_new_vel = np.empty((0,2))
-
-        # # Properties of OS
-        # self.len_OS = 3.0  # Length OS in m
-        # self.wid_OS = 1.75  # Width OS in m
-        # self.max_speed_OS = 6 # Maximum speed of OS in m/s
-
-        # # Time thresholds
-        # self.max_TTC = 15  # Time to collison in s
-        # self.threshold = 7.5  # time to collision threshold in s for standby actions
-
-        # # Safety domain factor
-        # self.safe_Fact = 3
-        
-        # # Uncertainty handling
-        # self.unc_speed = 0.5  # m/s
-        # self.unc_angle = 5  # degrees
-        
-        # # Resolution of the discretized velocity space
-        # self.res_speed = 0.25 # m/s
-        # self.res_ang = 3 # degrees
-
-       
 
     def calc_coord_gps_to_xy(self, coord_os, coord_ts):
         """ Function to calc GPS coordinates to xy-coordinates in meters to the OS;
@@ -237,10 +214,8 @@ class VO:
                 v_outn = np.vstack((v_outn, v_out))
         return np.array(v_outn), np.array(v_test)
 
-    # @profile
     def check_collision(self, vel_p, vel_obs):
         """ Function Check for Collision """
-        
         vel_p_xy = self.vect_to_xy(vel_p)
         vel_p_xy = np.reshape(vel_p_xy, (1,2))
         outo, intu = self.inOutVO(vel_p_xy, vel_obs)
@@ -250,7 +225,6 @@ class VO:
         else:
             collision = False
         return collision
-
 
     def check_collision_col(self, vel_point, pos_tip, col_cons):
         """ Function Check for Collision """
@@ -269,6 +243,7 @@ class VO:
         return collision
 
     def check_between_angles(self, angle, bound_left, bound_right):
+        """ Function to check wether an angle is between two bound, given by two angles"""
         if bound_right > bound_left:
             ang_betw = bound_right - bound_left
         else:
@@ -295,21 +270,6 @@ class VO:
         phi = ((vel_Rel[1]-vel_OS[1])+360) % 360
         return phi
 
-
-    def check_colreg_rule(self, vel_OS, pos_TS_rel):
-        """ Function Check COLREG rule (relative bearing) """
-        phi = self.calc_ang_vect(vel_OS, self.vect_to_ang_mag(pos_TS_rel))
-        if 15 <= phi <= 112.5:
-            colreg_rule = 'Right crossing (Rule 15)'
-        elif 112.5 < phi <= 247.5:
-            colreg_rule = 'Being Overtaken (Rule 13)'
-        elif 247.5 < phi <= 345:
-            colreg_rule = 'Left crossing (Rule 15'
-        else:
-            colreg_rule = 'Head-on (Rule 14)'
-        return colreg_rule
-
-
     def check_colreg_rule_heading(self, vel_OS_2, vel_TS_2):
         """ Function to check COLREG rule (angle between vel_OS and
         vel_TS heading// course over ground) """
@@ -332,7 +292,6 @@ class VO:
                 colreg_rule_2 = 'Head-on (Rule 14)'
         return colreg_rule_2
 
-
     def check_side(self, vel_Rel, tang_coord):
         """ Function that checks wether the relative velocity is inside the CC or
         outside, if outside check which side """
@@ -351,7 +310,6 @@ class VO:
 
         return side
 
-
     def ang_betw_vect(self, ref_vect, *test_vect):
         """ Function to calculate the angle between two vectors """
         ref_vect_xy = self.vect_to_xy(ref_vect)
@@ -364,7 +322,6 @@ class VO:
 
         return np.array(angles_betw)
 
-    # @profile
     def calc_vel_obst(self, TS, ang_os_rad):
         """ Function to calculate the VO, gives back an array with the vertices of
         the VO """
@@ -687,7 +644,6 @@ class VO:
 
         return np.array([vel_obst_TTC_unc, vert_hull, tang_points, points_colreg_line], dtype=object)
 
-    # Here unc_speed anc unc_angle removed from 1,2 place
     def add_uncert(self, vel_obst, posTS_rel, vel_TS):
         """ Function to add the uncertainties in speed and angle of the TS to the
         VO """
@@ -730,7 +686,6 @@ class VO:
         #     plt.fill(unc_VO[unc_VO_hull.vertices,0], unc_VO[unc_VO_hull.vertices,1], 'r', alpha=1 ,zorder=0.5, edgecolor='black', linewidth=1.5)
 
         return np.array(unc_VO_vert)
-
 
     def check_coll_point(self, vel_Relxy, vel_OS, vel_OSxy, vel_TS, vel_TSxy, vert_hull, tang_points):
         """ Function to calculate Point of collision, Distance to collision,
@@ -927,6 +882,64 @@ class VO:
 
         return np.array(new_vel)
 
+    def calc_new_vel_overtaking(self, vel_des, search_area, vel_OS):
+        """ Function to calculate the new velocity for encounters, where COLREG
+        constrains are applied """
+        if np.any(search_area) and self.coll_safety == False:
+            # Calculate new vel
+            vel_space_free_xy = search_area
+            vel_space_free_mag = np.sqrt(vel_space_free_xy[:,0] ** 2 + vel_space_free_xy[:,1] ** 2)
+            
+            # Cost function to choose new velocity
+            in_arcos_des = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_des))
+                            )/(vel_space_free_mag*vel_des[0])
+            in_arcos_des = np.round_(in_arcos_des, decimals=10)
+            angles_des_free = np.rad2deg(np.arccos(in_arcos_des))
+            
+            speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
+           
+            vel_30 = vel_OS.copy()
+            in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
+                            )/(vel_space_free_mag*vel_30[0])
+            in_arcos_30 = np.round_(in_arcos_30, decimals=10)
+            angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
+                                    
+            angles_30_free = (30-angles_30_free)*-1
+            angles_30_free[angles_30_free>0] = 0
+            angles_30_free = -angles_30_free
+            angles_30_free = np.round_(angles_30_free, decimals=8)
+
+            # Normalize the values between 0-1, with 0 = 0 and 1 = max value
+            norm_ang_des_free = angles_des_free / np.max(angles_des_free)
+            norm_speed_des_free = speed_des_free / np.max(speed_des_free)
+            if np.max(angles_30_free) == 0:
+                norm_ang_30_free = angles_30_free
+            else:
+                norm_ang_30_free = angles_30_free / np.max(angles_30_free)
+        
+        
+            # Cost function
+            J = (VO.w_1 * norm_ang_des_free + VO.w_2 * norm_speed_des_free +
+                VO.w_3 * norm_ang_30_free)
+        
+            # Extract index and plot the new velocity
+            index_j = np.argmin(J)
+            new_vel_xy = ([vel_space_free_xy[index_j, 0],
+                    vel_space_free_xy[index_j, 1]])
+            
+            new_vel = self.vect_to_ang_mag(new_vel_xy)
+            
+            # if plotting:
+            #     plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
+            #                 scale_units='xy', angles='xy', color='blue', zorder=6)
+            #     plt.annotate('$V_{new}$', (new_vel_xy[0],new_vel_xy[1]), (new_vel_xy[0]+0,new_vel_xy[1]-1), zorder=6, c="blue")
+                
+        else:
+            print("Death!")
+            new_vel = self.latest_new_vel
+            # new_vel = []
+
+        return np.array(new_vel)
 
     def calc_new_vel(self, vel_des, search_area, vel_OS):
         """ Function to calculate the new velocity for encounters, where no COLREG
@@ -948,17 +961,6 @@ class VO:
                             )/(vel_space_free_mag*vel_30[0])
             in_arcos_30 = np.round_(in_arcos_30, decimals=10)
             angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-
-            # vel_30 = vel_OS.copy()
-            # in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
-            #                 )/(vel_space_free_mag*vel_30[0])
-            # in_arcos_30 = np.round_(in_arcos_30, decimals=10)
-            # angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-                                    
-            # angles_30_free = (30-angles_30_free)*-1
-            # angles_30_free[angles_30_free>0] = 0
-            # angles_30_free = -angles_30_free
-            # angles_30_free = np.round_(angles_30_free, decimals=8)
 
             # Normalize the values between 0-1, with 0 = 0 and 1 = max value
             norm_ang_des_free = angles_des_free / np.max(angles_des_free)
@@ -992,7 +994,6 @@ class VO:
         similar_rows = np.where(distances <= threshold)
         most_common_index = mode(similar_rows[0]).mode[0]
         return arr[most_common_index]
-
 
     def calc_vel_final(self, ts_info, os_info, this, pos_os):
         global plotting
@@ -1051,7 +1052,6 @@ class VO:
                     self.vel_OS_init = vel_OS
                     self.flag = False
 
-
                 # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering
                 if self.ts_vo_checks[0,10] == None:
                     VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
@@ -1105,8 +1105,7 @@ class VO:
                 # ax.scatter(np.deg2rad(free_vel_1[:,1]), free_vel_1[:,0], c="green", s=1, zorder=5)
                 # ax.scatter(np.deg2rad(in_all_1[:,1]), in_all_1[:,0], c="red",s=1,zorder=5)
                 # ax.scatter(np.deg2rad(col_con_1[:,1]), col_con_1[:,0], c="purple",s=1,zorder=5)
-
-                
+    
             # if all velocities would lead to a collision, expand the free vel space by the colreg constrains, so that a colreg non-compliant action is possible
             if not np.any(free_vel):
                 free_vel = col_con        
@@ -1117,7 +1116,10 @@ class VO:
             if TS_vel[10] == 'Right crossing (Rule 15)' or TS_vel[10] == 'Head-on (Rule 14)' or TS_vel[10] == 'Overtaking (Rule 13)':
 
                 # Calculate new velocity
-                new_vel = self.calc_new_vel_colreg(vel_des, free_vel, self.vel_OS_init)
+                if TS_vel[10] == 'Overtaking (Rule 13)':
+                    new_vel = self.calc_new_vel_overtaking(vel_des, free_vel, self.vel_OS_init)
+                else:
+                    new_vel = self.calc_new_vel(vel_des, free_vel, self.vel_OS_init)
                 
                 if np.any(new_vel):
                     new_vel_testo = np.vstack((new_vel_testo, new_vel, new_vel))
@@ -1137,13 +1139,12 @@ class VO:
                 else:
                     new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
             elif TS_vel[10] == 'Static object':
-                new_vel = self.calc_new_vel(vel_des, free_vel, self.vel_OS_init)
+                new_vel = self.calc_new_vel_overtaking(vel_des, free_vel, self.vel_OS_init)
                 if np.any(new_vel):
                     new_vel_testo = np.vstack((new_vel_testo, new_vel))
 
                 else:
                     new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
-
 
         # Extract the final new velocity
         if np.any(new_vel_testo):
@@ -1170,6 +1171,5 @@ class VO:
             else:
                 new_vel_final = self.latest_new_vel
                 
-        
         self.latest_new_vel = new_vel_final
         return new_vel_final

@@ -29,6 +29,7 @@ class ClosedLoopNode(Node):
         self.os_pos = []
         self.os_speed = []
         self.os_ang = []
+        self.detec_range = 50 # Range in which obstacles can be detected around the OS
         self.ts_pos_1 = []
         self.ts_pos_2 = []
         self.dist_os_ts_1 = []
@@ -43,7 +44,7 @@ class ClosedLoopNode(Node):
         self.wid_os = 3.5
         self.len_ts_1 = 6.0
         self.wid_ts_1 = 3.5
-        self.vel_ts_1 = 3.0
+        self.vel_ts_1 = 1.5
         self.len_ts_2 = 6.0
         self.wid_ts_2 = 3.5
         self.vel_ts_2 = 3.0
@@ -53,7 +54,8 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = None
         self.last_gps_2 = None
         self.last_gps_time_2 = None
-        self.os_max_speed = 6.0
+        self.os_max_speed = 1.0
+        self.os_des_speed = 1.0
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
         self.flag = False
         self.wait_bool_ts_1 = False # Start the algorithm once position of the TSs are recieved
@@ -76,7 +78,7 @@ class ClosedLoopNode(Node):
 
         # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
         # VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
-        self.vo = VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3) # Initalize the VO algorithm
+        self.vo = VO(3.0, 1.75, 1.0, 15, 7.5, 6, 0.5, 5, 0.25, 3) # Initalize the VO algorithm
 
         # Define publisher and subscriber
         self.gps_sub_tp = self.create_subscription(
@@ -287,25 +289,25 @@ class ClosedLoopNode(Node):
             vel_OSxy = self.vo.vect_to_xy(vel_OS)
             ang_OS_rad = np.deg2rad(self.ang_gps)
             # Desired velocity with start speed and angle to TP
-            vel_des = np.array([3.0, ang_TP])
+            vel_des = np.array([self.os_des_speed, ang_TP])
             # Define input array for VO calculation
             self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
             self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
-            # If both ships are within the range of 50 m the arrays have to be stacked
-            if distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+            # If both ships are within the detection range the arrays have to be stacked
+            if distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range:
                 self.TS_all = np.vstack((self.TS_1, self.TS_2))
                 self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters > 50:
+            elif distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters > self.detec_range:
                 self.TS_all = self.TS_1
                 self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters > 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+            elif distance.great_circle(self.gps, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range:
                 self.TS_all = self.TS_2
                 self.flag = True
             else:
                 self.flag = False
             self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
 
-            # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil
+            # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil if the OS is not moving yet
             if self.thetime < 1.5:
                 self.new_vel = vel_des
                 thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
@@ -340,8 +342,7 @@ class ClosedLoopNode(Node):
                     thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
                     msg = Float32MultiArray()
                     msg.data = [thrust, thrust, 0.0]
-
-                    
+            print("thrust", thrust)
             self.thruster_pub_os.publish(msg)
             self.speed_com.append(self.new_vel[0])
             self.ang_com.append(self.new_vel[1])
