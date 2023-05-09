@@ -54,14 +54,12 @@ class ClosedLoopNode(Node):
         self.last_gps_2 = None
         self.last_gps_time_2 = None
         self.os_max_speed = 6.0
-        self.ref_point = [45.001799636812144, 15.002536642856318]
+        self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
         self.flag = False
-        # PID controll parameters
-        # ku = 0.6
-        # kp = 0.36
-        # Tu = 1.6 s
-        # ki = 0.45
-        # kd = 0.072
+        self.wait_bool_ts_1 = False # Start the algorithm once position of the TSs are recieved
+        self.wait_bool_ts_2 = False # Start the algorithm once position of the TSs are recieved
+        self.wait_bool_tp = False # Start the algorithm once position of the TSs are recieved
+        # PID speed controll parameters
         self.kp = 0.36
         self.ki = 0.15
         self.kd = 0.072
@@ -78,10 +76,9 @@ class ClosedLoopNode(Node):
 
         # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
         # VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
-        self.test_vo = VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
+        self.vo = VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3) # Initalize the VO algorithm
 
-        # self.plotting = False
-
+        # Define publisher and subscriber
         self.gps_sub_tp = self.create_subscription(
             NavSatFix, "/target_point", self.gps_callback_tp, 10)
 
@@ -102,6 +99,7 @@ class ClosedLoopNode(Node):
 
         self.get_logger().info("Closed Loop started!")
 
+    # Calculate the course difference between two courses (new velocity and current velocity)
     def angle_diff(self, first_angle, second_angle):
         diff = second_angle - first_angle
         if diff > 180:
@@ -110,6 +108,7 @@ class ClosedLoopNode(Node):
             diff += 360
         return diff
 
+    # PID speed controller for thruster output
     def compute_pid(self, setpoint, vel, time_step):
         self.error = setpoint - vel  
         self.int_error += self.error * time_step
@@ -121,7 +120,8 @@ class ClosedLoopNode(Node):
         elif self.output <= 0:
             self.output = 0.0
         return self.output
-       
+
+    # PID speed controller for thruster output   
     def compute_pid_1(self, setpoint, vel, time_step):
         self.error_1 = setpoint - vel  
         self.int_error_1 += self.error_1 * time_step
@@ -134,11 +134,14 @@ class ClosedLoopNode(Node):
             self.output_1 = 0.0
         return self.output_1
     
+    # Callback function to receive GPS coordinates of the target point (TP)
     def gps_callback_tp(self, pose: NavSatFix):
         gps_lat = pose.latitude
         gps_lon = pose.longitude
-        # self.gps_tp = np.array([gps_lat, gps_lon])
+        self.gps_tp = np.array([gps_lat, gps_lon])
+        self.wait_bool_tp = True
 
+    # Callback function to receive GPS coordinates of target ship 1 (TS 1) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_1(self, pose: NavSatFix):
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
@@ -146,6 +149,7 @@ class ClosedLoopNode(Node):
         gps_lat = pose.latitude
         gps_lon = pose.longitude
         self.gps_1 = np.array([gps_lat, gps_lon])
+        self.wait_bool_ts_1 = True
         if self.last_gps_1 is None:
             self.last_gps_1 = self.gps_1
         if self.last_gps_time_1 is None:
@@ -175,6 +179,7 @@ class ClosedLoopNode(Node):
         msg.data = [thrust, thrust, 0.0]
         self.thruster_pub_ts_1.publish(msg)
 
+    # Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_2(self, pose: NavSatFix):
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
@@ -182,6 +187,7 @@ class ClosedLoopNode(Node):
         gps_lat = pose.latitude
         gps_lon = pose.longitude
         self.gps_2 = np.array([gps_lat, gps_lon])
+        self.wait_bool_ts_2 = True
         if self.last_gps_2 is None:
             self.last_gps_2 = self.gps_2
         if self.last_gps_time_2 is None:
@@ -211,129 +217,136 @@ class ClosedLoopNode(Node):
         msg.data = [thrust, thrust, 0.0]
         self.thruster_pub_ts_2.publish(msg)
 
+    # Main callback function where the VO is calculated and OS control is done 
     def gps_callback_os(self, pose: PoseWithCovarianceStamped):
-        gps_time_sec = pose.header.stamp.sec
-        gps_time_nanosec =  pose.header.stamp.nanosec
-        gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
-        gps_lat = pose.latitude
-        gps_lon = pose.longitude
-        self.gps = np.array([gps_lat, gps_lon])
-        if self.last_gps is None:
-            self.last_gps = self.gps
-        if self.last_gps_time is None:
-            self.last_gps_time = gps_time
-
-        # self.os_pos.append(self.gps)
-
-        gps_time_diff = gps_time - self.last_gps_time
-                
-        if gps_time_diff > 0.0:
-            dist_gps = distance.great_circle(self.gps, self.last_gps)
-            self.speed_gps = dist_gps.meters / gps_time_diff
-            ang_x = math.cos(self.gps[0]) * math.sin(self.gps[1]-self.last_gps[1])
-            ang_y = math.cos(self.last_gps[0]) * math.sin(self.gps[0]) - math.sin(self.last_gps[0]) * math.cos(self.gps[0]) * math.cos(self.gps[1]-self.last_gps[1])
-            self.ang_gps = np.rad2deg(np.arctan2(ang_x, ang_y))
-            self.ang_gps = (self.ang_gps+360) % 360
-            # print("Speed ", self.speed_gps, "Angle ", self.ang_gps)
-        else:
-            self.speed_gps = 0
-            self.ang_gps = 0
+        if self.wait_bool_ts_1 and self.wait_bool_ts_2 and self.wait_bool_tp: # Only start this callback, once for every TS the GPS data was received once
             
-        self.last_gps_time = gps_time
-        self.last_gps = self.gps
-        
-        # Calculate relative position of TS to OS
-        self.pos_ts_rel_1 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
-        self.pos_ts_rel_2 = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_2)
+            gps_time_sec = pose.header.stamp.sec
+            gps_time_nanosec =  pose.header.stamp.nanosec
+            gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
+            gps_lat = pose.latitude
+            gps_lon = pose.longitude
+            self.gps = np.array([gps_lat, gps_lon])
+            if self.last_gps is None:
+                self.last_gps = self.gps
+            if self.last_gps_time is None:
+                self.last_gps_time = gps_time
 
-        # Calculate relative position of all vessels to the reference point
-        self.ref_os = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps)
-        self.ref_ts_1 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_1)
-        self.ref_ts_2 = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_2)
-        self.os_pos.append(self.ref_os)
-        self.ts_pos_1.append(self.ref_ts_1)
-        self.ts_pos_2.append(self.ref_ts_2)
+            # self.os_pos.append(self.gps)
 
-        self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
-        self.simu_time.append(self.thetime)
-
-        # Calculate distance between OS and TS and save it in an list
-        self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
-        self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2).meters)
-        
-        # Save speed and orientation of the OS in a list
-        self.os_speed.append(self.speed_gps)
-        self.os_ang.append(self.ang_gps)  
-        
-
-        # Calculate the relative position of the target point to OS
-        self.gps_tp = np.array([45.00179960159882, 15.003804964281368])
-        pos_TP_rel = self.test_vo.calc_coord_gps_to_xy(self.gps, self.gps_tp)
-        ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
-        ang_TP = (ang_TP+360) % 360
-        ang_TP = self.test_vo.calc_ang_n_to_e(ang_TP)
-
-        vel_OS = np.array([self.speed_gps, self.ang_gps])
-        vel_OSxy = self.test_vo.vect_to_xy(vel_OS)
-        ang_OS_rad = np.deg2rad(self.ang_gps)
-        vel_des = np.array([3.0, ang_TP])
-        ang_diff = (self.ang_gps - 0 + 180 + 360) % 360 - 180
-        self.delta_ang.append(ang_diff)
-        self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
-        self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
-        if distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
-            self.TS_all = np.vstack((self.TS_1, self.TS_2))
-            self.flag = True
-        elif distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters > 50:
-            self.TS_all = self.TS_1
-            self.flag = True
-        elif distance.great_circle(self.gps, self.gps_1).meters > 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
-            self.TS_all = self.TS_2
-            self.flag = True
-        else:
-            self.flag = False
-        self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
-       
-        if self.thetime < 1.5:
-            self.new_vel = vel_des
-            thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
-            msg = Float32MultiArray()
-            msg.data = [thrust, thrust, 0.0]
-        else:
-            if self.flag:
-                starting_time = perf_counter_ns()
-                self.new_vel = self.test_vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
-                self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
-            else:
-                self.elapsed_time.append(0)
-                self.new_vel = vel_des
-            print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+            # Calculate the OS course from the GPS data
+            gps_time_diff = gps_time - self.last_gps_time
                     
-            if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
-                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)   
-                rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
-                msg = Float32MultiArray()
-                msg.data = [thrust+rot, thrust-rot, 0.0]
-                # msg = Float32MultiArray()
-                # msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-            elif self.angle_diff(vel_OS[1], self.new_vel[1]) < 5:
-                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
-                rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
-                msg = Float32MultiArray()
-                msg.data = [thrust+rot, thrust-rot, 0.0]
-                # msg = Float32MultiArray()
-                # msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
+            if gps_time_diff > 0.0:
+                dist_gps = distance.great_circle(self.gps, self.last_gps)
+                self.speed_gps = dist_gps.meters / gps_time_diff
+                ang_x = math.cos(self.gps[0]) * math.sin(self.gps[1]-self.last_gps[1])
+                ang_y = math.cos(self.last_gps[0]) * math.sin(self.gps[0]) - math.sin(self.last_gps[0]) * math.cos(self.gps[0]) * math.cos(self.gps[1]-self.last_gps[1])
+                self.ang_gps = np.rad2deg(np.arctan2(ang_x, ang_y))
+                self.ang_gps = (self.ang_gps+360) % 360
+                # print("Speed ", self.speed_gps, "Angle ", self.ang_gps)
             else:
+                self.speed_gps = 0
+                self.ang_gps = 0
+                
+            self.last_gps_time = gps_time
+            self.last_gps = self.gps
+            
+            # Calculate relative position of TS to OS
+            self.pos_ts_rel_1 = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
+            self.pos_ts_rel_2 = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_2)
+
+            # Calculate relative position of all vessels to the reference point
+            self.ref_os = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps)
+            self.ref_ts_1 = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps_1)
+            self.ref_ts_2 = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps_2)
+            self.os_pos.append(self.ref_os)
+            self.ts_pos_1.append(self.ref_ts_1)
+            self.ts_pos_2.append(self.ref_ts_2)
+
+            # Save the time for each iteration
+            self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
+            self.simu_time.append(self.thetime)
+
+            # Calculate distance between OS and TS and save it in an list
+            self.dist_os_ts_1.append(distance.great_circle(self.gps, self.gps_1).meters) 
+            self.dist_os_ts_2.append(distance.great_circle(self.gps, self.gps_2).meters)
+            
+            # Save speed and orientation of the OS in a list
+            self.os_speed.append(self.speed_gps)
+            self.os_ang.append(self.ang_gps)  
+            
+            # Calculate the relative position of the target point to OS
+            pos_TP_rel = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_tp)
+            # Calculate relative bearing of TP to OS
+            ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
+            ang_TP = (ang_TP+360) % 360
+            ang_TP = self.vo.calc_ang_n_to_e(ang_TP)
+
+            vel_OS = np.array([self.speed_gps, self.ang_gps])
+            vel_OSxy = self.vo.vect_to_xy(vel_OS)
+            ang_OS_rad = np.deg2rad(self.ang_gps)
+            # Desired velocity with start speed and angle to TP
+            vel_des = np.array([3.0, ang_TP])
+            # Define input array for VO calculation
+            self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
+            self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
+            # If both ships are within the range of 50 m the arrays have to be stacked
+            if distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+                self.TS_all = np.vstack((self.TS_1, self.TS_2))
+                self.flag = True
+            elif distance.great_circle(self.gps, self.gps_1).meters < 50 and distance.great_circle(self.gps, self.gps_2).meters > 50:
+                self.TS_all = self.TS_1
+                self.flag = True
+            elif distance.great_circle(self.gps, self.gps_1).meters > 50 and distance.great_circle(self.gps, self.gps_2).meters < 50:
+                self.TS_all = self.TS_2
+                self.flag = True
+            else:
+                self.flag = False
+            self.OS = np.array([vel_OS, vel_OSxy,ang_OS_rad,vel_des], dtype=object)
+
+            # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil
+            if self.thetime < 1.5:
+                self.new_vel = vel_des
                 thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
                 msg = Float32MultiArray()
                 msg.data = [thrust, thrust, 0.0]
+            else:
+                if self.flag:
+                    starting_time = perf_counter_ns()
+                    self.new_vel = self.vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
+                    self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
+                else:
+                    self.elapsed_time.append(0)
+                    self.new_vel = vel_des
+                print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
 
-                 
-        self.thruster_pub_os.publish(msg)
-        self.speed_com.append(self.new_vel[0])
-        self.ang_com.append(self.new_vel[1])
+                # Control output for changing the course angle        
+                if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)   
+                    rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                    msg = Float32MultiArray()
+                    msg.data = [thrust+rot, thrust-rot, 0.0]
+                    # msg = Float32MultiArray()
+                    # msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
+                elif self.angle_diff(vel_OS[1], self.new_vel[1]) < 5:
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                    rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                    msg = Float32MultiArray()
+                    msg.data = [thrust+rot, thrust-rot, 0.0]
+                    # msg = Float32MultiArray()
+                    # msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
+                else:
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                    msg = Float32MultiArray()
+                    msg.data = [thrust, thrust, 0.0]
+
+                    
+            self.thruster_pub_os.publish(msg)
+            self.speed_com.append(self.new_vel[0])
+            self.ang_com.append(self.new_vel[1])
     
-    def exit_handler(self):
+    def exit_handler(self): # Just for plotting
         os_position = np.array(self.os_pos)
         ts_position = np.array(self.ts_pos_1)
         ts_position_2 = np.array(self.ts_pos_2)
@@ -342,10 +355,10 @@ class ClosedLoopNode(Node):
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
-        new_vel_xy = self.test_vo.vect_to_xy(self.new_vel) 
-        vel_xy_ts_1 = self.test_vo.vect_to_xy([self.speed_gps_1, self.ang_gps_1])
+        new_vel_xy = self.vo.vect_to_xy(self.new_vel) 
+        vel_xy_ts_1 = self.vo.vect_to_xy([self.speed_gps_1, self.ang_gps_1])
         fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time", "OS pos", "TS pos"]
-        rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.delta_ang, self.elapsed_time, os_position, ts_position]
+        rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position]
         filename = "simulation_results_.csv"
         # writing to csv file  
         with open(filename, 'w') as csvfile:  
@@ -358,7 +371,7 @@ class ClosedLoopNode(Node):
             # writing the data rows  
             csvwriter.writerows(rows)
              
-        min_length = min(len(simu_time), len(dist_os_ts_1), len(dist_os_ts_2), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.delta_ang), len(self.elapsed_time))
+        min_length = min(len(simu_time), len(dist_os_ts_1), len(dist_os_ts_2), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.elapsed_time))
         
         simu_time = simu_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
@@ -367,7 +380,6 @@ class ClosedLoopNode(Node):
         self.ang_com = self.ang_com[15:min_length]
         os_speed = os_speed[15:min_length]
         os_ang = os_ang[15:min_length]
-        self.delta_ang = self.delta_ang[15:min_length]
         self.elapsed_time = self.elapsed_time[15:min_length]
 
         fig1 = plt.figure()
@@ -421,9 +433,7 @@ class ClosedLoopNode(Node):
         # plt.ylabel("Run time [ms]")
         # # plt.legend(loc="upper left", fontsize="10")
         # ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable='box')
-        
-        
-        
+               
         ### For Subplots
         # fig, axs = plt.subplots(2, 2, constrained_layout = True)
         # fig.suptitle("Results Head-on encounter with one TS", fontsize=15)
@@ -465,7 +475,7 @@ class ClosedLoopNode(Node):
         os_timestamp = np.empty((0,2))
         ts_timestamp = np.empty((0,2))
         ts_timestamp_2 = np.empty((0,2))
-        ref_tp = self.test_vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
+        ref_tp = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
         prev_timestamp = simu_time[0]
         for timestamp, os_pos, ts_pos, ts_pos2 in zip(simu_time, os_position, ts_position, ts_position_2):
             time_diff = timestamp - prev_timestamp
@@ -554,10 +564,10 @@ class ClosedLoopNode(Node):
         
         # velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])
         plt.axis('square')
-        bot_left = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899825520364, 15.00126830157632]))
-        bot_right = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899769180805, 15.003804904724001]))
-        top_left = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699490216614, 15.001268341281854]))
-        top_right = self.test_vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699433873545, 15.003805023840597]))
+        bot_left = self.vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899825520364, 15.00126830157632]))
+        bot_right = self.vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.000899769180805, 15.003804904724001]))
+        top_left = self.vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699490216614, 15.001268341281854]))
+        top_right = self.vo.calc_coord_gps_to_xy(self.ref_point, np.array([45.002699433873545, 15.003805023840597]))
         plt.axis([bot_left[0],bot_right[0]+5,bot_left[1]-2.5,top_left[1]+2.5])
         
 
@@ -581,7 +591,7 @@ class ClosedLoopNode(Node):
         # plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
         # plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
 
-        if self.test_vo.coll_safety:
+        if self.vo.coll_safety:
             fig6 = plt.figure()
             plt.scatter(5, 5, c="red", marker="x", linewidths=2.5)
             plt.axis([0,10,0,10])
