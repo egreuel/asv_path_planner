@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from asv_path_planner import velobst
 from .velobst_class import VO
 import atexit
 import numpy as np
@@ -44,7 +43,7 @@ class ClosedLoopNode(Node):
         self.wid_os = 3.5
         self.len_ts_1 = 6.0
         self.wid_ts_1 = 3.5
-        self.vel_ts_1 = 1.5
+        self.vel_ts_1 = 1.0
         self.len_ts_2 = 6.0
         self.wid_ts_2 = 3.5
         self.vel_ts_2 = 3.0
@@ -54,17 +53,29 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = None
         self.last_gps_2 = None
         self.last_gps_time_2 = None
-        self.os_max_speed = 1.0
+        self.os_max_speed = 3.0
         self.os_des_speed = 1.0
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
         self.flag = False
         self.wait_bool_ts_1 = False # Start the algorithm once position of the TSs are recieved
         self.wait_bool_ts_2 = False # Start the algorithm once position of the TSs are recieved
         self.wait_bool_tp = False # Start the algorithm once position of the TSs are recieved
-        # PID speed controll parameters
+        # PID speed control parameters (found with Ziegler-Nichols methode)
         self.kp = 0.36
         self.ki = 0.15
         self.kd = 0.072
+        # PD heading control parameters (found with Ziegler-Nichols methode)
+        # for 4 m/s
+        # ku = 0.04
+        # Tu = 3.5 s 
+        # for 1 m/s
+        # ku = 0.0175
+        # tu = 4.7
+        # kd = ku*Tu*0.1
+        # kp = 0.8*ku
+       
+        self.kp_ang = 0.014
+        self.kd_ang = 0.0082
         self.error = 0
         self.der_error = 0
         self.int_error = 0
@@ -75,6 +86,10 @@ class ClosedLoopNode(Node):
         self.int_error_1 = 0
         self.last_error_1 = 0
         self.output_1 = 0
+        self.error_ang = 0
+        self.der_error_ang = 0
+        self.last_error_ang = 0
+        self.output_ang = 0
 
         # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
         # VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
@@ -136,6 +151,19 @@ class ClosedLoopNode(Node):
             self.output_1 = 0.0
         return self.output_1
     
+    # PD heading control for thruster output
+    def compute_pd(self, error, time_step):
+        self.error_ang = error
+        self.der_error_ang = (self.error_ang - self.last_error_ang) / time_step
+        self.last_error_ang = self.error_ang
+        self.output_ang = self.kp_ang*self.error_ang + self.kd_ang*self.der_error_ang
+        if self.output_ang >= 0.25:
+            self.output_ang = 0.25
+        elif self.output_ang <= -0.25:
+            self.output_ang = -0.25
+        return self.output_ang
+    
+
     # Callback function to receive GPS coordinates of the target point (TP)
     def gps_callback_tp(self, pose: NavSatFix):
         gps_lat = pose.latitude
@@ -176,10 +204,11 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = gps_time
         self.last_gps_1 = self.gps_1
 
-        thrust = self.compute_pid_1(self.vel_ts_1, self.speed_gps_1, 0.020)
-        msg = Float32MultiArray()
-        msg.data = [thrust, thrust, 0.0]
-        self.thruster_pub_ts_1.publish(msg)
+        if gps_time_diff > 0:
+            thrust = self.compute_pid_1(self.vel_ts_1, self.speed_gps_1, gps_time_diff)
+            msg = Float32MultiArray()
+            msg.data = [thrust, thrust, 0.0]
+            self.thruster_pub_ts_1.publish(msg)
 
     # Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_2(self, pose: NavSatFix):
@@ -214,10 +243,11 @@ class ClosedLoopNode(Node):
         self.last_gps_time_2 = gps_time
         self.last_gps_2 = self.gps_2
 
-        thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, 0.020)
-        msg = Float32MultiArray()
-        msg.data = [thrust, thrust, 0.0]
-        self.thruster_pub_ts_2.publish(msg)
+        if gps_time_diff > 0:
+            thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, gps_time_diff)
+            msg = Float32MultiArray()
+            msg.data = [thrust, thrust, 0.0]
+            self.thruster_pub_ts_2.publish(msg)
 
     # Main callback function where the VO is calculated and OS control is done 
     def gps_callback_os(self, pose: PoseWithCovarianceStamped):
@@ -310,13 +340,14 @@ class ClosedLoopNode(Node):
             # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil if the OS is not moving yet
             if self.thetime < 1.5:
                 self.new_vel = vel_des
-                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
                 msg = Float32MultiArray()
                 msg.data = [thrust, thrust, 0.0]
             else:
                 if self.flag:
                     starting_time = perf_counter_ns()
                     self.new_vel = self.vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
+                    print("COLREG", self.vo.colreg)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)
@@ -325,24 +356,26 @@ class ClosedLoopNode(Node):
 
                 # Control output for changing the course angle        
                 if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
-                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)   
-                    rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)   
+                    # rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
                     msg = Float32MultiArray()
                     msg.data = [thrust+rot, thrust-rot, 0.0]
                     # msg = Float32MultiArray()
                     # msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
-                elif self.angle_diff(vel_OS[1], self.new_vel[1]) < 5:
-                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
-                    rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                elif self.angle_diff(vel_OS[1], self.new_vel[1]) < -5:
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
+                    # rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
+                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
                     msg = Float32MultiArray()
                     msg.data = [thrust+rot, thrust-rot, 0.0]
                     # msg = Float32MultiArray()
                     # msg.data = [self.new_vel[0]/(self.os_max_speed*2), self.new_vel[0]*1.5/self.os_max_speed, 0.0]
                 else:
-                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, 0.020)
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
                     msg = Float32MultiArray()
                     msg.data = [thrust, thrust, 0.0]
-            print("thrust", thrust)
+            
             self.thruster_pub_os.publish(msg)
             self.speed_com.append(self.new_vel[0])
             self.ang_com.append(self.new_vel[1])

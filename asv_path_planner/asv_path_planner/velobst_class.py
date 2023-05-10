@@ -26,6 +26,8 @@ class VO:
     
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
         
+        self.colreg = []
+
         # Properties of OS
         self.len_OS = leng_OS  # Length OS in m
         self.wid_OS = width_OS  # Width OS in m
@@ -1051,7 +1053,7 @@ class VO:
                 if self.flag:
                     self.vel_OS_init = vel_OS
                     self.flag = False
-
+                # new COLREG rule only after 50 times no collision is detectd and the rule was None
                 # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering
                 if self.ts_vo_checks[0,10] == None:
                     VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
@@ -1111,6 +1113,7 @@ class VO:
                 free_vel = col_con        
         # Calculate new velocities for each VO the OS vel is colliding with
         new_vel_testo = np.empty((0, 2))
+        
         for TS_vel in TS_VO_check:
             # for each TS with collision and COLREG rules where contrains have to be applied, calculate the new velocity in free velocity space
             if TS_vel[10] == 'Right crossing (Rule 15)' or TS_vel[10] == 'Head-on (Rule 14)' or TS_vel[10] == 'Overtaking (Rule 13)':
