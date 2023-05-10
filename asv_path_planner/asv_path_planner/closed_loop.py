@@ -53,7 +53,7 @@ class ClosedLoopNode(Node):
         self.last_gps_time_1 = None
         self.last_gps_2 = None
         self.last_gps_time_2 = None
-        self.os_max_speed = 3.0
+        self.os_max_speed = 1.0
         self.os_des_speed = 1.0
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
         self.flag = False
@@ -157,10 +157,10 @@ class ClosedLoopNode(Node):
         self.der_error_ang = (self.error_ang - self.last_error_ang) / time_step
         self.last_error_ang = self.error_ang
         self.output_ang = self.kp_ang*self.error_ang + self.kd_ang*self.der_error_ang
-        if self.output_ang >= 0.25:
-            self.output_ang = 0.25
-        elif self.output_ang <= -0.25:
-            self.output_ang = -0.25
+        if self.output_ang >= 0.5:
+            self.output_ang = 0.5
+        elif self.output_ang <= -0.5:
+            self.output_ang = -0.5
         return self.output_ang
     
 
@@ -340,14 +340,15 @@ class ClosedLoopNode(Node):
             # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil if the OS is not moving yet
             if self.thetime < 1.5:
                 self.new_vel = vel_des
-                thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
-                msg = Float32MultiArray()
-                msg.data = [thrust, thrust, 0.0]
+                if gps_time_diff > 0:
+                    thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
+                    msg = Float32MultiArray()
+                    msg.data = [thrust, thrust, 0.0]
             else:
                 if self.flag:
                     starting_time = perf_counter_ns()
                     self.new_vel = self.vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
-                    print("COLREG", self.vo.colreg)
+                    print("HUSO", self.vo.colreg)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)
@@ -376,7 +377,8 @@ class ClosedLoopNode(Node):
                     msg = Float32MultiArray()
                     msg.data = [thrust, thrust, 0.0]
             
-            self.thruster_pub_os.publish(msg)
+            if gps_time_diff > 0:
+                self.thruster_pub_os.publish(msg)
             self.speed_com.append(self.new_vel[0])
             self.ang_com.append(self.new_vel[1])
     

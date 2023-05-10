@@ -25,9 +25,7 @@ class VO:
     w_3 = 1.5  # Angle deviation from 30°
     
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
-        
         self.colreg = []
-
         # Properties of OS
         self.len_OS = leng_OS  # Length OS in m
         self.wid_OS = width_OS  # Width OS in m
@@ -1039,40 +1037,108 @@ class VO:
                 
         # for each VO --> check collision
         TS_VO_check = np.empty((0, 15))
-        for TSv in TS_VO:
+        for i, TSv in enumerate(TS_VO):
             vel_TS_ang = np.array([TSv[3], TSv[4]])
             vel_TS_xy = self.vect_to_xy(vel_TS_ang)
             vel_rela = self.calc_rel_vel(vel_OS, vel_TS_ang)
             vel_rela_xy = self.vect_to_xy(vel_rela)
             VO_check = self.check_collision(vel_OS, TSv[5])
+            des_check = self.check_collision(vel_des, TSv[5])
             TSv = np.append(TSv, VO_check)
-            
-            # if check collision = TRUE --> check rule, calculate COLREG con, calc collision point (assigned to TS)
-            if VO_check:
-                # Save the inital velocity of OS the first time a collision is detected
+            ######################
+            if VO_check and des_check and self.ts_vo_checks[0,10] == None:
                 if self.flag:
                     self.vel_OS_init = vel_OS
                     self.flag = False
-                # new COLREG rule only after 50 times no collision is detectd and the rule was None
-                # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering
-                if self.ts_vo_checks[0,10] == None:
-                    VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
-                    TSv = np.append(TSv, VO_rule)
-                else:
-                    TSv = np.append(TSv, self.ts_vo_checks[0,10])
+                VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
+                TSv = np.append(TSv, VO_rule)
                 Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
-                
                 TSv = np.append(TSv, [0])
                 TSv[11] = Col_con
                 Coll = self.check_coll_point(
                     vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy,
-                    TSv[6], TSv[7])
+                TSv[6], TSv[7])
                 TSv = np.append(TSv, Coll)
+                self.colreg = ["1 Pimmel"]
+            elif VO_check and des_check and self.ts_vo_checks[0,10] != None:
+                VO_rule = self.ts_vo_checks[0,10]
+                TSv = np.append(TSv, VO_rule)
+                Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
+                TSv = np.append(TSv, [0])
+                TSv[11] = Col_con
+                Coll = self.check_coll_point(
+                    vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy,
+                TSv[6], TSv[7])
+                TSv = np.append(TSv, Coll)
+                self.colreg = ["2 Pimmel"]
+            elif not VO_check and des_check and self.ts_vo_checks[0,10] != None:
+                VO_rule = self.ts_vo_checks[0,10]
+                TSv = np.append(TSv, VO_rule)
+                Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
+                TSv = np.append(TSv, [0])
+                TSv[11] = Col_con
+                TSv = np.append(TSv, [None, None, None])
+                self.colreg = ["3 Pimmel"]
+            elif not VO_check and not des_check and self.ts_vo_checks[0,10] != None:
+                TSv = np.append(TSv, [None, None, None, None, None])
+                self.flag = True
+                self.colreg = ["4 Pimmel"]
+            elif not VO_check and not des_check and self.ts_vo_checks[0,10] == None:
+                TSv = np.append(TSv, [None, None, None, None, None])
+                self.flag = True
+                self.colreg = ["5 Pimmel"]
+            elif VO_check and not des_check:
+                if self.flag:
+                    self.vel_OS_init = vel_OS
+                    self.flag = False
+                VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
+                TSv = np.append(TSv, VO_rule)
+                Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
+                TSv = np.append(TSv, [0])
+                TSv[11] = Col_con
+                Coll = self.check_coll_point(
+                    vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy,
+                TSv[6], TSv[7])
+                TSv = np.append(TSv, Coll)
+                self.colreg = ["6 Pimmel"]
             else:
                 TSv = np.append(TSv, [None, None, None, None, None])
                 self.flag = True
+                self.colreg = ["Last Pimmel"]
+            
             TS_VO_check = np.vstack((TS_VO_check, TSv))
             self.ts_vo_checks = TS_VO_check
+
+            
+            ######################
+
+            # # if check collision = TRUE --> check rule, calculate COLREG con, calc collision point (assigned to TS)
+            # if VO_check:
+            #     # Save the inital velocity of OS the first time a collision is detected
+            #     if self.flag:
+            #         self.vel_OS_init = vel_OS
+            #         self.flag = False
+            #     # new COLREG rule only after 50 times no collision is detectd and the rule was None // solange vel_des is inside VO, dont change COLREG
+            #     # Check COLREG rule only if the last time the VO_check was false --> So that the COLREG rule does not change during the avoidance manouver, and so alter the course which results in chattering
+            #     if self.ts_vo_checks[0,10] == None:
+            #         VO_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
+            #         TSv = np.append(TSv, VO_rule)
+            #     else:
+            #         TSv = np.append(TSv, self.ts_vo_checks[0,10])
+            #     Col_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSv[0])
+                
+            #     TSv = np.append(TSv, [0])
+            #     TSv[11] = Col_con
+            #     Coll = self.check_coll_point(
+            #         vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy,
+            #         TSv[6], TSv[7])
+            #     TSv = np.append(TSv, Coll)
+            # else:
+            #     TSv = np.append(TSv, [None, None, None, None, None])
+            #     self.flag = True
+            # TS_VO_check = np.vstack((TS_VO_check, TSv))
+            # self.ts_vo_checks = TS_VO_check
+          
         ### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points, points_colreg_lines, point_tipp, Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)
         
         # if np.any(TS_VO_check[:,9]):
@@ -1115,6 +1181,7 @@ class VO:
         new_vel_testo = np.empty((0, 2))
         
         for TS_vel in TS_VO_check:
+            # self.colreg = [TS_vel[10], TS_vel[9], self.check_collision(vel_des, TS_vel[5])]
             # for each TS with collision and COLREG rules where contrains have to be applied, calculate the new velocity in free velocity space
             if TS_vel[10] == 'Right crossing (Rule 15)' or TS_vel[10] == 'Head-on (Rule 14)' or TS_vel[10] == 'Overtaking (Rule 13)':
 
