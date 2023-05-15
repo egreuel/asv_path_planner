@@ -806,7 +806,7 @@ class VO:
 
         Parameters
         ----------
-        velobs : velocity obstacle
+        velobs : velocity obstacle or colreg contrains
         vel_space_free : all possible velocities of the OS
 
         Returns
@@ -824,61 +824,6 @@ class VO:
                     in_all = np.vstack((in_all, into))
         
         return vel_space_free, in_all
-
-    def calc_new_vel_colreg(self, vel_des, search_area, vel_OS):
-        """ Function to calculate the new velocity for encounters, where COLREG
-        constrains are applied """
-        if np.any(search_area) and self.coll_safety == False:
-            # Calculate new vel
-            vel_space_free_xy = search_area
-            vel_space_free_mag = np.sqrt(vel_space_free_xy[:,0] ** 2 + vel_space_free_xy[:,1] ** 2)
-            
-            # Cost function to choose new velocity
-            in_arcos_des = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_des))
-                            )/(vel_space_free_mag*vel_des[0])
-            in_arcos_des = np.round_(in_arcos_des, decimals=10)
-            angles_des_free = np.rad2deg(np.arccos(in_arcos_des))
-            
-            speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
-            
-            vel_30 = vel_OS.copy()
-            vel_30[1] = (vel_30[1] + 30) % 360
-            in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
-                            )/(vel_space_free_mag*vel_30[0])
-            in_arcos_30 = np.round_(in_arcos_30, decimals=10)
-            angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-                                        
-            # Normalize the values between 0-1, with 0 = 0 and 1 = max value
-            norm_ang_des_free = angles_des_free / np.max(angles_des_free)
-            norm_speed_des_free = speed_des_free / np.max(speed_des_free)
-            if np.max(angles_30_free) == 0:
-                norm_ang_30_free = angles_30_free
-            else:
-                norm_ang_30_free = angles_30_free / np.max(angles_30_free)
-        
-        
-            # Cost function
-            J = (VO.w_1 * norm_ang_des_free + VO.w_2 * norm_speed_des_free +
-                VO.w_3 * norm_ang_30_free)
-        
-            # Extract index and plot the new velocity
-            index_j = np.argmin(J)
-            new_vel_xy = ([vel_space_free_xy[index_j, 0],
-                    vel_space_free_xy[index_j, 1]])
-            
-            new_vel = self.vect_to_ang_mag(new_vel_xy)
-            
-            # if plotting:
-            #     plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
-            #                 scale_units='xy', angles='xy', color='blue', zorder=6)
-            #     plt.annotate('$V_{new}$', (new_vel_xy[0],new_vel_xy[1]), (new_vel_xy[0]+0,new_vel_xy[1]-1), zorder=6, c="blue")
-                
-        else:
-            print("Death!")
-            new_vel = self.latest_new_vel
-            # new_vel = []
-
-        return np.array(new_vel)
 
     def calc_new_vel_overtaking(self, vel_des, search_area, vel_OS):
         """ Function to calculate the new velocity for encounters, where COLREG

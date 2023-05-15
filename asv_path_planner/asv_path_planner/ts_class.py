@@ -1,14 +1,14 @@
 class TS:
 
-    def __init__(self, len_ts, wid_ts, pos_ts, speed_ts, ang_ts):
+    def __init__(self):
         self.colreg_init = []
         self.os_init = []
         
-        self.pos = pos_ts
-        self.length = len_ts
-        self.width = wid_ts
-        self.speed = speed_ts
-        self.ang = ang_ts
+        self.pos = []
+        self.length = []
+        self.width = []
+        self.speed = []
+        self.ang = []
         self.vo = []
         self.vert_hull = []
         self.tang_points = []
