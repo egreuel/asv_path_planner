@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from .velobst_class import VO
+from .ts_class import TS
 import atexit
 import numpy as np
 import math
@@ -64,6 +65,7 @@ class ClosedLoopNode(Node):
         self.kp = 0.36
         self.ki = 0.15
         self.kd = 0.072
+
         # PD heading control parameters (found with Ziegler-Nichols methode)
         # for 4 m/s
         # ku = 0.04
@@ -73,9 +75,9 @@ class ClosedLoopNode(Node):
         # tu = 4.7
         # kd = ku*Tu*0.1
         # kp = 0.8*ku
-       
         self.kp_ang = 0.014
         self.kd_ang = 0.0082
+       
         self.error = 0
         self.der_error = 0
         self.int_error = 0
