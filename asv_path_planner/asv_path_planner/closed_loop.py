@@ -42,12 +42,12 @@ class ClosedLoopNode(Node):
         self.start_time = perf_counter_ns()
         self.len_os = 6.0
         self.wid_os = 3.5
-        self.len_ts_1 = 6.0
-        self.wid_ts_1 = 3.5
-        self.vel_ts_1 = 1.0
-        self.len_ts_2 = 6.0
-        self.wid_ts_2 = 3.5
-        self.vel_ts_2 = 3.0
+        self.obst_1 = TS(6.0,3.5,[],[],[])
+        self.obst_2 = TS(6.0,3.5,[],[],[])
+        self.coll_check = []
+
+        self.vel_ts_1 = 1.0 # input for simulation to move the TS
+        self.vel_ts_2 = 3.0 # input for simulation to move the TS
         self.last_gps = None
         self.last_gps_time = None
         self.last_gps_1 = None
@@ -193,21 +193,21 @@ class ClosedLoopNode(Node):
                 
         if gps_time_diff > 0.0:
             dist_gps = distance.great_circle(self.gps_1, self.last_gps_1)
-            self.speed_gps_1 = dist_gps.meters / gps_time_diff
+            self.obst_1.speed = dist_gps.meters / gps_time_diff
             ang_x = math.cos(self.gps_1[0]) * math.sin(self.gps_1[1]-self.last_gps_1[1])
             ang_y = math.cos(self.last_gps_1[0]) * math.sin(self.gps_1[0]) - math.sin(self.last_gps_1[0]) * math.cos(self.gps_1[0]) * math.cos(self.gps_1[1]-self.last_gps_1[1])
             self.ang_gps_1 = np.rad2deg(np.arctan2(ang_x, ang_y))
-            self.ang_gps_1 = (self.ang_gps_1+360) % 360
+            self.obst_1.ang = (self.ang_gps_1+360) % 360
             #  print("Speed ", self.speed_gps_1, "Angle ", self.ang_gps_1)
         else:
-            self.speed_gps_1 = 0
-            self.ang_gps_1 = 0
+            self.obst_1.speed = 0
+            self.obst_1.ang = 0
             
         self.last_gps_time_1 = gps_time
         self.last_gps_1 = self.gps_1
 
         if gps_time_diff > 0:
-            thrust = self.compute_pid_1(self.vel_ts_1, self.speed_gps_1, gps_time_diff)
+            thrust = self.compute_pid_1(self.vel_ts_1, self.obst_1.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_1.publish(msg)
@@ -232,21 +232,21 @@ class ClosedLoopNode(Node):
                 
         if gps_time_diff > 0.0:
             dist_gps = distance.great_circle(self.gps_2, self.last_gps_2)
-            self.speed_gps_2 = dist_gps.meters / gps_time_diff
+            self.obst_2.speed = dist_gps.meters / gps_time_diff
             ang_x = math.cos(self.gps_2[0]) * math.sin(self.gps_2[1]-self.last_gps_2[1])
             ang_y = math.cos(self.last_gps_2[0]) * math.sin(self.gps_2[0]) - math.sin(self.last_gps_2[0]) * math.cos(self.gps_2[0]) * math.cos(self.gps_2[1]-self.last_gps_2[1])
             self.ang_gps_2 = np.rad2deg(np.arctan2(ang_x, ang_y))
-            self.ang_gps_2 = (self.ang_gps_2+360) % 360
+            self.obst_2.ang = (self.ang_gps_2+360) % 360
             # print("Speed ", self.speed_gps_2, "Angle ", self.ang_gps_2)
         else:
-            self.speed_gps_2 = 0
-            self.ang_gps_2 = 0
+            self.obst_2.speed = 0
+            self.obst_2.ang = 0
             
         self.last_gps_time_2 = gps_time
         self.last_gps_2 = self.gps_2
 
         if gps_time_diff > 0:
-            thrust = self.compute_pid_1(self.vel_ts_2, self.speed_gps_2, gps_time_diff)
+            thrust = self.compute_pid_1(self.vel_ts_2, self.obst_2.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_2.publish(msg)
@@ -287,8 +287,8 @@ class ClosedLoopNode(Node):
             self.last_gps = self.gps
             
             # Calculate relative position of TS to OS
-            self.pos_ts_rel_1 = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
-            self.pos_ts_rel_2 = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_2)
+            self.obst_1.pos = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
+            self.obst_2.pos = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_2)
 
             # Calculate relative position of all vessels to the reference point
             self.ref_os = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps)
@@ -322,18 +322,18 @@ class ClosedLoopNode(Node):
             ang_OS_rad = np.deg2rad(self.ang_gps)
             # Desired velocity with start speed and angle to TP
             vel_des = np.array([self.os_des_speed, ang_TP])
-            # Define input array for VO calculation
-            self.TS_1 = np.array([[self.pos_ts_rel_1,self.len_ts_1,self.wid_ts_1, self.speed_gps_1, self.ang_gps_1]],dtype=object)
-            self.TS_2 = np.array([[self.pos_ts_rel_2,self.len_ts_2,self.wid_ts_2, self.speed_gps_2, self.ang_gps_2]],dtype=object)
+            
+            self.coll_check.append(self.vo.coll_safety)
+
             # If both ships are within the detection range the arrays have to be stacked
             if distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range:
-                self.TS_all = np.vstack((self.TS_1, self.TS_2))
+                self.TS_all = [self.obst_1,self.obst_2]
                 self.flag = True
             elif distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters > self.detec_range:
-                self.TS_all = self.TS_1
+                self.TS_all = [self.obst_1]
                 self.flag = True
             elif distance.great_circle(self.gps, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range:
-                self.TS_all = self.TS_2
+                self.TS_all = [self.obst_2]
                 self.flag = True
             else:
                 self.flag = False
@@ -350,26 +350,25 @@ class ClosedLoopNode(Node):
                 if self.flag:
                     starting_time = perf_counter_ns()
                     self.new_vel = self.vo.calc_vel_final(self.TS_all, self.OS, False, np.array([0,0]))
-                    print("HUSO", self.vo.colreg)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)
                     self.new_vel = vel_des
                 print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-
+                
                 # Control output for changing the course angle        
                 if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
                     thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)   
-                    # rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
-                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
+                    # rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
+                    rot = 0
                     msg = Float32MultiArray()
                     msg.data = [thrust+rot, thrust-rot, 0.0]
                     # msg = Float32MultiArray()
                     # msg.data = [self.new_vel[0]*1.5/self.os_max_speed,self.new_vel[0]/(self.os_max_speed*2), 0.0]
                 elif self.angle_diff(vel_OS[1], self.new_vel[1]) < -5:
                     thrust = self.compute_pid(self.new_vel[0], self.speed_gps, gps_time_diff)
-                    # rot = (self.angle_diff(vel_OS[1], self.new_vel[1])/90)*1
-                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
+                    # rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
+                    rot = 0
                     msg = Float32MultiArray()
                     msg.data = [thrust+rot, thrust-rot, 0.0]
                     # msg = Float32MultiArray()
@@ -394,7 +393,7 @@ class ClosedLoopNode(Node):
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
         simu_time = np.array(self.simu_time)
         new_vel_xy = self.vo.vect_to_xy(self.new_vel) 
-        vel_xy_ts_1 = self.vo.vect_to_xy([self.speed_gps_1, self.ang_gps_1])
+        vel_xy_ts_1 = self.vo.vect_to_xy([self.obst_1.speed, self.obst_1.ang])
         fields = ["Sim Time", "Distance", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time", "OS pos", "TS pos"]
         rows = [simu_time, dist_os_ts_1, self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position]
         filename = "simulation_results_.csv"
@@ -419,6 +418,7 @@ class ClosedLoopNode(Node):
         os_speed = os_speed[15:min_length]
         os_ang = os_ang[15:min_length]
         self.elapsed_time = self.elapsed_time[15:min_length]
+        self.coll_check = self.coll_check[15:min_length]
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
@@ -428,12 +428,12 @@ class ClosedLoopNode(Node):
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
         time_min_dist = simu_time[ind_min_dist]
-        plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance = {min_dist} m", linewidth=2.5)
+        plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance to TS 1 = {min_dist} m", linewidth=2.5)
         min_dist_2 = min(dist_os_ts_2)
         min_dist_2 = round(min_dist_2, 2)
         ind_min_dist_2 = dist_os_ts_2.argmin()
         time_min_dist_2 = simu_time[ind_min_dist_2]
-        plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance = {min_dist_2} m", linewidth=2.5)
+        plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
 
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
@@ -552,15 +552,15 @@ class ClosedLoopNode(Node):
         plt.fill(vert_OS[:,0],vert_OS[:,1], "blue", hatch="----", edgecolor="black", linewidth=0.5, label="OS")
 
         # Calculate the vertices of the TS around it
-        vert_TS = np.array([[-0.5*self.wid_ts_1, -0.5*self.len_ts_1],
-                            [0.5*self.wid_ts_1, -0.5*self.len_ts_1],
-                            [0.5*self.wid_ts_1, 0.5*self.len_ts_1],
-                            [0, self.len_ts_1],
-                            [-0.5*self.wid_ts_1, 0.5*self.len_ts_1]])
+        vert_TS = np.array([[-0.5*self.obst_1.width, -0.5*self.obst_1.length],
+                            [0.5*self.obst_1.width, -0.5*self.obst_1.length],
+                            [0.5*self.obst_1.width, 0.5*self.obst_1.length],
+                            [0, self.obst_1.length],
+                            [-0.5*self.obst_1.width, 0.5*self.obst_1.length]])
 
         # Rotate the vertices in the direction the TS is facing
-        rot_M_TS = np.array([[np.cos(np.deg2rad(self.ang_gps_1)), -np.sin(np.deg2rad(self.ang_gps_1))],
-                            [np.sin(np.deg2rad(self.ang_gps_1)), np.cos(np.deg2rad(self.ang_gps_1))]])
+        rot_M_TS = np.array([[np.cos(np.deg2rad(self.obst_1.ang)), -np.sin(np.deg2rad(self.obst_1.ang))],
+                            [np.sin(np.deg2rad(self.obst_1.ang)), np.cos(np.deg2rad(self.obst_1.ang))]])
 
         vert_TS[:] = np.dot(vert_TS[:], rot_M_TS)
         
@@ -570,15 +570,15 @@ class ClosedLoopNode(Node):
         plt.fill(vert_TS[:,0],vert_TS[:,1], "orange", hatch="||||", edgecolor="black", linewidth=0.5, label="TS 1")
 
         # Calculate the vertices of the TS around it
-        vert_TS_2 = np.array([[-0.5*self.wid_ts_2, -0.5*self.len_ts_2],
-                            [0.5*self.wid_ts_2, -0.5*self.len_ts_2],
-                            [0.5*self.wid_ts_2, 0.5*self.len_ts_2],
-                            [0, self.len_ts_2],
-                            [-0.5*self.wid_ts_2, 0.5*self.len_ts_2]])
+        vert_TS_2 = np.array([[-0.5*self.obst_2.width, -0.5*self.obst_2.length],
+                            [0.5*self.obst_2.width, -0.5*self.obst_2.length],
+                            [0.5*self.obst_2.width, 0.5*self.obst_2.length],
+                            [0, self.obst_2.length],
+                            [-0.5*self.obst_2.width, 0.5*self.obst_2.length]])
 
         # Rotate the vertices in the direction the TS is facing
-        rot_M_TS_2 = np.array([[np.cos(np.deg2rad(self.ang_gps_2)), -np.sin(np.deg2rad(self.ang_gps_2))],
-                            [np.sin(np.deg2rad(self.ang_gps_2)), np.cos(np.deg2rad(self.ang_gps_2))]])
+        rot_M_TS_2 = np.array([[np.cos(np.deg2rad(self.obst_2.ang)), -np.sin(np.deg2rad(self.obst_2.ang))],
+                            [np.sin(np.deg2rad(self.obst_2.ang)), np.cos(np.deg2rad(self.obst_2.ang))]])
 
         vert_TS_2[:] = np.dot(vert_TS_2[:], rot_M_TS_2)
         
@@ -628,13 +628,11 @@ class ClosedLoopNode(Node):
         # current_values_y = plt.gca().get_yticks()
         # plt.gca().set_xticklabels(['{:.4f}'.format(x) for x in current_values_x])
         # plt.gca().set_yticklabels(['{:.4f}'.format(x) for x in current_values_y])
-
+        
         if self.vo.coll_safety:
             fig6 = plt.figure()
-            plt.scatter(5, 5, c="red", marker="x", linewidths=2.5)
-            plt.axis([0,10,0,10])
-                       
-
+            plt.plot(simu_time, self.coll_check, c="red")
+                
         plt.show()
 
 def main(args=None):
