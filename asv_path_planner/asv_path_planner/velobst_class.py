@@ -222,45 +222,6 @@ class VO:
             collision = False
         return collision
 
-    def check_collision_col(self, vel_point, pos_tip, col_cons):
-        """ Function Check for Collision """
-        bound_left = col_cons[0]
-        bound_right = col_cons[1]
-        
-        # Form the vector from the tip of the vel_obs to the point that has to be checked
-        vel_point_xy = self.vect_to_xy(vel_point)
-        vect_check_xy = vel_point_xy - pos_tip
-        vect_check = self.vect_to_ang_mag(vect_check_xy)
-        
-        if self.check_between_angles(vect_check[1],bound_left,bound_right):
-            collision = True
-        else:
-            collision = False
-        return collision
-
-    def check_between_angles(self, angle, bound_left, bound_right):
-        """ Function to check wether an angle is between two bound, given by two angles"""
-        if bound_right > bound_left:
-            ang_betw = bound_right - bound_left
-        else:
-            ang_betw = (bound_right + 360) - bound_left
-        
-        ang_diff_1 = angle - bound_left
-        if ang_diff_1 < 0:
-            ang_diff_1 += 360
-            
-        if ang_diff_1 < ang_betw:
-            return True
-            
-        ang_diff_2 = bound_right - angle
-        if ang_diff_2 < 0:
-            ang_diff_2 += 360
-            
-        if ang_diff_2 < ang_betw:
-            return True
-            
-        return False
-
     def calc_ang_vect(self, vel_OS, vel_Rel):
         """ Function to calulate the angle between the two velocity vectors """
         phi = ((vel_Rel[1]-vel_OS[1])+360) % 360
@@ -395,7 +356,6 @@ class VO:
         # plt.scatter(vert_OS[:,0], vert_OS[:,1], marker='.', linewidths=(0.1))
 
         # Convex Hull function of scipy library to create a hull of the new points of the minkowski sum
-        
         # Expanded TS shape by OS (just for plotting)
         hull_exp = ConvexHull(exp_vert_TS)
         hull_safe = ConvexHull(exp_vert_TS_safe)
@@ -443,16 +403,13 @@ class VO:
         vert_hull = np.array(vert_hull)
         vert_hull = np.resize(vert_hull, (hull_safe.vertices.shape[0], 2))
         
-        # ### just for testing 
-        testo_poly = Polygon(vert_hull)
-        if testo_poly.contains(Point(0,0)):
+        # Checking if the OS is colliding with the safety area
+        safety_area = Polygon(vert_hull)
+        if safety_area.contains(Point(0,0)):
             self.coll_safety = True
         else:
             self.coll_safety = False
         
-        # if inside the safety domain, use the expanded hull 
-
-
         # Find the tangent lines by checking which vertices has the greatest angle in between
         rel_angles = []
         # Calculate the angle between all vertices points
@@ -595,7 +552,7 @@ class VO:
         # Extract the unc vertices
         # take the two points of the b and calculate the distance to TS. Take the further point. Then extract all points between these two points. Depending on where they are in the array either delete or take all.
         points_colreg_line = np.vstack((vert_hull_unc[0],vert_hull_unc[1]))
-        # VO with unc and no TTC
+        # VO with unc and TTC
         vel_obst_TTC_unc = vert_hull_unc.copy()
         
         if plotting:
@@ -695,7 +652,7 @@ class VO:
         """ Function to calculate Point of collision, Distance to collision,
         Time to collision """
         # Calculate point, where the vel_Rel hits the polygone of the TS
-        # Calculate the relative Velocotiy with magnitude and direction
+        # Calculate the relative velocity with magnitude and direction
         vel_Rel_in = self.vect_to_ang_mag(vel_Relxy)
         # Line function of the realtive veloctiy
         m_Rel = vel_Relxy[1]/vel_Relxy[0]
@@ -710,9 +667,6 @@ class VO:
             y_line_Rel_1 = m_Rel * x_line_Rel_1 + b_Rel
             y_line_Rel_2 = m_Rel * x_line_Rel_2 + b_Rel
         
-        ##### Add cases for m=0 and m=inf!
-        # print("xlin",x_line_Rel_2)
-        # print("ylin",y_line_Rel_2)
         if 0-0.001 < m_Rel < 0+0.001:
             line_Rel = LineString([(0, 0), (x_line_Rel_2, y_line_Rel_2)])
             
@@ -727,13 +681,10 @@ class VO:
 
         # Check wether the relative velocity is inside the CC or outside, if outside check which side and choose the tangent point of this side
         if self.check_side(vel_Rel_in, tang_points) == 'right':
-            # print('right')
             pos_TS_rel_coll = tang_points[1, :]
         elif self.check_side(vel_Rel_in, tang_points) == 'left':
-            # print('left')
             pos_TS_rel_coll = tang_points[0, :]
         else:
-            # print('inside')
             pos_TS_rel_coll = line_Rel.intersection(hull_safe_2)
             # Check which intersection is close to the OS and choose this one as collision point with the hull
             if np.sum(np.abs(pos_TS_rel_coll.bounds[:2])) < np.sum(np.abs(pos_TS_rel_coll.bounds[2:])):
@@ -766,15 +717,13 @@ class VO:
             x = (b_TS-b_OS)/(m_OS-m_TS)
             y = m_OS * x + b_OS
             point_coll = x, y
-            # print('Point of collision:',point_coll)
-
+ 
             # Distance to collision
             dist_coll = np.sqrt(point_coll[0] ** 2 + point_coll[1] ** 2)
-            # print('Distance to collision:',dist_coll)
-
+           
             # Time to collision
             time_coll = dist_coll / vel_OS[0]
-            # print('Time to collision:',time_coll)
+
         # if plotting:
         #     plt.scatter(point_coll[0], point_coll[1],
         #                 marker='x', c='black', linewidths=(0.7))
@@ -788,8 +737,6 @@ class VO:
             vect_col_line = (pos_TS_rel + vel_TS_xy) - vel_TS_xy
             perp_line = np.array([-vect_col_line[1], vect_col_line[0]])
             bound_left = perp_line + vel_TS_xy
-            # bound_left_2 = -perp_line + vel_TS_xy
-            # Either take the left line of the VO and the perpendicular line or take the middle line of the VO and the perpendicular line
             colreg_con = np.array([bound_left, vel_TS_xy, (pos_TS_rel + vel_TS_xy)])
             # if plotting:
             #     colreg_con_2 = np.array([bound_left_2, vel_TS_xy, (pos_TS_rel + vel_TS_xy)])
@@ -1048,7 +995,6 @@ class VO:
             vx_sample = (vv * np.cos(thth)).flatten()
             vy_sample = (vv * np.sin(thth)).flatten()
             v_sample = np.column_stack((vx_sample, vy_sample))
-            ### only if any point of the circle of the velocity is inisde the VO, use this VO fpr calculating the free vel space
             
             # Calculate free vel space --> all velocities - VOs - COLREG cons
             free_vel, in_all = self.calc_free_vel_space(vo_added, v_sample)
@@ -1132,7 +1078,7 @@ class VO:
                 new_vel_final = vel_des.copy()
             else:
                 new_vel_final = self.extract_most_common_vel(new_vel_testo, 0)
-        #### what to do if no new_vel is there? Stop or drive on with the current speed?    
+           
         else:
             is_inside = False
             for vel_obs in vo_added:
