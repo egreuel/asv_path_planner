@@ -20,7 +20,7 @@ from scipy.stats import mode
 class VO:
 
     # Weights for the cost-function to choose the new velocity
-    w_1 = 1  # Angle deviation from desired velocity
+    w_1 = 1.0  # Angle deviation from desired velocity
     w_2 = 1.3  # Speed deviation from desried velocity
     w_3 = 1.5  # Angle deviation from 30°
     
@@ -440,9 +440,10 @@ class VO:
         
         # ### just for testing 
         testo_poly = Polygon(vert_hull)
-        if testo_poly.contains(Point(0,0)) and self.flag_coll:
+        if testo_poly.contains(Point(0,0)):
             self.coll_safety = True
-            self.flag_coll = False
+        else:
+            self.coll_safety = False
         
         # if inside the safety domain, use the expanded hull 
 
