@@ -43,8 +43,8 @@ class ClosedLoopNode(Node):
         self.ts_2.length = 6.0
         self.ts_2.width = 3.5
         
-        self.vel_ts_1 = 1.0 # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
-        self.vel_ts_2 = 3.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
+        self.vel_ts_1 = 0.75 # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
+        self.vel_ts_2 = 6.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
         self.os_max_speed = 3.0 # slow: 1.0, fast: 3.0
         self.os_des_speed = 3.0 # slow: 1.0, fast: 3.0
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
@@ -371,7 +371,7 @@ class ClosedLoopNode(Node):
         simu_time = np.array(self.simu_time)
         new_vel_xy = self.vo.vect_to_xy(self.new_vel) 
         vel_xy_ts_1 = self.vo.vect_to_xy([self.ts_1.speed, self.ts_1.ang])
-        fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Delta Angle", "Run Time", "OS pos", "TS pos", "Coll check"]
+        fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
         rows = [simu_time, dist_os_ts_1, dist_os_ts_2,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
         filename = "simulation_results_.csv"
         # writing to csv file  
@@ -400,7 +400,7 @@ class ClosedLoopNode(Node):
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
         plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
-        ##### plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
+        plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
         min_dist = min(dist_os_ts_1)
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
@@ -410,7 +410,7 @@ class ClosedLoopNode(Node):
         min_dist_2 = round(min_dist_2, 2)
         ind_min_dist_2 = dist_os_ts_2.argmin()
         time_min_dist_2 = simu_time[ind_min_dist_2]
-        ##### plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
+        plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
 
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
@@ -513,8 +513,8 @@ class ClosedLoopNode(Node):
         plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path", linewidth=1.5)
         plt.scatter(ts_timestamp[:,0], ts_timestamp[:,1], c="black", marker="3", linewidth=1.5, s=50)
         plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
-        ##### plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
-        ##### plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
+        plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
+        plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
         plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
         plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
 
@@ -570,7 +570,7 @@ class ClosedLoopNode(Node):
         # Add the Position of the TS
         vert_TS_2[:, 0] = vert_TS_2[:, 0]+ts_position_2[-1,0]
         vert_TS_2[:, 1] = vert_TS_2[:, 1]+ts_position_2[-1,1]
-        ##### plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
+        plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
 
         # plt.quiver(os_position[-1,0], os_position[-1,1], new_vel_xy[0]*5, new_vel_xy[1],scale=1,
         #             scale_units='xy', angles='xy', color='blue', zorder=6,width=0.01, hatch="----", edgecolor="black", linewidth=0.5, label="COG (OS)")

@@ -26,6 +26,7 @@ class VO:
     
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
         self.colreg = []
+        self.hyst_flag = 0
         # Properties of OS
         self.len_OS = leng_OS  # Length OS in m
         self.wid_OS = width_OS  # Width OS in m
@@ -321,6 +322,15 @@ class VO:
         angles_betw = np.rad2deg(np.arccos(in_arcos))
 
         return np.array(angles_betw)
+    
+    def angle_diff(self, first_angle, second_angle):
+        """ Function to calculate the angle between two angles (+-180°) """
+        diff = second_angle - first_angle
+        if diff > 180:
+            diff -= 360
+        elif diff < -180:
+            diff += 360
+        return diff
 
     def calc_vel_obst(self, TS, ang_os_rad):
         """ Function to calculate the VO, gives back an array with the vertices of
@@ -775,12 +785,11 @@ class VO:
         #                 marker='x', c='black', linewidths=(0.7))
         return np.array([point_coll, dist_coll, time_coll], dtype=object)
 
-    def calc_colreg_con(self, vel_OS, vel_TS, vel_TS_xy, pos_TS_rel):
+    def calc_colreg_con(self, vel_TS_xy, pos_TS_rel,colr_rule):
         """ Function to calculate the COLREG constrains"""
         
         colreg_con = []
-        if (self.check_colreg_rule_heading(vel_OS, vel_TS) == 'Head-on (Rule 14)'
-            or self.check_colreg_rule_heading(vel_OS, vel_TS) == 'Right crossing (Rule 15)'):
+        if (colr_rule == 'Head-on (Rule 14)' or colr_rule == 'Right crossing (Rule 15)'):
             vect_col_line = (pos_TS_rel + vel_TS_xy) - vel_TS_xy
             perp_line = np.array([-vect_col_line[1], vect_col_line[0]])
             bound_left = perp_line + vel_TS_xy
@@ -841,17 +850,30 @@ class VO:
             angles_des_free = np.rad2deg(np.arccos(in_arcos_des))
             
             speed_des_free = np.abs(vel_space_free_mag - vel_des[0])
-           
+
             vel_30 = vel_OS.copy()
-            in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
-                            )/(vel_space_free_mag*vel_30[0])
-            in_arcos_30 = np.round_(in_arcos_30, decimals=10)
-            angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
-                                    
-            angles_30_free = (30-angles_30_free)*-1
-            angles_30_free[angles_30_free>0] = 0
-            angles_30_free = -angles_30_free
-            angles_30_free = np.round_(angles_30_free, decimals=8)
+            if self.hyst_flag == 0:
+                in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
+                                )/(vel_space_free_mag*vel_30[0])
+                in_arcos_30 = np.round_(in_arcos_30, decimals=10)
+                angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
+                                        
+                angles_30_free = (30-angles_30_free)*-1
+                angles_30_free[angles_30_free>0] = 0
+                angles_30_free = -angles_30_free
+                angles_30_free = np.round_(angles_30_free, decimals=8)
+            elif self.hyst_flag == 1:
+                vel_30[1] = (vel_30[1] + 30) % 360
+                in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
+                                )/(vel_space_free_mag*vel_30[0])
+                in_arcos_30 = np.round_(in_arcos_30, decimals=10)
+                angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
+            elif self.hyst_flag == -1:
+                vel_30[1] = (vel_30[1] - 30) % 360
+                in_arcos_30 = (np.dot(vel_space_free_xy, self.vect_to_xy(vel_30))
+                                )/(vel_space_free_mag*vel_30[0])
+                in_arcos_30 = np.round_(in_arcos_30, decimals=10)
+                angles_30_free = np.rad2deg(np.arccos(in_arcos_30))
 
             # Normalize the values between 0-1, with 0 = 0 and 1 = max value
             norm_ang_des_free = angles_des_free / np.max(angles_des_free)
@@ -995,16 +1017,17 @@ class VO:
             if TSo.coll_check:
                 if TSo.colreg_rule == None:
                     self.vel_OS_init = vel_OS
+                    self.hyst_flag = 0
                     # TSo.os_init = vel_OS
                     TSo.colreg_rule = self.check_colreg_rule_heading(vel_OS, vel_TS_ang)
-                TSo.colreg_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSo.pos)
+                TSo.colreg_con = self.calc_colreg_con(vel_TS_xy, TSo.pos, TSo.colreg_rule)
                 Coll = self.check_coll_point(
                     vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy, TSo.vert_hull, TSo.tang_points)
                 TSo.coll_point = Coll[0]
                 TSo.coll_dist = Coll[1]
                 TSo.coll_time = Coll[2]
             elif not TSo.coll_check and TSo.coll_check_des and TSo.colreg_rule != None:
-                TSo.colreg_con = self.calc_colreg_con(vel_OS, vel_TS_ang, vel_TS_xy, TSo.pos)
+                TSo.colreg_con = self.calc_colreg_con(vel_TS_xy, TSo.pos, TSo.colreg_rule)
                 Coll = self.check_coll_point(
                     vel_rela_xy, vel_OS, vel_OSxy, vel_TS_ang, vel_TS_xy, TSo.vert_hull, TSo.tang_points)
                 TSo.coll_point = Coll[0]
@@ -1061,13 +1084,16 @@ class VO:
         new_vel_testo = np.empty((0, 2))
         
         for TS_vel in ts_info:
-            # self.colreg = [TS_vel[10], TS_vel[9], self.check_collision(vel_des, TS_vel[5])]
             # for each TS with collision and COLREG rules where contrains have to be applied, calculate the new velocity in free velocity space
             if TS_vel.colreg_rule == 'Right crossing (Rule 15)' or TS_vel.colreg_rule == 'Head-on (Rule 14)' or TS_vel.colreg_rule == 'Overtaking (Rule 13)':
 
                 # Calculate new velocity
                 if TS_vel.colreg_rule == 'Overtaking (Rule 13)':
                     new_vel = self.calc_new_vel_overtaking(vel_des, free_vel, self.vel_OS_init)
+                    if self.angle_diff(self.vel_OS_init[1], new_vel[1]) > 0:
+                        self.hyst_flag = 1
+                    elif self.angle_diff(self.vel_OS_init[1], new_vel[1]) < 0:
+                        self.hyst_flag = -1
                 else:
                     new_vel = self.calc_new_vel(vel_des, free_vel, self.vel_OS_init)
                 
@@ -1090,6 +1116,10 @@ class VO:
                     new_vel_testo = np.vstack((new_vel_testo, np.empty((0,2))))
             elif TS_vel.colreg_rule == 'Static object':
                 new_vel = self.calc_new_vel_overtaking(vel_des, free_vel, self.vel_OS_init)
+                if self.angle_diff(self.vel_OS_init[1], new_vel[1]) > 0:
+                        self.hyst_flag = 1
+                elif self.angle_diff(self.vel_OS_init[1], new_vel[1]) < 0:
+                        self.hyst_flag = -1
                 if np.any(new_vel):
                     new_vel_testo = np.vstack((new_vel_testo, new_vel))
 
