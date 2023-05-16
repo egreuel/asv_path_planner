@@ -13,7 +13,7 @@ from scipy.stats import mode
 # input: vel_OS[speed(m/s), angle(° in NED frame)], len_OS[m], wid_OS[m], max_speed_OS [m/s], max_TTC[s], min_TTC[s], saftey_fact[],
 #        speed_TS[m/s], speed_TS_unc[m/s], ang_TS[° in NED frame], ang_TS_unc[°], speed_res[m/s], ang_res[°], pos_TS_rel[x,y], len_TS[m], wid_TS[m]
 
-# output: VO, absolute course
+# output: new absolute course
 
 # Plotting
 # plotting = False
