@@ -22,11 +22,14 @@ class VO:
     # Weights for the cost-function to choose the new velocity
     w_1 = 1.0  # Angle deviation from desired velocity
     w_2 = 1.3  # Speed deviation from desried velocity
-    w_3 = 1.5  # Angle deviation from 30°
+    w_3 = 1.5  # Angle deviation from 30° to the inital velocity
     
     def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
         self.colreg = []
+        
+        # Variable needed to make sure, that in case of an overtaking, the OS is not changing the side on which to overtake during the manouver
         self.hyst_flag = 0
+        
         # Properties of OS
         self.len_OS = leng_OS  # Length OS in m
         self.wid_OS = width_OS  # Width OS in m
@@ -36,7 +39,7 @@ class VO:
         self.max_TTC = max_time_col  # Time to collison in s
         self.threshold = treshhold  # time to collision threshold in s for standby actions
 
-        # Safety domain factor
+        # Safety area factor
         self.safe_Fact = safe_domain_fact
         
         # Uncertainty handling
@@ -46,19 +49,11 @@ class VO:
         # Resolution of the discretized velocity space
         self.res_speed = speed_res # m/s
         self.res_ang = ang_res # degrees
-              
-        # Create last state check array
-        self.ts_vo_checks = np.empty((1, 15), dtype=object)
-
-        # Fill the array with None values
-        self.ts_vo_checks.fill(None)
 
         # Variable to store the inital state of OS once a collision check is true
         self.vel_OS_init = []
-        self.flag = True
 
         # Variable to store if the saftey domain is violated
-        self.flag_coll = True
         self.coll_safety = False
 
         # Variable to store the latest calculated new velocity
