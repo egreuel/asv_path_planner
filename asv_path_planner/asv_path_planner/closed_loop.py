@@ -397,9 +397,10 @@ class ClosedLoopNode(Node):
                 
             # writing the data rows  
             csvwriter.writerows(rows)
-             
+
+        # For plotting all data have to be of the same size     
         min_length = min(len(simu_time), len(dist_os_ts_1), len(dist_os_ts_2), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.elapsed_time), len(self.coll_check))
-        
+        # Remove the first 15 measurents because here the ships are still starting up and the speed and orientation calculation from the GPS are not good
         simu_time = simu_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
         dist_os_ts_2 = dist_os_ts_2[15:min_length]
@@ -410,6 +411,7 @@ class ClosedLoopNode(Node):
         self.elapsed_time = self.elapsed_time[15:min_length]
         self.coll_check = self.coll_check[15:min_length]
 
+        # Plot the distance between TS and OS over time
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
         plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
@@ -431,7 +433,7 @@ class ClosedLoopNode(Node):
         plt.legend(loc="best", fontsize="10")
         ax1.set_aspect(1.0/ax1.get_data_ratio(), adjustable='box')
         
-        
+        # Plot the current speed and the desired speed (calculated by VO algorithm) of the OS
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
         plt.plot(simu_time, os_speed, c="teal", label="Current speed (OS)", linewidth=2.5)
@@ -442,6 +444,7 @@ class ClosedLoopNode(Node):
         plt.legend(loc="best", fontsize="10")
         ax2.set_aspect(1.0/ax2.get_data_ratio(), adjustable='box')
         
+        # Plot the current orientation and the desired orientation (calculated by VO algorithm) of the OS
         fig3 = plt.figure()
         ax3 = fig3.add_subplot(111)
         plt.plot(simu_time, os_ang, c="teal", label="Current orientation (OS)", linewidth=2.5)
@@ -452,7 +455,7 @@ class ClosedLoopNode(Node):
         plt.legend(loc="best", fontsize="10")
         ax3.set_aspect(1.0/ax3.get_data_ratio(), adjustable='box')
         
-        # Algorithm run time
+        # Plot of the VO Algorithm run time
         # fig4 = plt.figure()
         # ax4 = fig4.add_subplot(111)
         # plt.plot(simu_time, self.elapsed_time, c="red", label="Run time")
@@ -462,6 +465,7 @@ class ClosedLoopNode(Node):
         # # plt.legend(loc="upper left", fontsize="10")
         # ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable='box')
 
+        # Plot the collision check of OS with the safety area (0=no collision, 1=collision)
         fig5 = plt.figure()
         ax5 = fig5.add_subplot(111)
         plt.plot(simu_time, self.coll_check, c="red", label="Collision check with safety domain")
@@ -469,7 +473,8 @@ class ClosedLoopNode(Node):
         plt.ylabel("In/Out safety area")
         plt.legend(loc="best", fontsize="10")
         ax5.set_aspect(1.0/ax5.get_data_ratio(), adjustable='box')
-       
+
+        # Plot the trajectory of the ships
         fig6 = plt.figure()
         # points_test = []
         os_timestamp = np.empty((0,2))
