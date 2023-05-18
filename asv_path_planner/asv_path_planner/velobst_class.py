@@ -407,9 +407,9 @@ class VO:
             ang_os_rad (float): Orientation of the OS in radian
 
         Returns:
-            (numpy.array(float),numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices
+            (numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices
             of the velocity obstacle, the vertices of the saftey area around the TS, the tangent points at the safety area around TS
-            seen from OS, the points that form the line for the COLRGE contrains
+            seen from OS
         """
         pos_TS_rel = TS.pos
         len_TS = TS.length
@@ -669,8 +669,8 @@ class VO:
             elif index_p_r == (len(vert_VO_testo_unc)-1):
                 vert_hull_unc = np.vstack((vert_VO_testo_unc[index_p_l-1:],vert_VO_testo_unc[:1]))
             else:
-                vert_hull_unc = vert_VO_testo_unc[index_p_l-1:index_p_r+2] ##### == shifted hull vert unc with the 2nd point on line if index_p_l-1 and index_p_r+2
-        
+                vert_hull_unc = vert_VO_testo_unc[index_p_l-1:index_p_r+2]
+
         # VO with unc and TTC
         vel_obst_TTC_unc = vert_hull_unc.copy()
         
