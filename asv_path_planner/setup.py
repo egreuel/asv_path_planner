@@ -23,7 +23,7 @@ setup(
             "vel_obst_node = asv_path_planner.master_vel_obst_node:main",
             "draw_circle = asv_path_planner.draw_circle:main",
             "pose_subs = asv_path_planner.pose_subs:main",
-            "closed_loop = asv_path_planner.closed_loop:main",
+            "ros_script = asv_path_planner.ros_script:main",
             "velobst = asv_path_planner.velobst:main"
         ],
     },

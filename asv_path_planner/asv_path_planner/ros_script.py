@@ -13,10 +13,10 @@ import math
 import rclpy
 import csv
 
-class ClosedLoopNode(Node):
+class RosScriptNode(Node):
 
     def __init__(self):
-        super().__init__("closed_loop")
+        super().__init__("ros_script")
         atexit.register(self.exit_handler)
         self.os_pos = []
         self.os_speed = []
@@ -571,7 +571,7 @@ class ClosedLoopNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ClosedLoopNode()
+    node = RosScriptNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
