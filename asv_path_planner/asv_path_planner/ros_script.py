@@ -119,17 +119,17 @@ class RosScriptNode(Node):
         self.get_logger().info("Node started!")
 
     # Calculate the course difference between two courses (new velocity and current velocity)
-    def angle_diff(self, first_angle, second_angle):
-        """_summary_
+    def angle_diff(self, ref_angle, angle):
+        """Function that calculates the difference of an orientation angle in respect to another from -180 to 180°
 
         Args:
-            first_angle (_type_): _description_
-            second_angle (_type_): _description_
+            ref_angle (float[°]): Reference angle to which the difference is calculated
+            angle (float[°]): Deviating angle from the reference angle
 
         Returns:
-            _type_: _description_
+            float: Angle difference in a range from -180 to 180°
         """
-        diff = second_angle - first_angle
+        diff = angle - ref_angle
         if diff > 180:
             diff -= 360
         elif diff < -180:
@@ -138,6 +138,16 @@ class RosScriptNode(Node):
 
     # PID speed controller for thruster output
     def compute_pid(self, setpoint, vel, time_step):
+        """PID controller to maintain a given speed for OS
+
+        Args:
+            setpoint (float [m/s]): Desired speed
+            vel (float [m/s]): Current speed
+            time_step (float [m/s]): Time step between measurments
+
+        Returns:
+            float: Thruster input value from 0 to 1
+        """
         self.error = setpoint - vel  
         self.int_error += self.error * time_step
         self.der_error = (self.error - self.last_error) / time_step
@@ -151,6 +161,16 @@ class RosScriptNode(Node):
 
     # PID speed controller for thruster output   
     def compute_pid_1(self, setpoint, vel, time_step):
+        """PID controller to maintain a given speed for TS
+
+        Args:
+            setpoint (float [m/s]): Desired speed
+            vel (float [m/s]): Current speed
+            time_step (float [m/s]): Time step between measurments
+
+        Returns:
+            float: Thruster input value from 0 to 1
+        """
         self.error_1 = setpoint - vel  
         self.int_error_1 += self.error_1 * time_step
         self.der_error_1 = (self.error_1 - self.last_error_1) / time_step
@@ -164,6 +184,16 @@ class RosScriptNode(Node):
     
     # PD heading control for thruster output
     def compute_pd(self, error, time_step):
+        """PD controller for orientation control
+
+        Args:
+            setpoint (float [°]): Desired orientation
+            vel (float [°]): Current Orientation
+            time_step (float [m/s]): Time step between measurments
+
+        Returns:
+            float: Thruster input value from -0.5 to 0.5
+        """
         self.error_ang = error
         self.der_error_ang = (self.error_ang - self.last_error_ang) / time_step
         self.last_error_ang = self.error_ang
@@ -176,6 +206,11 @@ class RosScriptNode(Node):
     
     # Callback function to receive GPS coordinates of the target point/destination (TP)
     def gps_callback_tp(self, pose: NavSatFix):
+        """Callback function to receive GPS data from the target point/destination inside the unity simulation
+
+        Args:
+            pose (NavSatFix): GPS coordinates
+        """
         gps_lat = pose.latitude
         gps_lon = pose.longitude
         self.gps_tp = np.array([gps_lat, gps_lon])
@@ -183,6 +218,12 @@ class RosScriptNode(Node):
 
     # Callback function to receive GPS coordinates of target ship 1 (TS 1) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_1(self, pose: NavSatFix):
+        """Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and
+        orientation and also publishing thruster inputs
+
+        Args:
+            pose (NavSatFix): GPS coordinates
+        """
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -222,6 +263,12 @@ class RosScriptNode(Node):
 
     # Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_2(self, pose: NavSatFix):
+        """Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and
+        orientation and also publishing thruster inputs
+
+        Args:
+            pose (NavSatFix): GPS coordinates
+        """
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -261,6 +308,13 @@ class RosScriptNode(Node):
 
     # Main callback function where the VO is calculated and OS control is done 
     def gps_callback_os(self, pose: NavSatFix):
+        """Callback function to receive GPS data from the own ship inside the unity simulation to calculate speed and orientation and
+        unsing the collision avoidance algorithm to find a collision free path through the simulation;it is also used to publish 
+        commands to the thrusters of the OS
+
+        Args:
+            pose (NavSatFix): GPS coordinates
+        """
         if self.wait_bool_ts_1 and self.wait_bool_ts_2 and self.wait_bool_tp: # Only start this callback, if every TS has received GPS data once
             
             gps_time_sec = pose.header.stamp.sec
@@ -391,6 +445,8 @@ class RosScriptNode(Node):
             self.ang_com.append(self.new_vel[1])
     
     def exit_handler(self): # Just for plotting when closing the node with ctrl+c
+        """Function that is only used once when the ROS node is closed, to plot the results of the simulation and store the results in a .csv file
+        """
         os_position = np.array(self.os_pos)
         ts_position = np.array(self.ts_pos_1)
         ts_position_2 = np.array(self.ts_pos_2)
@@ -587,6 +643,8 @@ class RosScriptNode(Node):
         plt.show()
 
 def main(args=None):
+    """Main function where the ROS node is assigned and it the node loops infinite
+    """
     rclpy.init(args=args)
     node = RosScriptNode()
     rclpy.spin(node)

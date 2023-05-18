@@ -24,7 +24,21 @@ class VO:
     w_2 = 1.3  # Speed deviation from desried velocity
     w_3 = 1.5  # Angle deviation from 30° to the inital velocity
     
-    def __init__(self, leng_OS, width_OS, max_speedOS, max_time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
+    def __init__(self, leng_OS, width_OS, max_speedOS, time_col, treshhold, safe_domain_fact, speed_unc, ang_unc, speed_res, ang_res):
+        """Function to initalize parameters of the OS once it is assinged to the class
+
+        Args:
+            leng_OS (float [m/s]): Length of the OS
+            width_OS (float [m/s]): Width of the OS
+            max_speedOS (float [m/s]): maximum speed of the OS
+            time_col (int [s]): Velocities leading to a collison where the time to collision isgreater than this time will not be considerd from the algorithm
+            treshhold (int [s]): Time threshold to collision for stand-by scenarios; if the time to collision is smaller than this value, the OS is avoiding the collision even if it is the stand-by vessel
+            safe_domain_fact (int): Factor for the safety domain --> multiple of the OS size
+            speed_unc (float [m/s]): Uncertainties in the speed measurements of the TS
+            ang_unc (float [°]): Uncertainties in the orientation angle measurements of the TS
+            speed_res (float [m/s]): Resolution of speed for the descitized velocity space
+            ang_res (float [°]): Resolution of orientation angle for the descitized velocity space
+        """
         self.colreg = []
         
         # Variable needed to make sure, that in case of an overtaking, the OS is not changing the side on which to overtake during the manouver
@@ -36,7 +50,7 @@ class VO:
         self.max_speed_OS = max_speedOS # Maximum speed of OS in m/s
 
         # Time thresholds
-        self.max_TTC = max_time_col  # Time to collison in s
+        self.max_TTC = time_col  # Time to collison in s
         self.threshold = treshhold  # time to collision threshold in s for standby actions
 
         # Safety area factor
@@ -60,9 +74,15 @@ class VO:
         self.latest_new_vel = np.empty((0,2))
 
     def calc_coord_gps_to_xy(self, coord_os, coord_ts):
-        """ Function to calc GPS coordinates to xy-coordinates in meters to the OS;
-        Returns the position of the target ship relative to the own ship in the xy-
-        coordinate system
+        """Function to calculate GPS coordinates to xy-coordinates in meters in resepct to the OS;
+        Returns the position of the target ship relative to the own ship in the xy-coordinate system
+
+        Args:
+            coord_os (numpy.array(float)): GPS coordiantes of OS (Latitude, longitude)
+            coord_ts (numpy.array(float)): GPS coordiantes of TS (Latitude, longitude)
+
+        Returns:
+            numpy.array(float): Relative position of TS to OS in xy-coordinates (x[m],y[m])
         """
         pos_TSy = np.array([coord_ts[0], coord_os[1]])
         pos_TSx = np.array([coord_os[0], coord_ts[1]])
@@ -82,19 +102,26 @@ class VO:
         return np.array(pos_Rel)
 
 
-    def calc_abs_vel(self, ref_vel, targ_vel):
-        """ Function to calculate the absolute velocity of the TS if only the
-        relative velocity of TS is given;
+    def calc_abs_vel(self, abs_vel_os, rel_vel_ts):
+        """Function to calculate the absolute velocity of the TS if only the
+        relative velocity of TS to OS is given;
         Returns the absolute velocity of the target ship with speed and angle
+
+        Args:
+            abs_vel_os (numpy.array(float)): Absolute velocity vector of OS (speed[m/s], angle[°])
+            rel_vel_ts (numpy.array(float)): Relative velocity vector of TS to OS (speed[m/s], angle[°])
+
+        Returns:
+            numpy.array(float): Absolute velocity of the TS (speed[m/s], angle[°])
         """
-        # x and y componet of the vector from magnitude(speed) and direction(angle)
-        ref_velxy = self.vect_to_xy(ref_vel)
-        vel_Relxy = self.vect_to_xy(targ_vel)
+        # x and y componet of the vector from magnitude (speed) and direction (angle)
+        abs_vel_osxy = self.vect_to_xy(abs_vel_os)
+        vel_Relxy = self.vect_to_xy(rel_vel_ts)
         # Calculate the TS vector in component form
-        vel_TSxy_calc = vel_Relxy + ref_velxy
-        # Calculate the magnitude(speed) of the vector
+        vel_TSxy_calc = vel_Relxy + abs_vel_osxy
+        # Calculate the magnitude (speed) of the vector
         speed_TS_calc = np.sqrt(vel_TSxy_calc[0] ** 2 + vel_TSxy_calc[1] ** 2)
-        # Calculate the dircetion(angle) of the vector
+        # Calculate the dircetion (angle) of the vector
         ang_TS_calc = np.degrees(np.arctan2(vel_TSxy_calc[1], vel_TSxy_calc[0]))
         ang_TS_calc = (ang_TS_calc+360) % 360
         # convert the angle from east CCW to north CW
@@ -104,16 +131,25 @@ class VO:
 
 
     def calc_rel_vel(self, vel_OS, vel_TS):
-        """ Function to calculate the relative velocity of OS and TS """
-        # x and y componet of the vector from magnitude(speed) and direction(angle)
+        """Function to calculate the relative velocity of the OS to TS if only the
+        absolute velocity of TS and OS are given;
+        Returns the relative velocity of the OS to TS with speed and angle
+
+        Args:
+            vel_OS (numpy.array(float)): Absolute velocity vector of OS (speed[m/s], angle[°])
+            vel_TS (numpy.array(float)): Absolute velocity vector of TS (speed[m/s], angle[°])
+
+        Returns:
+            numpy.array(float): Relative velocity of OS to TS (speed[m/s], angle[°])
+        """
+        # x and y componet of the vector from magnitude (speed) and direction (angle)
         vel_OSxy = self.vect_to_xy(vel_OS)
         vel_TSxy = self.vect_to_xy(vel_TS)
         # Calculate the relative vector in component form
         vel_Relxy = vel_OSxy - vel_TSxy
-        # Calculate the magnitude(speed) of the vector
+        # Calculate the magnitude (speed) of the vector
         speed_Rel = np.sqrt(vel_Relxy[0] ** 2 + vel_Relxy[1] ** 2)
-        # Calculate the dircetion(angle) of the vector
-        # Add special cases for rel Velocity speed = 0
+        # Calculate the dircetion (angle) of the vector
         ang_Rel = np.degrees(np.arctan2(vel_Relxy[1], vel_Relxy[0]))
         ang_Rel = (ang_Rel+360) % 360
         # convert the angle from east CCW to north CW
@@ -122,8 +158,15 @@ class VO:
         return np.array(vel_Rel)
 
     def vect_to_ang_mag(self, vect_xy):
-        """ Function that calculates the magnitude and direction of a vector given
-        in x/y-form """
+        """Function that calculates the magnitude (speed) and direction (angle) of a vector given
+        in x/y-form 
+
+        Args:
+            vect_xy (numpy.array(float)): Velocity vector in xy-form
+
+        Returns:
+            numpy.array(float): Velocity vector in the form magnitude (speed) and direction (angle)
+        """
         speed = np.sqrt(vect_xy[0] ** 2 + vect_xy[1] ** 2)
         angle = math.degrees(np.arctan2(vect_xy[1], vect_xy[0]))
         angle = (angle+360) % 360
@@ -132,24 +175,43 @@ class VO:
         return np.array(vector)
 
     def vect_to_xy(self, vector):
-        """ Function that calculates the x/y-form of a vector given in
-        magnitude/direction-form """
+        """Function that calculates the x/y-form of a vector given in
+        magnitude/direction-form 
+
+        Args:
+            vector (numpy.array(float)): Velocity vector in magnitude/direction-form
+
+        Returns:
+            numpy.array(float): Velocity vector in the xy-form (x[m],y[m])
+        """
         vect_xy = ([vector[0] * math.cos(math.radians(self.calc_ang_n_to_e(vector[1]))),
                             vector[0] * math.sin(math.radians(self.calc_ang_n_to_e(vector[1])))])
         
-        # slower:
-        # vect_xy = ([vector[:,0] * np.cos(np.radians(self.calc_ang_n_to_e(vector[:,1]))),
-        #                     vector[:,0] * np.sin(np.radians(self.calc_ang_n_to_e(vector[:,1])))])
         return np.array(vect_xy)
 
     def calc_ang_n_to_e(self, angle):
-        """ Function that converts the angle from the north clockwise system to the
-        east counter clockwise system and vice versa """
+        """Function that converts the angle from the north clockwise system to the
+        east counter-clockwise system and vice versa 
+
+        Args:
+            angle (float): Orientation angle in north clockwise or east counter-clockwise system
+
+        Returns:
+            float: Orientation angle base on the other system
+        """
         alpha = (-angle + 90) % 360
         return alpha
 
     def calc_minkowski_sum(self, vert_TS, vert_OS):
-        """ Function of the minkoswski sum """
+        """Function to calculate the Minkowski sum of two shapes
+
+        Args:
+            vert_TS (numpy.array(float)): numpy array of xy-coordinates that form the shape of the TS
+            vert_OS (numpy.array(float)): numpy array of xy-coordinates that form the shape of the OS
+
+        Returns:
+            numpy.array(float): numpy array with new xy-coordinates of the added shapes
+        """
         result = []
         for x in vert_TS:
             for y in vert_OS:
@@ -159,16 +221,17 @@ class VO:
     def orientation(self, v1, v2, p):
         """
         Calculation of all points that are right or left of a directed vector
+
         Parameters
         ----------
-        v1 : Vertex 1 of the velocity obstacle.
-        v2 : Vertex 2 of the velocity obstacle.
-        p : Points that are tested
+        v1(numpy.array(float)): Point 1 of the directed vector
+        v2(numpy.array(float)): Point 2 of the directed vector
+        p(numpy.array(float)): Points that are tested
 
         Returns
         -------
-        v_out :  all points left from the vector formed by v1, v2
-        v_in : all points left from the vector formed by v1, v2
+        v_out(numpy.array(float)):  all points left from the vector formed by v1, v2
+        v_in(numpy.array(float)): all points left from the vector formed by v1, v2
         """     
         val = (float(v2[1] - v1[1]) * (p[:,0] - v2[0])) - \
             (float(v2[0] - v1[0]) * (p[:,1] - v2[1]))
@@ -192,13 +255,13 @@ class VO:
         Calculation of all point inside or outside the velocity obstacle
         Parameters
         ----------
-        v_test : Velocity points to test
-        vo : velocity obstacle vertices
+        v_test(numpy.array(float)): Velocity vector in xy-coordinates to test
+        vo(numpy.array(float)): velocity obstacle vertices
 
         Returns
         -------
-        v_outn : all points outside the VO 
-        v_test : all points inside the VO
+        v_outn(numpy.array(float)): all points outside the VO 
+        v_test(numpy.array(float)): all points inside the VO
 
         """
         v_outn = np.empty((0,2))
@@ -211,7 +274,15 @@ class VO:
         return np.array(v_outn), np.array(v_test)
 
     def check_collision(self, vel_p, vel_obs):
-        """ Function Check for Collision """
+        """Function that checks if a point is inside a convex shape
+
+        Args:
+            vel_p (numpy.array(float)): Point to be tested
+            vel_obs (numpy.array(float)): Vertices of the shape to be tested against
+
+        Returns:
+            boolean: True if point is inside the shape, False if outside the shape
+        """
         vel_p_xy = self.vect_to_xy(vel_p)
         vel_p_xy = np.reshape(vel_p_xy, (1,2))
         outo, intu = self.inOutVO(vel_p_xy, vel_obs)
@@ -223,13 +294,29 @@ class VO:
         return collision
 
     def calc_ang_vect(self, vel_OS, vel_Rel):
-        """ Function to calulate the angle between the two velocity vectors """
+        """Function to calculate the angle that is formed by two velocity vectors
+
+        Args:
+            vel_OS (numpy.array(float)): Velocity vector (speed[m/s], angle[°])
+            vel_Rel (numpy.array(float)): Velocity vector (speed[m/s], angle[°])
+
+        Returns:
+            float: Angle between two vectors
+        """
         phi = ((vel_Rel[1]-vel_OS[1])+360) % 360
         return phi
 
     def check_colreg_rule_heading(self, vel_OS_2, vel_TS_2):
-        """ Function to check COLREG rule (angle between vel_OS and
-        vel_TS heading// course over ground) """
+        """Function that checks which COLREG rule have to be applied (angle between the course 
+        over gorud of OS and 
+
+        Args:
+            vel_OS_2 (numpy.array(float)): Velocity vector of OS (speed[m/s], angle[°])
+            vel_TS_2 (numpy.array(float)): elocity vector of TS (speed[m/s], angle[°])
+
+        Returns:
+            str: String of the COLREG rule applied for the given encounter
+        """
         vel = vel_TS_2.copy()
         vel[1] = vel_TS_2[1] - 180
         if vel[0] <= 0.1:  # Threshhold for static objects
@@ -250,8 +337,16 @@ class VO:
         return colreg_rule_2
 
     def check_side(self, vel_Rel, tang_coord):
-        """ Function that checks wether the relative velocity is inside the CC or
-        outside, if outside check which side """
+        """ Function that checks wether the relative velocity of OS to TS is inside the CC or
+        outside, if outside check which side
+
+        Args:
+            vel_Rel (numpy.array(float)): Relative velocity vector of OS to TS (speed, angle)
+            tang_coord (numpy.array(float)): Coordinates of the tangent points of TS shape that form the CC
+
+        Returns:
+            str: String that say if the velocity is inside, right or left of the CC
+        """
         side = 'empty or inside'
 
         tang_points_vec_1 = self.vect_to_ang_mag(tang_coord[0, :])
@@ -259,7 +354,7 @@ class VO:
 
         angles_betw = self.ang_betw_vect(vel_Rel, tang_points_vec_1, tang_points_vec_2)
         angles_betw_tang = self.ang_betw_vect(tang_points_vec_1, tang_points_vec_2)
-
+      
         if angles_betw[0] > angles_betw_tang:
             side = 'right'
         elif angles_betw[1] > angles_betw_tang:
@@ -268,7 +363,15 @@ class VO:
         return side
 
     def ang_betw_vect(self, ref_vect, *test_vect):
-        """ Function to calculate the angle between two vectors """
+        """ Function to calculate the angle between two vectors in range 0 to 180°
+
+        Args:
+            ref_vect (numpy.array(float)): Velocity vector to which the angle is calculated
+            *test_vect (numpy.array(float)): Velocity vectors that are tested against the ref_vect
+
+        Returns:
+            numpy.array(float): Angles [°] between the reference vector and the test vectors
+        """
         ref_vect_xy = self.vect_to_xy(ref_vect)
         test_vect_xy = np.apply_along_axis(self.vect_to_xy, 1, test_vect)
         test_vect = np.apply_along_axis(self.vect_to_ang_mag, 1, test_vect_xy)
@@ -279,9 +382,17 @@ class VO:
 
         return np.array(angles_betw)
     
-    def angle_diff(self, first_angle, second_angle):
-        """ Function to calculate the angle between two angles (+-180°) """
-        diff = second_angle - first_angle
+    def angle_diff(self, ref_angle, angle):
+        """Function that calculates the difference of an orientation angle in respect to another from -180 to 180°
+
+        Args:
+            ref_angle (float[°]): Reference angle to which the difference is calculated
+            angle (float[°]): Deviating angle from the reference angle
+
+        Returns:
+            float: Angle difference in a range from -180 to 180°
+        """
+        diff = angle - ref_angle
         if diff > 180:
             diff -= 360
         elif diff < -180:
@@ -289,8 +400,17 @@ class VO:
         return diff
 
     def calc_vel_obst(self, TS, ang_os_rad):
-        """ Function to calculate the VO, gives back an array with the vertices of
-        the VO """
+        """Function that calculates the Velocity Obstacle of each TS with uncertainities and with respect to the time to collision
+
+        Args:
+            TS (class object): Object of the class TS with information about the target ship
+            ang_os_rad (float): Orientation of the OS in radian
+
+        Returns:
+            (numpy.array(float),numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices
+            of the velocity obstacle, the vertices of the saftey area around the TS, the tangent points at the safety area around TS
+            seen from OS, the points that form the line for the COLRGE contrains
+        """
         pos_TS_rel = TS.pos
         len_TS = TS.length
         wid_TS = TS.width
@@ -538,6 +658,7 @@ class VO:
         index_p_l = index_l[np.argmin(distance_i_l)]
         index_p_r = index_r[np.argmin(distance_i_r)]
         
+        # Extract the unc vertices
         if index_p_l > index_p_r:
             
             vert_hull_unc = np.vstack(
@@ -549,9 +670,7 @@ class VO:
                 vert_hull_unc = np.vstack((vert_VO_testo_unc[index_p_l-1:],vert_VO_testo_unc[:1]))
             else:
                 vert_hull_unc = vert_VO_testo_unc[index_p_l-1:index_p_r+2] ##### == shifted hull vert unc with the 2nd point on line if index_p_l-1 and index_p_r+2
-        # Extract the unc vertices
-        # take the two points of the b and calculate the distance to TS. Take the further point. Then extract all points between these two points. Depending on where they are in the array either delete or take all.
-        points_colreg_line = np.vstack((vert_hull_unc[0],vert_hull_unc[1]))
+        
         # VO with unc and TTC
         vel_obst_TTC_unc = vert_hull_unc.copy()
         
@@ -603,7 +722,7 @@ class VO:
             # plt.annotate('Uncertainty \nin $V_{TS}$ \n(Unc)', xy=(9.2 , 26), xycoords='data', xytext=(-89, 30), textcoords='offset points', arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"), bbox=dict(pad=-9, facecolor="none", edgecolor="none"))
             # plt.annotate('VO with \nuncertainty \nin $V_{TS}$ \n($VO \oplus Unc$)', xy=(11, 15), xycoords='data', xytext=(10, -70), textcoords='offset points', arrowprops=dict(arrowstyle="->", connectionstyle="angle3,angleA=90,angleB=0"))
 
-        return np.array([vel_obst_TTC_unc, vert_hull, tang_points, points_colreg_line], dtype=object)
+        return np.array([vel_obst_TTC_unc, vert_hull, tang_points], dtype=object)
 
     def add_uncert(self, vel_obst, posTS_rel, vel_TS):
         """ Function to add the uncertainties in speed and angle of the TS to the
@@ -949,8 +1068,7 @@ class VO:
             TSo.vo = VOs[0]
             TSo.vert_hull = VOs[1]
             TSo.tang_points = VOs[2]
-            TSo.points_colreg_line = VOs[3]
-           
+                       
             # Check if the current velocity and desired velocity of OS are inside VO
             TSo.coll_check = self.check_collision(vel_OS, TSo.vo)
             TSo.coll_check_des = self.check_collision(vel_des, TSo.vo)
@@ -983,7 +1101,7 @@ class VO:
                 TSo.coll_dist = []
                 TSo.coll_time = []
           
-        ### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points, points_colreg_lines, Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)
+        ### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points,  Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)
         vo_added = np.array([obj.vo for obj in ts_info],dtype=object)
         col_con_added = np.array([obj.colreg_con for obj in ts_info],dtype=object)
         # if np.any(TS_VO_check[:,9]):

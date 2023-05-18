@@ -12,9 +12,10 @@ sys.path.insert(0, os.path.abspath('..'))
 import asv_path_planner
 
 
-project = 'Collision Avoidance'
+project = 'Velocity Obstacle'
 copyright = '2023, Eric Greuel'
 author = 'Eric Greuel'
+version = '1.0.0'
 release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------

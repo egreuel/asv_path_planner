@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Collision Avoidance's documentation!
-===============================================
+The Velocity Obstacle algorithm - Collision avoidance for ASVs in compliance with COLREGs
+=========================================================================================
 This package creates a new ROS node that can connect to the MARUS unity simulator and uses the
 collision aovidance algorithm to guide autonomous surface vehicles through the environment.
 The collision avoidacne algorithm is based on the Velocity Obstacle (VO) methode and acts in 

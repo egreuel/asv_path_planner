@@ -16,7 +16,7 @@ class TS:
     and other that are stored during the collision avoidance algorithm.
 
     """
-    def __init__(self,length):
+    def __init__(self):
         
         self.colreg_init = []
         self.os_init = []
@@ -29,7 +29,6 @@ class TS:
         self.vo = []
         self.vert_hull = []
         self.tang_points = []
-        self.points_colreg_line = []
         self.coll_check = []
         self.coll_check_des = []
         self.colreg_rule = None

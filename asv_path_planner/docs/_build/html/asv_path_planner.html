@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASV path planner package &mdash; Collision Avoidance 1.0.0 documentation</title>
+  <title>ASV path planner package &mdash; Velocity Obstacle 1.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -29,8 +29,11 @@
           
           
           <a href="index.html" class="icon icon-home">
-            Collision Avoidance
+            Velocity Obstacle
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -111,7 +114,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Collision Avoidance</a>
+          <a href="index.html">Velocity Obstacle</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -133,7 +136,7 @@
 <h1>ASV path planner package<a class="headerlink" href="#asv-path-planner-package" title="Permalink to this heading"></a></h1>
 <section id="module-asv_path_planner.ros_script">
 <span id="ros-node-module"></span><h2>ROS node module<a class="headerlink" href="#module-asv_path_planner.ros_script" title="Permalink to this heading"></a></h2>
-<p>This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm</p>
+<p>This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm including some simple control algorithms for the OS in the simulation</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ros_script.</span></span><span class="sig-name descname"><span class="pre">RosScriptNode</span></span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode" title="Permalink to this definition"></a></dt>
@@ -141,20 +144,20 @@
 <p>This class defines the ROS node which is used to connect to the MARUS simulator</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.angle_diff">
-<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.angle_diff" title="Permalink to this definition"></a></dt>
-<dd><p>_summary_</p>
+<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.angle_diff" title="Permalink to this definition"></a></dt>
+<dd><p>Function that calculates the difference of an orientation angle in respect to another from -180 to 180°</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>first_angle</strong> (<em>_type_</em>) – _description_</p></li>
-<li><p><strong>second_angle</strong> (<em>_type_</em>) – _description_</p></li>
+<li><p><strong>ref_angle</strong> (<em>float</em><em>[</em><em>°</em><em>]</em>) – Reference angle to which the difference is calculated</p></li>
+<li><p><strong>angle</strong> (<em>float</em><em>[</em><em>°</em><em>]</em>) – Deviating angle from the reference angle</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>_description_</p>
+<dd class="field-even"><p>Angle difference in a range from -180 to 180°</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>_type_</p>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -162,49 +165,127 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pd">
 <span class="sig-name descname"><span class="pre">compute_pd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pd" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>PD controller for orientation control</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>setpoint</strong> (<em>float</em><em> [</em><em>°</em><em>]</em>) – Desired orientation</p></li>
+<li><p><strong>vel</strong> (<em>float</em><em> [</em><em>°</em><em>]</em>) – Current Orientation</p></li>
+<li><p><strong>time_step</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Time step between measurments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Thruster input value from -0.5 to 0.5</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid">
 <span class="sig-name descname"><span class="pre">compute_pid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>PID controller to maintain a given speed for OS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>setpoint</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Desired speed</p></li>
+<li><p><strong>vel</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Current speed</p></li>
+<li><p><strong>time_step</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Time step between measurments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Thruster input value from 0 to 1</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid_1">
 <span class="sig-name descname"><span class="pre">compute_pid_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_1" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>PID controller to maintain a given speed for TS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>setpoint</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Desired speed</p></li>
+<li><p><strong>vel</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Current speed</p></li>
+<li><p><strong>time_step</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Time step between measurments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Thruster input value from 0 to 1</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.exit_handler">
 <span class="sig-name descname"><span class="pre">exit_handler</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.exit_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.exit_handler" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Function that is only used once when the ROS node is closed, to plot the results of the simulation and store the results in a .csv file</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_os">
 <span class="sig-name descname"><span class="pre">gps_callback_os</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_os"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_os" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Callback function to receive GPS data from the own ship inside the unity simulation to calculate speed and orientation and
+unsing the collision avoidance algorithm to find a collision free path through the simulation;it is also used to publish
+commands to the thrusters of the OS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp">
 <span class="sig-name descname"><span class="pre">gps_callback_tp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Callback function to receive GPS data from the target point/destination inside the unity simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1">
 <span class="sig-name descname"><span class="pre">gps_callback_ts_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_ts_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and
+orientation and also publishing thruster inputs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2">
 <span class="sig-name descname"><span class="pre">gps_callback_ts_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_ts_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and
+orientation and also publishing thruster inputs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.main">
 <span class="sig-prename descclassname"><span class="pre">asv_path_planner.ros_script.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.main" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Main function where the ROS node is assigned and it the node loops infinite</p>
+</dd></dl>
 
 </section>
 <section id="module-asv_path_planner.ts_class">
@@ -212,7 +293,7 @@
 <p>Module for target ships (TS)/obstacles consisting of one class</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="asv_path_planner.ts_class.TS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ts_class.</span></span><span class="sig-name descname"><span class="pre">TS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ts_class.html#TS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ts_class.TS" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ts_class.</span></span><span class="sig-name descname"><span class="pre">TS</span></span><a class="reference internal" href="_modules/asv_path_planner/ts_class.html#TS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ts_class.TS" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class that stores information about TS/obstacles:</p>
 <ul class="simple">
@@ -230,7 +311,7 @@
 <span id="velocity-obstacle-vo-module"></span><h2>Velocity Obstacle (VO) module<a class="headerlink" href="#module-asv_path_planner.velobst_class" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.velobst_class.</span></span><span class="sig-name descname"><span class="pre">VO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leng_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_speedOS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_time_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treshhold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_domain_fact</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_res</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.velobst_class.</span></span><span class="sig-name descname"><span class="pre">VO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leng_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_speedOS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treshhold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_domain_fact</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_res</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.add_uncert">
@@ -242,34 +323,101 @@ VO</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.ang_betw_vect">
 <span class="sig-name descname"><span class="pre">ang_betw_vect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_vect</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">test_vect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.ang_betw_vect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.ang_betw_vect" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calculate the angle between two vectors</p>
+<dd><p>Function to calculate the angle between two vectors in range 0 to 180°</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_vect</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector to which the angle is calculated</p></li>
+<li><p><strong>*test_vect</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vectors that are tested against the ref_vect</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Angles [°] between the reference vector and the test vectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.angle_diff">
-<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.angle_diff" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calculate the angle between two angles (+-180°)</p>
+<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.angle_diff" title="Permalink to this definition"></a></dt>
+<dd><p>Function that calculates the difference of an orientation angle in respect to another from -180 to 180°</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_angle</strong> (<em>float</em><em>[</em><em>°</em><em>]</em>) – Reference angle to which the difference is calculated</p></li>
+<li><p><strong>angle</strong> (<em>float</em><em>[</em><em>°</em><em>]</em>) – Deviating angle from the reference angle</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Angle difference in a range from -180 to 180°</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_abs_vel">
-<span class="sig-name descname"><span class="pre">calc_abs_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targ_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_abs_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_abs_vel" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calc_abs_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">abs_vel_os</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_vel_ts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_abs_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_abs_vel" title="Permalink to this definition"></a></dt>
 <dd><p>Function to calculate the absolute velocity of the TS if only the
-relative velocity of TS is given;
+relative velocity of TS to OS is given;
 Returns the absolute velocity of the target ship with speed and angle</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>abs_vel_os</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Absolute velocity vector of OS (speed[m/s], angle[°])</p></li>
+<li><p><strong>rel_vel_ts</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Relative velocity vector of TS to OS (speed[m/s], angle[°])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute velocity of the TS (speed[m/s], angle[°])</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_ang_n_to_e">
 <span class="sig-name descname"><span class="pre">calc_ang_n_to_e</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_ang_n_to_e"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_ang_n_to_e" title="Permalink to this definition"></a></dt>
 <dd><p>Function that converts the angle from the north clockwise system to the
-east counter clockwise system and vice versa</p>
+east counter-clockwise system and vice versa</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>angle</strong> (<em>float</em>) – Orientation angle in north clockwise or east counter-clockwise system</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Orientation angle base on the other system</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_ang_vect">
 <span class="sig-name descname"><span class="pre">calc_ang_vect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_Rel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_ang_vect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_ang_vect" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calulate the angle between the two velocity vectors</p>
+<dd><p>Function to calculate the angle that is formed by two velocity vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vel_OS</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector (speed[m/s], angle[°])</p></li>
+<li><p><strong>vel_Rel</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector (speed[m/s], angle[°])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Angle between two vectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -281,9 +429,22 @@ east counter clockwise system and vice versa</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy">
 <span class="sig-name descname"><span class="pre">calc_coord_gps_to_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord_os</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_ts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_coord_gps_to_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calc GPS coordinates to xy-coordinates in meters to the OS;
-Returns the position of the target ship relative to the own ship in the xy-
-coordinate system</p>
+<dd><p>Function to calculate GPS coordinates to xy-coordinates in meters in resepct to the OS;
+Returns the position of the target ship relative to the own ship in the xy-coordinate system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coord_os</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – GPS coordiantes of OS (Latitude, longitude)</p></li>
+<li><p><strong>coord_ts</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – GPS coordiantes of TS (Latitude, longitude)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Relative position of TS to OS in xy-coordinates (x[m],y[m])</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -310,7 +471,21 @@ coordinate system</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_minkowski_sum">
 <span class="sig-name descname"><span class="pre">calc_minkowski_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vert_TS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_OS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_minkowski_sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_minkowski_sum" title="Permalink to this definition"></a></dt>
-<dd><p>Function of the minkoswski sum</p>
+<dd><p>Function to calculate the Minkowski sum of two shapes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vert_TS</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – numpy array of xy-coordinates that form the shape of the TS</p></li>
+<li><p><strong>vert_OS</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – numpy array of xy-coordinates that form the shape of the OS</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy array with new xy-coordinates of the added shapes</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -330,7 +505,23 @@ constrains are applied</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_rel_vel">
 <span class="sig-name descname"><span class="pre">calc_rel_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_rel_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_rel_vel" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calculate the relative velocity of OS and TS</p>
+<dd><p>Function to calculate the relative velocity of the OS to TS if only the
+absolute velocity of TS and OS are given;
+Returns the relative velocity of the OS to TS with speed and angle</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vel_OS</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Absolute velocity vector of OS (speed[m/s], angle[°])</p></li>
+<li><p><strong>vel_TS</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Absolute velocity vector of TS (speed[m/s], angle[°])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Relative velocity of OS to TS (speed[m/s], angle[°])</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -341,8 +532,23 @@ constrains are applied</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_vel_obst">
 <span class="sig-name descname"><span class="pre">calc_vel_obst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">TS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_os_rad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_vel_obst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_vel_obst" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calculate the VO, gives back an array with the vertices of
-the VO</p>
+<dd><p>Function that calculates the Velocity Obstacle of each TS with uncertainities and with respect to the time to collision</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TS</strong> (<em>class object</em>) – Object of the class TS with information about the target ship</p></li>
+<li><p><strong>ang_os_rad</strong> (<em>float</em>) – Orientation of the OS in radian</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Multiple values are returned: The vertices
+of the velocity obstacle, the vertices of the saftey area around the TS, the tangent points at the safety area around TS
+seen from OS, the points that form the line for the COLRGE contrains</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(numpy.array(float),numpy.array(float),numpy.array(float),numpy.array(float))</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -355,21 +561,63 @@ Time to collision</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_collision">
 <span class="sig-name descname"><span class="pre">check_collision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_obs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_collision"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_collision" title="Permalink to this definition"></a></dt>
-<dd><p>Function Check for Collision</p>
+<dd><p>Function that checks if a point is inside a convex shape</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vel_p</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Point to be tested</p></li>
+<li><p><strong>vel_obs</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Vertices of the shape to be tested against</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if point is inside the shape, False if outside the shape</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_colreg_rule_heading">
 <span class="sig-name descname"><span class="pre">check_colreg_rule_heading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_colreg_rule_heading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_colreg_rule_heading" title="Permalink to this definition"></a></dt>
-<dd><p>Function to check COLREG rule (angle between vel_OS and
-vel_TS heading// course over ground)</p>
+<dd><p>Function that checks which COLREG rule have to be applied (angle between the course
+over gorud of OS and</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vel_OS_2</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector of OS (speed[m/s], angle[°])</p></li>
+<li><p><strong>vel_TS_2</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – elocity vector of TS (speed[m/s], angle[°])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>String of the COLREG rule applied for the given encounter</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_side">
 <span class="sig-name descname"><span class="pre">check_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_Rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tang_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_side" title="Permalink to this definition"></a></dt>
-<dd><p>Function that checks wether the relative velocity is inside the CC or
+<dd><p>Function that checks wether the relative velocity of OS to TS is inside the CC or
 outside, if outside check which side</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vel_Rel</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Relative velocity vector of OS to TS (speed, angle)</p></li>
+<li><p><strong>tang_coord</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Coordinates of the tangent points of TS shape that form the CC</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>String that say if the velocity is inside, right or left of the CC</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -382,15 +630,15 @@ outside, if outside check which side</p>
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.inOutVO">
 <span class="sig-name descname"><span class="pre">inOutVO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.inOutVO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.inOutVO" title="Permalink to this definition"></a></dt>
 <dd><p>Calculation of all point inside or outside the velocity obstacle
-:param v_test:
-:type v_test: Velocity points to test
-:param vo:
-:type vo: velocity obstacle vertices</p>
+:param v_test(numpy.array(float)):
+:type v_test(numpy.array(float)): Velocity vector in xy-coordinates to test
+:param vo(numpy.array(float)):
+:type vo(numpy.array(float)): velocity obstacle vertices</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>v_outn</strong> (<em>all points outside the VO</em>)</p></li>
-<li><p><strong>v_test</strong> (<em>all points inside the VO</em>)</p></li>
+<li><p><strong>v_outn(numpy.array(float))</strong> (<em>all points outside the VO</em>)</p></li>
+<li><p><strong>v_test(numpy.array(float))</strong> (<em>all points inside the VO</em>)</p></li>
 </ul>
 </p>
 </dd>
@@ -400,18 +648,19 @@ outside, if outside check which side</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.orientation">
 <span class="sig-name descname"><span class="pre">orientation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.orientation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.orientation" title="Permalink to this definition"></a></dt>
-<dd><p>Calculation of all points that are right or left of a directed vector
-:param v1:
-:type v1: Vertex 1 of the velocity obstacle.
-:param v2:
-:type v2: Vertex 2 of the velocity obstacle.
-:param p:
-:type p: Points that are tested</p>
+<dd><p>Calculation of all points that are right or left of a directed vector</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><ul class="simple">
-<li><p><strong>v_out</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
-<li><p><strong>v_in</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v1</strong><strong>(</strong><strong>numpy.array</strong><strong>(</strong><strong>float</strong><strong>)</strong><strong>)</strong> (<em>Point 1</em><em> of </em><em>the directed vector</em>) – </p></li>
+<li><p><strong>v2</strong><strong>(</strong><strong>numpy.array</strong><strong>(</strong><strong>float</strong><strong>)</strong><strong>)</strong> (<em>Point 2</em><em> of </em><em>the directed vector</em>) – </p></li>
+<li><p><strong>p</strong><strong>(</strong><strong>numpy.array</strong><strong>(</strong><strong>float</strong><strong>)</strong><strong>)</strong> (<em>Points that are tested</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>v_out(numpy.array(float))</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
+<li><p><strong>v_in(numpy.array(float))</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
 </ul>
 </p>
 </dd>
@@ -421,8 +670,19 @@ outside, if outside check which side</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.vect_to_ang_mag">
 <span class="sig-name descname"><span class="pre">vect_to_ang_mag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vect_xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.vect_to_ang_mag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.vect_to_ang_mag" title="Permalink to this definition"></a></dt>
-<dd><p>Function that calculates the magnitude and direction of a vector given
+<dd><p>Function that calculates the magnitude (speed) and direction (angle) of a vector given
 in x/y-form</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vect_xy</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector in xy-form</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Velocity vector in the form magnitude (speed) and direction (angle)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -430,6 +690,17 @@ in x/y-form</p>
 <span class="sig-name descname"><span class="pre">vect_to_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.vect_to_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.vect_to_xy" title="Permalink to this definition"></a></dt>
 <dd><p>Function that calculates the x/y-form of a vector given in
 magnitude/direction-form</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vector</strong> (<em>numpy.array</em><em>(</em><em>float</em><em>)</em>) – Velocity vector in magnitude/direction-form</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Velocity vector in the xy-form (x[m],y[m])</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">

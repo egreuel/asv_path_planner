@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>asv_path_planner.ros_script &mdash; Collision Avoidance 1.0.0 documentation</title>
+  <title>asv_path_planner.ros_script &mdash; Velocity Obstacle 1.0.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -27,8 +27,11 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            Collision Avoidance
+            Velocity Obstacle
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -54,7 +57,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Collision Avoidance</a>
+          <a href="../../index.html">Velocity Obstacle</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -74,7 +77,7 @@
              
   <h1>Source code for asv_path_planner.ros_script</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm</span>
+<span class="sd">This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm including some simple control algorithms for the OS in the simulation</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -194,17 +197,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Node started!&quot;</span><span class="p">)</span>
 
     <span class="c1"># Calculate the course difference between two courses (new velocity and current velocity)</span>
-<div class="viewcode-block" id="RosScriptNode.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">first_angle</span><span class="p">,</span> <span class="n">second_angle</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;_summary_</span>
+<div class="viewcode-block" id="RosScriptNode.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_angle</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the difference of an orientation angle in respect to another from -180 to 180°</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            first_angle (_type_): _description_</span>
-<span class="sd">            second_angle (_type_): _description_</span>
+<span class="sd">            ref_angle (float[°]): Reference angle to which the difference is calculated</span>
+<span class="sd">            angle (float[°]): Deviating angle from the reference angle</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            _type_: _description_</span>
+<span class="sd">            float: Angle difference in a range from -180 to 180°</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">second_angle</span> <span class="o">-</span> <span class="n">first_angle</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">-</span> <span class="n">ref_angle</span>
         <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">:</span>
             <span class="n">diff</span> <span class="o">-=</span> <span class="mi">360</span>
         <span class="k">elif</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">:</span>
@@ -213,6 +216,16 @@
 
     <span class="c1"># PID speed controller for thruster output</span>
 <div class="viewcode-block" id="RosScriptNode.compute_pid"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for OS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
         <span class="bp">self</span><span class="o">.</span><span class="n">int_error</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">*</span> <span class="n">time_step</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">der_error</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
@@ -226,6 +239,16 @@
 
     <span class="c1"># PID speed controller for thruster output   </span>
 <div class="viewcode-block" id="RosScriptNode.compute_pid_1"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_1">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for TS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error_1</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
         <span class="bp">self</span><span class="o">.</span><span class="n">int_error_1</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_1</span> <span class="o">*</span> <span class="n">time_step</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">der_error_1</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_1</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
@@ -239,6 +262,16 @@
     
     <span class="c1"># PD heading control for thruster output</span>
 <div class="viewcode-block" id="RosScriptNode.compute_pd"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pd">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PD controller for orientation control</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [°]): Desired orientation</span>
+<span class="sd">            vel (float [°]): Current Orientation</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from -0.5 to 0.5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">error_ang</span> <span class="o">=</span> <span class="n">error</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">der_error_ang</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_ang</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_ang</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_error_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_ang</span>
@@ -251,6 +284,11 @@
     
     <span class="c1"># Callback function to receive GPS coordinates of the target point/destination (TP)</span>
 <div class="viewcode-block" id="RosScriptNode.gps_callback_tp"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_tp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the target point/destination inside the unity simulation</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
         <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gps_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
@@ -258,6 +296,12 @@
 
     <span class="c1"># Callback function to receive GPS coordinates of target ship 1 (TS 1) to calculate velocity and publish a velocity to the TS</span>
 <div class="viewcode-block" id="RosScriptNode.gps_callback_ts_1"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -297,6 +341,12 @@
 
     <span class="c1"># Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS</span>
 <div class="viewcode-block" id="RosScriptNode.gps_callback_ts_2"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -336,6 +386,13 @@
 
     <span class="c1"># Main callback function where the VO is calculated and OS control is done </span>
 <div class="viewcode-block" id="RosScriptNode.gps_callback_os"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_os">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_os</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the own ship inside the unity simulation to calculate speed and orientation and</span>
+<span class="sd">        unsing the collision avoidance algorithm to find a collision free path through the simulation;it is also used to publish </span>
+<span class="sd">        commands to the thrusters of the OS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_tp</span><span class="p">:</span> <span class="c1"># Only start this callback, if every TS has received GPS data once</span>
             
             <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
@@ -466,6 +523,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
     
 <div class="viewcode-block" id="RosScriptNode.exit_handler"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.exit_handler">[docs]</a>    <span class="k">def</span> <span class="nf">exit_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># Just for plotting when closing the node with ctrl+c</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that is only used once when the ROS node is closed, to plot the results of the simulation and store the results in a .csv file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">os_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os_pos</span><span class="p">)</span>
         <span class="n">ts_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_1</span><span class="p">)</span>
         <span class="n">ts_position_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_2</span><span class="p">)</span>
@@ -662,6 +721,8 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
 
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function where the ROS node is assigned and it the node loops infinite</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rclpy</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
     <span class="n">node</span> <span class="o">=</span> <span class="n">RosScriptNode</span><span class="p">()</span>
     <span class="n">rclpy</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>asv_path_planner.velobst_class &mdash; Collision Avoidance 1.0.0 documentation</title>
+  <title>asv_path_planner.velobst_class &mdash; Velocity Obstacle 1.0.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -27,8 +27,11 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            Collision Avoidance
+            Velocity Obstacle
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -54,7 +57,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Collision Avoidance</a>
+          <a href="../../index.html">Velocity Obstacle</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -99,7 +102,21 @@
     <span class="n">w_2</span> <span class="o">=</span> <span class="mf">1.3</span>  <span class="c1"># Speed deviation from desried velocity</span>
     <span class="n">w_3</span> <span class="o">=</span> <span class="mf">1.5</span>  <span class="c1"># Angle deviation from 30° to the inital velocity</span>
     
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">leng_OS</span><span class="p">,</span> <span class="n">width_OS</span><span class="p">,</span> <span class="n">max_speedOS</span><span class="p">,</span> <span class="n">max_time_col</span><span class="p">,</span> <span class="n">treshhold</span><span class="p">,</span> <span class="n">safe_domain_fact</span><span class="p">,</span> <span class="n">speed_unc</span><span class="p">,</span> <span class="n">ang_unc</span><span class="p">,</span> <span class="n">speed_res</span><span class="p">,</span> <span class="n">ang_res</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">leng_OS</span><span class="p">,</span> <span class="n">width_OS</span><span class="p">,</span> <span class="n">max_speedOS</span><span class="p">,</span> <span class="n">time_col</span><span class="p">,</span> <span class="n">treshhold</span><span class="p">,</span> <span class="n">safe_domain_fact</span><span class="p">,</span> <span class="n">speed_unc</span><span class="p">,</span> <span class="n">ang_unc</span><span class="p">,</span> <span class="n">speed_res</span><span class="p">,</span> <span class="n">ang_res</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to initalize parameters of the OS once it is assinged to the class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            leng_OS (float [m/s]): Length of the OS</span>
+<span class="sd">            width_OS (float [m/s]): Width of the OS</span>
+<span class="sd">            max_speedOS (float [m/s]): maximum speed of the OS</span>
+<span class="sd">            time_col (int [s]): Velocities leading to a collison where the time to collision isgreater than this time will not be considerd from the algorithm</span>
+<span class="sd">            treshhold (int [s]): Time threshold to collision for stand-by scenarios; if the time to collision is smaller than this value, the OS is avoiding the collision even if it is the stand-by vessel</span>
+<span class="sd">            safe_domain_fact (int): Factor for the safety domain --&gt; multiple of the OS size</span>
+<span class="sd">            speed_unc (float [m/s]): Uncertainties in the speed measurements of the TS</span>
+<span class="sd">            ang_unc (float [°]): Uncertainties in the orientation angle measurements of the TS</span>
+<span class="sd">            speed_res (float [m/s]): Resolution of speed for the descitized velocity space</span>
+<span class="sd">            ang_res (float [°]): Resolution of orientation angle for the descitized velocity space</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">colreg</span> <span class="o">=</span> <span class="p">[]</span>
         
         <span class="c1"># Variable needed to make sure, that in case of an overtaking, the OS is not changing the side on which to overtake during the manouver</span>
@@ -111,7 +128,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_speed_OS</span> <span class="o">=</span> <span class="n">max_speedOS</span> <span class="c1"># Maximum speed of OS in m/s</span>
 
         <span class="c1"># Time thresholds</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_TTC</span> <span class="o">=</span> <span class="n">max_time_col</span>  <span class="c1"># Time to collison in s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_TTC</span> <span class="o">=</span> <span class="n">time_col</span>  <span class="c1"># Time to collison in s</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">treshhold</span>  <span class="c1"># time to collision threshold in s for standby actions</span>
 
         <span class="c1"># Safety area factor</span>
@@ -135,9 +152,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">latest_new_vel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 
 <div class="viewcode-block" id="VO.calc_coord_gps_to_xy"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy">[docs]</a>    <span class="k">def</span> <span class="nf">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_os</span><span class="p">,</span> <span class="n">coord_ts</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calc GPS coordinates to xy-coordinates in meters to the OS;</span>
-<span class="sd">        Returns the position of the target ship relative to the own ship in the xy-</span>
-<span class="sd">        coordinate system</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to calculate GPS coordinates to xy-coordinates in meters in resepct to the OS;</span>
+<span class="sd">        Returns the position of the target ship relative to the own ship in the xy-coordinate system</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            coord_os (numpy.array(float)): GPS coordiantes of OS (Latitude, longitude)</span>
+<span class="sd">            coord_ts (numpy.array(float)): GPS coordiantes of TS (Latitude, longitude)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Relative position of TS to OS in xy-coordinates (x[m],y[m])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">pos_TSy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">coord_ts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coord_os</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
         <span class="n">pos_TSx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">coord_os</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coord_ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
@@ -157,19 +180,26 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pos_Rel</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="VO.calc_abs_vel"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_abs_vel">[docs]</a>    <span class="k">def</span> <span class="nf">calc_abs_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_vel</span><span class="p">,</span> <span class="n">targ_vel</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the absolute velocity of the TS if only the</span>
-<span class="sd">        relative velocity of TS is given;</span>
+<div class="viewcode-block" id="VO.calc_abs_vel"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_abs_vel">[docs]</a>    <span class="k">def</span> <span class="nf">calc_abs_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abs_vel_os</span><span class="p">,</span> <span class="n">rel_vel_ts</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to calculate the absolute velocity of the TS if only the</span>
+<span class="sd">        relative velocity of TS to OS is given;</span>
 <span class="sd">        Returns the absolute velocity of the target ship with speed and angle</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            abs_vel_os (numpy.array(float)): Absolute velocity vector of OS (speed[m/s], angle[°])</span>
+<span class="sd">            rel_vel_ts (numpy.array(float)): Relative velocity vector of TS to OS (speed[m/s], angle[°])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Absolute velocity of the TS (speed[m/s], angle[°])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># x and y componet of the vector from magnitude(speed) and direction(angle)</span>
-        <span class="n">ref_velxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">ref_vel</span><span class="p">)</span>
-        <span class="n">vel_Relxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">targ_vel</span><span class="p">)</span>
+        <span class="c1"># x and y componet of the vector from magnitude (speed) and direction (angle)</span>
+        <span class="n">abs_vel_osxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">abs_vel_os</span><span class="p">)</span>
+        <span class="n">vel_Relxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">rel_vel_ts</span><span class="p">)</span>
         <span class="c1"># Calculate the TS vector in component form</span>
-        <span class="n">vel_TSxy_calc</span> <span class="o">=</span> <span class="n">vel_Relxy</span> <span class="o">+</span> <span class="n">ref_velxy</span>
-        <span class="c1"># Calculate the magnitude(speed) of the vector</span>
+        <span class="n">vel_TSxy_calc</span> <span class="o">=</span> <span class="n">vel_Relxy</span> <span class="o">+</span> <span class="n">abs_vel_osxy</span>
+        <span class="c1"># Calculate the magnitude (speed) of the vector</span>
         <span class="n">speed_TS_calc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vel_TSxy_calc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">vel_TSxy_calc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># Calculate the dircetion(angle) of the vector</span>
+        <span class="c1"># Calculate the dircetion (angle) of the vector</span>
         <span class="n">ang_TS_calc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">vel_TSxy_calc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vel_TSxy_calc</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">ang_TS_calc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ang_TS_calc</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
         <span class="c1"># convert the angle from east CCW to north CW</span>
@@ -179,16 +209,25 @@
 
 
 <div class="viewcode-block" id="VO.calc_rel_vel"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_rel_vel">[docs]</a>    <span class="k">def</span> <span class="nf">calc_rel_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_TS</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the relative velocity of OS and TS &quot;&quot;&quot;</span>
-        <span class="c1"># x and y componet of the vector from magnitude(speed) and direction(angle)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to calculate the relative velocity of the OS to TS if only the</span>
+<span class="sd">        absolute velocity of TS and OS are given;</span>
+<span class="sd">        Returns the relative velocity of the OS to TS with speed and angle</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vel_OS (numpy.array(float)): Absolute velocity vector of OS (speed[m/s], angle[°])</span>
+<span class="sd">            vel_TS (numpy.array(float)): Absolute velocity vector of TS (speed[m/s], angle[°])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Relative velocity of OS to TS (speed[m/s], angle[°])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># x and y componet of the vector from magnitude (speed) and direction (angle)</span>
         <span class="n">vel_OSxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">)</span>
         <span class="n">vel_TSxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">vel_TS</span><span class="p">)</span>
         <span class="c1"># Calculate the relative vector in component form</span>
         <span class="n">vel_Relxy</span> <span class="o">=</span> <span class="n">vel_OSxy</span> <span class="o">-</span> <span class="n">vel_TSxy</span>
-        <span class="c1"># Calculate the magnitude(speed) of the vector</span>
+        <span class="c1"># Calculate the magnitude (speed) of the vector</span>
         <span class="n">speed_Rel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vel_Relxy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">vel_Relxy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># Calculate the dircetion(angle) of the vector</span>
-        <span class="c1"># Add special cases for rel Velocity speed = 0</span>
+        <span class="c1"># Calculate the dircetion (angle) of the vector</span>
         <span class="n">ang_Rel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">vel_Relxy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vel_Relxy</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">ang_Rel</span> <span class="o">=</span> <span class="p">(</span><span class="n">ang_Rel</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
         <span class="c1"># convert the angle from east CCW to north CW</span>
@@ -197,8 +236,15 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vel_Rel</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.vect_to_ang_mag"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_ang_mag">[docs]</a>    <span class="k">def</span> <span class="nf">vect_to_ang_mag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vect_xy</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function that calculates the magnitude and direction of a vector given</span>
-<span class="sd">        in x/y-form &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the magnitude (speed) and direction (angle) of a vector given</span>
+<span class="sd">        in x/y-form </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vect_xy (numpy.array(float)): Velocity vector in xy-form</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Velocity vector in the form magnitude (speed) and direction (angle)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vect_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">vect_xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">vect_xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vect_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">angle</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
@@ -207,24 +253,43 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.vect_to_xy"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_xy">[docs]</a>    <span class="k">def</span> <span class="nf">vect_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function that calculates the x/y-form of a vector given in</span>
-<span class="sd">        magnitude/direction-form &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the x/y-form of a vector given in</span>
+<span class="sd">        magnitude/direction-form </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vector (numpy.array(float)): Velocity vector in magnitude/direction-form</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Velocity vector in the xy-form (x[m],y[m])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">vect_xy</span> <span class="o">=</span> <span class="p">([</span><span class="n">vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calc_ang_n_to_e</span><span class="p">(</span><span class="n">vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]))),</span>
                             <span class="n">vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calc_ang_n_to_e</span><span class="p">(</span><span class="n">vector</span><span class="p">[</span><span class="mi">1</span><span class="p">])))])</span>
         
-        <span class="c1"># slower:</span>
-        <span class="c1"># vect_xy = ([vector[:,0] * np.cos(np.radians(self.calc_ang_n_to_e(vector[:,1]))),</span>
-        <span class="c1">#                     vector[:,0] * np.sin(np.radians(self.calc_ang_n_to_e(vector[:,1])))])</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vect_xy</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.calc_ang_n_to_e"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_n_to_e">[docs]</a>    <span class="k">def</span> <span class="nf">calc_ang_n_to_e</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function that converts the angle from the north clockwise system to the</span>
-<span class="sd">        east counter clockwise system and vice versa &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that converts the angle from the north clockwise system to the</span>
+<span class="sd">        east counter-clockwise system and vice versa </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            angle (float): Orientation angle in north clockwise or east counter-clockwise system</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Orientation angle base on the other system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">angle</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
         <span class="k">return</span> <span class="n">alpha</span></div>
 
 <div class="viewcode-block" id="VO.calc_minkowski_sum"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_minkowski_sum">[docs]</a>    <span class="k">def</span> <span class="nf">calc_minkowski_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vert_TS</span><span class="p">,</span> <span class="n">vert_OS</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function of the minkoswski sum &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to calculate the Minkowski sum of two shapes</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vert_TS (numpy.array(float)): numpy array of xy-coordinates that form the shape of the TS</span>
+<span class="sd">            vert_OS (numpy.array(float)): numpy array of xy-coordinates that form the shape of the OS</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): numpy array with new xy-coordinates of the added shapes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vert_TS</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">vert_OS</span><span class="p">:</span>
@@ -234,16 +299,17 @@
 <div class="viewcode-block" id="VO.orientation"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.orientation">[docs]</a>    <span class="k">def</span> <span class="nf">orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculation of all points that are right or left of a directed vector</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        v1 : Vertex 1 of the velocity obstacle.</span>
-<span class="sd">        v2 : Vertex 2 of the velocity obstacle.</span>
-<span class="sd">        p : Points that are tested</span>
+<span class="sd">        v1(numpy.array(float)): Point 1 of the directed vector</span>
+<span class="sd">        v2(numpy.array(float)): Point 2 of the directed vector</span>
+<span class="sd">        p(numpy.array(float)): Points that are tested</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        v_out :  all points left from the vector formed by v1, v2</span>
-<span class="sd">        v_in : all points left from the vector formed by v1, v2</span>
+<span class="sd">        v_out(numpy.array(float)):  all points left from the vector formed by v1, v2</span>
+<span class="sd">        v_in(numpy.array(float)): all points left from the vector formed by v1, v2</span>
 <span class="sd">        &quot;&quot;&quot;</span>     
         <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">v1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">v2</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">-</span> \
             <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">v1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
@@ -267,13 +333,13 @@
 <span class="sd">        Calculation of all point inside or outside the velocity obstacle</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        v_test : Velocity points to test</span>
-<span class="sd">        vo : velocity obstacle vertices</span>
+<span class="sd">        v_test(numpy.array(float)): Velocity vector in xy-coordinates to test</span>
+<span class="sd">        vo(numpy.array(float)): velocity obstacle vertices</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        v_outn : all points outside the VO </span>
-<span class="sd">        v_test : all points inside the VO</span>
+<span class="sd">        v_outn(numpy.array(float)): all points outside the VO </span>
+<span class="sd">        v_test(numpy.array(float)): all points inside the VO</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">v_outn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
@@ -286,7 +352,15 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_outn</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_test</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.check_collision"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.check_collision">[docs]</a>    <span class="k">def</span> <span class="nf">check_collision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_p</span><span class="p">,</span> <span class="n">vel_obs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function Check for Collision &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that checks if a point is inside a convex shape</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vel_p (numpy.array(float)): Point to be tested</span>
+<span class="sd">            vel_obs (numpy.array(float)): Vertices of the shape to be tested against</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if point is inside the shape, False if outside the shape</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">vel_p_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">vel_p</span><span class="p">)</span>
         <span class="n">vel_p_xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">vel_p_xy</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">outo</span><span class="p">,</span> <span class="n">intu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inOutVO</span><span class="p">(</span><span class="n">vel_p_xy</span><span class="p">,</span> <span class="n">vel_obs</span><span class="p">)</span>
@@ -298,13 +372,29 @@
         <span class="k">return</span> <span class="n">collision</span></div>
 
 <div class="viewcode-block" id="VO.calc_ang_vect"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_vect">[docs]</a>    <span class="k">def</span> <span class="nf">calc_ang_vect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_Rel</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calulate the angle between the two velocity vectors &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to calculate the angle that is formed by two velocity vectors</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vel_OS (numpy.array(float)): Velocity vector (speed[m/s], angle[°])</span>
+<span class="sd">            vel_Rel (numpy.array(float)): Velocity vector (speed[m/s], angle[°])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Angle between two vectors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="p">((</span><span class="n">vel_Rel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
         <span class="k">return</span> <span class="n">phi</span></div>
 
 <div class="viewcode-block" id="VO.check_colreg_rule_heading"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.check_colreg_rule_heading">[docs]</a>    <span class="k">def</span> <span class="nf">check_colreg_rule_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_OS_2</span><span class="p">,</span> <span class="n">vel_TS_2</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to check COLREG rule (angle between vel_OS and</span>
-<span class="sd">        vel_TS heading// course over ground) &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that checks which COLREG rule have to be applied (angle between the course </span>
+<span class="sd">        over gorud of OS and </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vel_OS_2 (numpy.array(float)): Velocity vector of OS (speed[m/s], angle[°])</span>
+<span class="sd">            vel_TS_2 (numpy.array(float)): elocity vector of TS (speed[m/s], angle[°])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: String of the COLREG rule applied for the given encounter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">vel</span> <span class="o">=</span> <span class="n">vel_TS_2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">vel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vel_TS_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">180</span>
         <span class="k">if</span> <span class="n">vel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.1</span><span class="p">:</span>  <span class="c1"># Threshhold for static objects</span>
@@ -325,8 +415,16 @@
         <span class="k">return</span> <span class="n">colreg_rule_2</span></div>
 
 <div class="viewcode-block" id="VO.check_side"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.check_side">[docs]</a>    <span class="k">def</span> <span class="nf">check_side</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_Rel</span><span class="p">,</span> <span class="n">tang_coord</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function that checks wether the relative velocity is inside the CC or</span>
-<span class="sd">        outside, if outside check which side &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function that checks wether the relative velocity of OS to TS is inside the CC or</span>
+<span class="sd">        outside, if outside check which side</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vel_Rel (numpy.array(float)): Relative velocity vector of OS to TS (speed, angle)</span>
+<span class="sd">            tang_coord (numpy.array(float)): Coordinates of the tangent points of TS shape that form the CC</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: String that say if the velocity is inside, right or left of the CC</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">side</span> <span class="o">=</span> <span class="s1">&#39;empty or inside&#39;</span>
 
         <span class="n">tang_points_vec_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_ang_mag</span><span class="p">(</span><span class="n">tang_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
@@ -334,7 +432,7 @@
 
         <span class="n">angles_betw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_betw_vect</span><span class="p">(</span><span class="n">vel_Rel</span><span class="p">,</span> <span class="n">tang_points_vec_1</span><span class="p">,</span> <span class="n">tang_points_vec_2</span><span class="p">)</span>
         <span class="n">angles_betw_tang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_betw_vect</span><span class="p">(</span><span class="n">tang_points_vec_1</span><span class="p">,</span> <span class="n">tang_points_vec_2</span><span class="p">)</span>
-
+      
         <span class="k">if</span> <span class="n">angles_betw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">angles_betw_tang</span><span class="p">:</span>
             <span class="n">side</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span>
         <span class="k">elif</span> <span class="n">angles_betw</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">angles_betw_tang</span><span class="p">:</span>
@@ -343,7 +441,15 @@
         <span class="k">return</span> <span class="n">side</span></div>
 
 <div class="viewcode-block" id="VO.ang_betw_vect"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.ang_betw_vect">[docs]</a>    <span class="k">def</span> <span class="nf">ang_betw_vect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_vect</span><span class="p">,</span> <span class="o">*</span><span class="n">test_vect</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the angle between two vectors &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the angle between two vectors in range 0 to 180°</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ref_vect (numpy.array(float)): Velocity vector to which the angle is calculated</span>
+<span class="sd">            *test_vect (numpy.array(float)): Velocity vectors that are tested against the ref_vect</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            numpy.array(float): Angles [°] between the reference vector and the test vectors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ref_vect_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">(</span><span class="n">ref_vect</span><span class="p">)</span>
         <span class="n">test_vect_xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vect_to_xy</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">test_vect</span><span class="p">)</span>
         <span class="n">test_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vect_to_ang_mag</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">test_vect_xy</span><span class="p">)</span>
@@ -354,9 +460,17 @@
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">angles_betw</span><span class="p">)</span></div>
     
-<div class="viewcode-block" id="VO.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">first_angle</span><span class="p">,</span> <span class="n">second_angle</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the angle between two angles (+-180°) &quot;&quot;&quot;</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">second_angle</span> <span class="o">-</span> <span class="n">first_angle</span>
+<div class="viewcode-block" id="VO.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_angle</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the difference of an orientation angle in respect to another from -180 to 180°</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ref_angle (float[°]): Reference angle to which the difference is calculated</span>
+<span class="sd">            angle (float[°]): Deviating angle from the reference angle</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Angle difference in a range from -180 to 180°</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">-</span> <span class="n">ref_angle</span>
         <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">:</span>
             <span class="n">diff</span> <span class="o">-=</span> <span class="mi">360</span>
         <span class="k">elif</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">:</span>
@@ -364,8 +478,17 @@
         <span class="k">return</span> <span class="n">diff</span></div>
 
 <div class="viewcode-block" id="VO.calc_vel_obst"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_obst">[docs]</a>    <span class="k">def</span> <span class="nf">calc_vel_obst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">TS</span><span class="p">,</span> <span class="n">ang_os_rad</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the VO, gives back an array with the vertices of</span>
-<span class="sd">        the VO &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the Velocity Obstacle of each TS with uncertainities and with respect to the time to collision</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            TS (class object): Object of the class TS with information about the target ship</span>
+<span class="sd">            ang_os_rad (float): Orientation of the OS in radian</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (numpy.array(float),numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices</span>
+<span class="sd">            of the velocity obstacle, the vertices of the saftey area around the TS, the tangent points at the safety area around TS</span>
+<span class="sd">            seen from OS, the points that form the line for the COLRGE contrains</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">pos_TS_rel</span> <span class="o">=</span> <span class="n">TS</span><span class="o">.</span><span class="n">pos</span>
         <span class="n">len_TS</span> <span class="o">=</span> <span class="n">TS</span><span class="o">.</span><span class="n">length</span>
         <span class="n">wid_TS</span> <span class="o">=</span> <span class="n">TS</span><span class="o">.</span><span class="n">width</span>
