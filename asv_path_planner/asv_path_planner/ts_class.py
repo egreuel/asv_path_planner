@@ -1,6 +1,23 @@
-class TS:
+"""
+Module for target ships (TS)/obstacles consisting of one class
 
-    def __init__(self):
+"""
+
+class TS:
+    """
+    Class that stores information about TS/obstacles:
+    
+    - Position
+    - Length
+    - Width
+    - Speed
+    - Orientation
+
+    and other that are stored during the collision avoidance algorithm.
+
+    """
+    def __init__(self,length):
+        
         self.colreg_init = []
         self.os_init = []
         

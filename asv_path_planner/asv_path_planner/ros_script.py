@@ -1,3 +1,8 @@
+"""
+This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm including some simple control algorithms for the OS in the simulation
+
+"""
+
 #!/usr/bin/env python3
 from .velobst_class import VO
 from .ts_class import TS
@@ -14,6 +19,9 @@ import rclpy
 import csv
 
 class RosScriptNode(Node):
+    """
+    This class defines the ROS node which is used to connect to the MARUS simulator
+    """
 
     def __init__(self):
         super().__init__("ros_script")
@@ -112,6 +120,15 @@ class RosScriptNode(Node):
 
     # Calculate the course difference between two courses (new velocity and current velocity)
     def angle_diff(self, first_angle, second_angle):
+        """_summary_
+
+        Args:
+            first_angle (_type_): _description_
+            second_angle (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         diff = second_angle - first_angle
         if diff > 180:
             diff -= 360

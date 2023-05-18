@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASV path planner package &mdash; Collision Avoidance 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="MARUS Simulator" href="MARUS%20Simulator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Collision Avoidance
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="COLREGs.html">COLREGs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Velocity%20Obstacle.html">Velocity Obstacle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MARUS%20Simulator.html">MARUS Simulator</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ASV path planner package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-asv_path_planner.ros_script">ROS node module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode"><code class="docutils literal notranslate"><span class="pre">RosScriptNode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.angle_diff"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.angle_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pd"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.exit_handler"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.exit_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_os"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_os()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_2()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#asv_path_planner.ros_script.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-asv_path_planner.ts_class">Target Ship (TS) module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#asv_path_planner.ts_class.TS"><code class="docutils literal notranslate"><span class="pre">TS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-asv_path_planner.velobst_class">Velocity Obstacle (VO) module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#asv_path_planner.velobst_class.VO"><code class="docutils literal notranslate"><span class="pre">VO</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.add_uncert"><code class="docutils literal notranslate"><span class="pre">VO.add_uncert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.ang_betw_vect"><code class="docutils literal notranslate"><span class="pre">VO.ang_betw_vect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.angle_diff"><code class="docutils literal notranslate"><span class="pre">VO.angle_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_abs_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_abs_vel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_ang_n_to_e"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_n_to_e()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_ang_vect"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_vect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_colreg_con"><code class="docutils literal notranslate"><span class="pre">VO.calc_colreg_con()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.calc_coord_gps_to_xy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_free_vel_space"><code class="docutils literal notranslate"><span class="pre">VO.calc_free_vel_space()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_minkowski_sum"><code class="docutils literal notranslate"><span class="pre">VO.calc_minkowski_sum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_new_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_new_vel_overtaking"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel_overtaking()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_rel_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_rel_vel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_vel_final"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_final()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.calc_vel_obst"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_obst()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.check_coll_point"><code class="docutils literal notranslate"><span class="pre">VO.check_coll_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.check_collision"><code class="docutils literal notranslate"><span class="pre">VO.check_collision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.check_colreg_rule_heading"><code class="docutils literal notranslate"><span class="pre">VO.check_colreg_rule_heading()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.check_side"><code class="docutils literal notranslate"><span class="pre">VO.check_side()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.extract_most_common_vel"><code class="docutils literal notranslate"><span class="pre">VO.extract_most_common_vel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.inOutVO"><code class="docutils literal notranslate"><span class="pre">VO.inOutVO()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.orientation"><code class="docutils literal notranslate"><span class="pre">VO.orientation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.vect_to_ang_mag"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_ang_mag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.vect_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_xy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.w_1"><code class="docutils literal notranslate"><span class="pre">VO.w_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.w_2"><code class="docutils literal notranslate"><span class="pre">VO.w_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.velobst_class.VO.w_3"><code class="docutils literal notranslate"><span class="pre">VO.w_3</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Collision Avoidance</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ASV path planner package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/asv_path_planner.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="asv-path-planner-package">
+<h1>ASV path planner package<a class="headerlink" href="#asv-path-planner-package" title="Permalink to this heading"></a></h1>
+<section id="module-asv_path_planner.ros_script">
+<span id="ros-node-module"></span><h2>ROS node module<a class="headerlink" href="#module-asv_path_planner.ros_script" title="Permalink to this heading"></a></h2>
+<p>This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ros_script.</span></span><span class="sig-name descname"><span class="pre">RosScriptNode</span></span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></p>
+<p>This class defines the ROS node which is used to connect to the MARUS simulator</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.angle_diff">
+<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.angle_diff" title="Permalink to this definition"></a></dt>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>first_angle</strong> (<em>_type_</em>) – _description_</p></li>
+<li><p><strong>second_angle</strong> (<em>_type_</em>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_type_</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pd">
+<span class="sig-name descname"><span class="pre">compute_pd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pd" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid">
+<span class="sig-name descname"><span class="pre">compute_pid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid_1">
+<span class="sig-name descname"><span class="pre">compute_pid_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.exit_handler">
+<span class="sig-name descname"><span class="pre">exit_handler</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.exit_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.exit_handler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_os">
+<span class="sig-name descname"><span class="pre">gps_callback_os</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_os"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_os" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp">
+<span class="sig-name descname"><span class="pre">gps_callback_tp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1">
+<span class="sig-name descname"><span class="pre">gps_callback_ts_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_ts_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2">
+<span class="sig-name descname"><span class="pre">gps_callback_ts_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_ts_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.main">
+<span class="sig-prename descclassname"><span class="pre">asv_path_planner.ros_script.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.main" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-asv_path_planner.ts_class">
+<span id="target-ship-ts-module"></span><h2>Target Ship (TS) module<a class="headerlink" href="#module-asv_path_planner.ts_class" title="Permalink to this heading"></a></h2>
+<p>Module for target ships (TS)/obstacles consisting of one class</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="asv_path_planner.ts_class.TS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ts_class.</span></span><span class="sig-name descname"><span class="pre">TS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ts_class.html#TS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ts_class.TS" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class that stores information about TS/obstacles:</p>
+<ul class="simple">
+<li><p>Position</p></li>
+<li><p>Length</p></li>
+<li><p>Width</p></li>
+<li><p>Speed</p></li>
+<li><p>Orientation</p></li>
+</ul>
+<p>and other that are stored during the collision avoidance algorithm.</p>
+</dd></dl>
+
+</section>
+<section id="module-asv_path_planner.velobst_class">
+<span id="velocity-obstacle-vo-module"></span><h2>Velocity Obstacle (VO) module<a class="headerlink" href="#module-asv_path_planner.velobst_class" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.velobst_class.</span></span><span class="sig-name descname"><span class="pre">VO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leng_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_speedOS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_time_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treshhold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_domain_fact</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_res</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.add_uncert">
+<span class="sig-name descname"><span class="pre">add_uncert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_obst</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posTS_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.add_uncert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.add_uncert" title="Permalink to this definition"></a></dt>
+<dd><p>Function to add the uncertainties in speed and angle of the TS to the
+VO</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.ang_betw_vect">
+<span class="sig-name descname"><span class="pre">ang_betw_vect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_vect</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">test_vect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.ang_betw_vect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.ang_betw_vect" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the angle between two vectors</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.angle_diff">
+<span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.angle_diff" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the angle between two angles (+-180°)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_abs_vel">
+<span class="sig-name descname"><span class="pre">calc_abs_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targ_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_abs_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_abs_vel" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the absolute velocity of the TS if only the
+relative velocity of TS is given;
+Returns the absolute velocity of the target ship with speed and angle</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_ang_n_to_e">
+<span class="sig-name descname"><span class="pre">calc_ang_n_to_e</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_ang_n_to_e"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_ang_n_to_e" title="Permalink to this definition"></a></dt>
+<dd><p>Function that converts the angle from the north clockwise system to the
+east counter clockwise system and vice versa</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_ang_vect">
+<span class="sig-name descname"><span class="pre">calc_ang_vect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_Rel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_ang_vect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_ang_vect" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calulate the angle between the two velocity vectors</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_colreg_con">
+<span class="sig-name descname"><span class="pre">calc_colreg_con</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_TS_xy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_TS_rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colr_rule</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_colreg_con"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_colreg_con" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the COLREG constrains</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy">
+<span class="sig-name descname"><span class="pre">calc_coord_gps_to_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord_os</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_ts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_coord_gps_to_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calc GPS coordinates to xy-coordinates in meters to the OS;
+Returns the position of the target ship relative to the own ship in the xy-
+coordinate system</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_free_vel_space">
+<span class="sig-name descname"><span class="pre">calc_free_vel_space</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">velobs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_space_free</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_free_vel_space"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_free_vel_space" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate all velocities that are free of collision</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>velobs</strong> (<em>velocity obstacle</em><em> or </em><em>colreg contrains</em>) – </p></li>
+<li><p><strong>vel_space_free</strong> (<em>all possible velocities</em><em> of </em><em>the OS</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>vel_space_free</strong> (<em>free velocities</em>)</p></li>
+<li><p><strong>in_all</strong> (<em>all velocities inside the VO</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_minkowski_sum">
+<span class="sig-name descname"><span class="pre">calc_minkowski_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vert_TS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_OS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_minkowski_sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_minkowski_sum" title="Permalink to this definition"></a></dt>
+<dd><p>Function of the minkoswski sum</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_new_vel">
+<span class="sig-name descname"><span class="pre">calc_new_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_des</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_new_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_new_vel" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the new velocity for encounters, where no COLREG
+constrains are applied</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_new_vel_overtaking">
+<span class="sig-name descname"><span class="pre">calc_new_vel_overtaking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_des</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_new_vel_overtaking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_new_vel_overtaking" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the new velocity for encounters, where COLREG
+constrains are applied</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_rel_vel">
+<span class="sig-name descname"><span class="pre">calc_rel_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_rel_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_rel_vel" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the relative velocity of OS and TS</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_vel_final">
+<span class="sig-name descname"><span class="pre">calc_vel_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">os_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">this</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_os</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_vel_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_vel_final" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.calc_vel_obst">
+<span class="sig-name descname"><span class="pre">calc_vel_obst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">TS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_os_rad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.calc_vel_obst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.calc_vel_obst" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the VO, gives back an array with the vertices of
+the VO</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_coll_point">
+<span class="sig-name descname"><span class="pre">check_coll_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_Relxy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_OS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_OSxy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TSxy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_hull</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tang_points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_coll_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_coll_point" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate Point of collision, Distance to collision,
+Time to collision</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_collision">
+<span class="sig-name descname"><span class="pre">check_collision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_obs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_collision"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_collision" title="Permalink to this definition"></a></dt>
+<dd><p>Function Check for Collision</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_colreg_rule_heading">
+<span class="sig-name descname"><span class="pre">check_colreg_rule_heading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_OS_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_TS_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_colreg_rule_heading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_colreg_rule_heading" title="Permalink to this definition"></a></dt>
+<dd><p>Function to check COLREG rule (angle between vel_OS and
+vel_TS heading// course over ground)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.check_side">
+<span class="sig-name descname"><span class="pre">check_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel_Rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tang_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.check_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.check_side" title="Permalink to this definition"></a></dt>
+<dd><p>Function that checks wether the relative velocity is inside the CC or
+outside, if outside check which side</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.extract_most_common_vel">
+<span class="sig-name descname"><span class="pre">extract_most_common_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.extract_most_common_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.extract_most_common_vel" title="Permalink to this definition"></a></dt>
+<dd><p>Function to calculate the most common velocity</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.inOutVO">
+<span class="sig-name descname"><span class="pre">inOutVO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.inOutVO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.inOutVO" title="Permalink to this definition"></a></dt>
+<dd><p>Calculation of all point inside or outside the velocity obstacle
+:param v_test:
+:type v_test: Velocity points to test
+:param vo:
+:type vo: velocity obstacle vertices</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>v_outn</strong> (<em>all points outside the VO</em>)</p></li>
+<li><p><strong>v_test</strong> (<em>all points inside the VO</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.orientation">
+<span class="sig-name descname"><span class="pre">orientation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.orientation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.orientation" title="Permalink to this definition"></a></dt>
+<dd><p>Calculation of all points that are right or left of a directed vector
+:param v1:
+:type v1: Vertex 1 of the velocity obstacle.
+:param v2:
+:type v2: Vertex 2 of the velocity obstacle.
+:param p:
+:type p: Points that are tested</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>v_out</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
+<li><p><strong>v_in</strong> (<em>all points left from the vector formed by v1, v2</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.vect_to_ang_mag">
+<span class="sig-name descname"><span class="pre">vect_to_ang_mag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vect_xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.vect_to_ang_mag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.vect_to_ang_mag" title="Permalink to this definition"></a></dt>
+<dd><p>Function that calculates the magnitude and direction of a vector given
+in x/y-form</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.vect_to_xy">
+<span class="sig-name descname"><span class="pre">vect_to_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.vect_to_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.vect_to_xy" title="Permalink to this definition"></a></dt>
+<dd><p>Function that calculates the x/y-form of a vector given in
+magnitude/direction-form</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.w_1">
+<span class="sig-name descname"><span class="pre">w_1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#asv_path_planner.velobst_class.VO.w_1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.w_2">
+<span class="sig-name descname"><span class="pre">w_2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.3</span></em><a class="headerlink" href="#asv_path_planner.velobst_class.VO.w_2" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.w_3">
+<span class="sig-name descname"><span class="pre">w_3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.5</span></em><a class="headerlink" href="#asv_path_planner.velobst_class.VO.w_3" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="MARUS%20Simulator.html" class="btn btn-neutral float-left" title="MARUS Simulator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Eric Greuel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
