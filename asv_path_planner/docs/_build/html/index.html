@@ -11,6 +11,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
@@ -50,7 +52,9 @@
 <li class="toctree-l1"><a class="reference internal" href="MARUS%20Simulator.html">MARUS Simulator</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">ASV path planner package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">ROS node module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.ts_class">Target Ship (TS) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.velobst_class">Velocity Obstacle (VO) module</a></li>
 </ul>
 
         </div>
@@ -92,66 +96,66 @@ compliance with COLREGs.</p>
 <li class="toctree-l1"><a class="reference internal" href="MARUS%20Simulator.html">MARUS Simulator</a></li>
 </ul>
 </div>
+<section id="implementation-in-python">
+<h2>Implementation in python<a class="headerlink" href="#implementation-in-python" title="Permalink to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">ASV path planner package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.ros_script">ROS node module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode"><code class="docutils literal notranslate"><span class="pre">RosScriptNode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.angle_diff()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pd"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pd()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_1()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.exit_handler"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.exit_handler()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_os"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_os()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_1()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_2()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">ROS node module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode"><code class="docutils literal notranslate"><span class="pre">RosScriptNode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.angle_diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pd"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.exit_handler"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.exit_handler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_os"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_os()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_2()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ros_script.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.ts_class">Target Ship (TS) module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ts_class.TS"><code class="docutils literal notranslate"><span class="pre">TS</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.ts_class">Target Ship (TS) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.ts_class.TS"><code class="docutils literal notranslate"><span class="pre">TS</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.velobst_class">Velocity Obstacle (VO) module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO"><code class="docutils literal notranslate"><span class="pre">VO</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.add_uncert"><code class="docutils literal notranslate"><span class="pre">VO.add_uncert()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.ang_betw_vect"><code class="docutils literal notranslate"><span class="pre">VO.ang_betw_vect()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.angle_diff"><code class="docutils literal notranslate"><span class="pre">VO.angle_diff()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_abs_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_abs_vel()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_n_to_e"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_n_to_e()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_vect"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_vect()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_colreg_con"><code class="docutils literal notranslate"><span class="pre">VO.calc_colreg_con()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.calc_coord_gps_to_xy()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_free_vel_space"><code class="docutils literal notranslate"><span class="pre">VO.calc_free_vel_space()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_minkowski_sum"><code class="docutils literal notranslate"><span class="pre">VO.calc_minkowski_sum()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_new_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_new_vel_overtaking"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel_overtaking()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_rel_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_rel_vel()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_final"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_final()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_obst"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_obst()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_coll_point"><code class="docutils literal notranslate"><span class="pre">VO.check_coll_point()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_collision"><code class="docutils literal notranslate"><span class="pre">VO.check_collision()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_colreg_rule_heading"><code class="docutils literal notranslate"><span class="pre">VO.check_colreg_rule_heading()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_side"><code class="docutils literal notranslate"><span class="pre">VO.check_side()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.extract_most_common_vel"><code class="docutils literal notranslate"><span class="pre">VO.extract_most_common_vel()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.inOutVO"><code class="docutils literal notranslate"><span class="pre">VO.inOutVO()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.orientation"><code class="docutils literal notranslate"><span class="pre">VO.orientation()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_ang_mag"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_ang_mag()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_xy()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_1"><code class="docutils literal notranslate"><span class="pre">VO.w_1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_2"><code class="docutils literal notranslate"><span class="pre">VO.w_2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_3"><code class="docutils literal notranslate"><span class="pre">VO.w_3</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html#module-asv_path_planner.velobst_class">Velocity Obstacle (VO) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO"><code class="docutils literal notranslate"><span class="pre">VO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.add_uncert"><code class="docutils literal notranslate"><span class="pre">VO.add_uncert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.ang_betw_vect"><code class="docutils literal notranslate"><span class="pre">VO.ang_betw_vect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.angle_diff"><code class="docutils literal notranslate"><span class="pre">VO.angle_diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_abs_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_abs_vel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_n_to_e"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_n_to_e()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_ang_vect"><code class="docutils literal notranslate"><span class="pre">VO.calc_ang_vect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_colreg_con"><code class="docutils literal notranslate"><span class="pre">VO.calc_colreg_con()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_coord_gps_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.calc_coord_gps_to_xy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_free_vel_space"><code class="docutils literal notranslate"><span class="pre">VO.calc_free_vel_space()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_minkowski_sum"><code class="docutils literal notranslate"><span class="pre">VO.calc_minkowski_sum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_new_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_new_vel_overtaking"><code class="docutils literal notranslate"><span class="pre">VO.calc_new_vel_overtaking()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_rel_vel"><code class="docutils literal notranslate"><span class="pre">VO.calc_rel_vel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_final"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_final()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_obst"><code class="docutils literal notranslate"><span class="pre">VO.calc_vel_obst()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_coll_point"><code class="docutils literal notranslate"><span class="pre">VO.check_coll_point()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_collision"><code class="docutils literal notranslate"><span class="pre">VO.check_collision()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_colreg_rule_heading"><code class="docutils literal notranslate"><span class="pre">VO.check_colreg_rule_heading()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.check_side"><code class="docutils literal notranslate"><span class="pre">VO.check_side()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.extract_most_common_vel"><code class="docutils literal notranslate"><span class="pre">VO.extract_most_common_vel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.inOutVO"><code class="docutils literal notranslate"><span class="pre">VO.inOutVO()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.orientation"><code class="docutils literal notranslate"><span class="pre">VO.orientation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_ang_mag"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_ang_mag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.vect_to_xy"><code class="docutils literal notranslate"><span class="pre">VO.vect_to_xy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_1"><code class="docutils literal notranslate"><span class="pre">VO.w_1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_2"><code class="docutils literal notranslate"><span class="pre">VO.w_2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="asv_path_planner.html#asv_path_planner.velobst_class.VO.w_3"><code class="docutils literal notranslate"><span class="pre">VO.w_3</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </div>
+</section>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>

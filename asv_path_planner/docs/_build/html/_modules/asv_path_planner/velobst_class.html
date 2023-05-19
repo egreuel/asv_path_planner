@@ -10,6 +10,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
@@ -485,9 +487,9 @@
 <span class="sd">            ang_os_rad (float): Orientation of the OS in radian</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            (numpy.array(float),numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices</span>
+<span class="sd">            (numpy.array(float),numpy.array(float),numpy.array(float)): Multiple values are returned: The vertices</span>
 <span class="sd">            of the velocity obstacle, the vertices of the saftey area around the TS, the tangent points at the safety area around TS</span>
-<span class="sd">            seen from OS, the points that form the line for the COLRGE contrains</span>
+<span class="sd">            seen from OS</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">pos_TS_rel</span> <span class="o">=</span> <span class="n">TS</span><span class="o">.</span><span class="n">pos</span>
         <span class="n">len_TS</span> <span class="o">=</span> <span class="n">TS</span><span class="o">.</span><span class="n">length</span>
@@ -736,6 +738,7 @@
         <span class="n">index_p_l</span> <span class="o">=</span> <span class="n">index_l</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distance_i_l</span><span class="p">)]</span>
         <span class="n">index_p_r</span> <span class="o">=</span> <span class="n">index_r</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distance_i_r</span><span class="p">)]</span>
         
+        <span class="c1"># Extract the unc vertices</span>
         <span class="k">if</span> <span class="n">index_p_l</span> <span class="o">&gt;</span> <span class="n">index_p_r</span><span class="p">:</span>
             
             <span class="n">vert_hull_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
@@ -746,10 +749,8 @@
             <span class="k">elif</span> <span class="n">index_p_r</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vert_VO_testo_unc</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
                 <span class="n">vert_hull_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">vert_VO_testo_unc</span><span class="p">[</span><span class="n">index_p_l</span><span class="o">-</span><span class="mi">1</span><span class="p">:],</span><span class="n">vert_VO_testo_unc</span><span class="p">[:</span><span class="mi">1</span><span class="p">]))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">vert_hull_unc</span> <span class="o">=</span> <span class="n">vert_VO_testo_unc</span><span class="p">[</span><span class="n">index_p_l</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">index_p_r</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="c1">##### == shifted hull vert unc with the 2nd point on line if index_p_l-1 and index_p_r+2</span>
-        <span class="c1"># Extract the unc vertices</span>
-        <span class="c1"># take the two points of the b and calculate the distance to TS. Take the further point. Then extract all points between these two points. Depending on where they are in the array either delete or take all.</span>
-        <span class="n">points_colreg_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">vert_hull_unc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">vert_hull_unc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">vert_hull_unc</span> <span class="o">=</span> <span class="n">vert_VO_testo_unc</span><span class="p">[</span><span class="n">index_p_l</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">index_p_r</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span>
+
         <span class="c1"># VO with unc and TTC</span>
         <span class="n">vel_obst_TTC_unc</span> <span class="o">=</span> <span class="n">vert_hull_unc</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         
@@ -801,7 +802,7 @@
             <span class="c1"># plt.annotate(&#39;Uncertainty \nin $V_{TS}$ \n(Unc)&#39;, xy=(9.2 , 26), xycoords=&#39;data&#39;, xytext=(-89, 30), textcoords=&#39;offset points&#39;, arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;angle3,angleA=0,angleB=90&quot;), bbox=dict(pad=-9, facecolor=&quot;none&quot;, edgecolor=&quot;none&quot;))</span>
             <span class="c1"># plt.annotate(&#39;VO with \nuncertainty \nin $V_{TS}$ \n($VO \oplus Unc$)&#39;, xy=(11, 15), xycoords=&#39;data&#39;, xytext=(10, -70), textcoords=&#39;offset points&#39;, arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;angle3,angleA=90,angleB=0&quot;))</span>
 
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vel_obst_TTC_unc</span><span class="p">,</span> <span class="n">vert_hull</span><span class="p">,</span> <span class="n">tang_points</span><span class="p">,</span> <span class="n">points_colreg_line</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vel_obst_TTC_unc</span><span class="p">,</span> <span class="n">vert_hull</span><span class="p">,</span> <span class="n">tang_points</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.add_uncert"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.add_uncert">[docs]</a>    <span class="k">def</span> <span class="nf">add_uncert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vel_obst</span><span class="p">,</span> <span class="n">posTS_rel</span><span class="p">,</span> <span class="n">vel_TS</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to add the uncertainties in speed and angle of the TS to the</span>
@@ -1147,8 +1148,7 @@
             <span class="n">TSo</span><span class="o">.</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VOs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">TSo</span><span class="o">.</span><span class="n">vert_hull</span> <span class="o">=</span> <span class="n">VOs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">TSo</span><span class="o">.</span><span class="n">tang_points</span> <span class="o">=</span> <span class="n">VOs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-            <span class="n">TSo</span><span class="o">.</span><span class="n">points_colreg_line</span> <span class="o">=</span> <span class="n">VOs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-           
+                       
             <span class="c1"># Check if the current velocity and desired velocity of OS are inside VO</span>
             <span class="n">TSo</span><span class="o">.</span><span class="n">coll_check</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_collision</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">TSo</span><span class="o">.</span><span class="n">vo</span><span class="p">)</span>
             <span class="n">TSo</span><span class="o">.</span><span class="n">coll_check_des</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_collision</span><span class="p">(</span><span class="n">vel_des</span><span class="p">,</span> <span class="n">TSo</span><span class="o">.</span><span class="n">vo</span><span class="p">)</span>
@@ -1181,7 +1181,7 @@
                 <span class="n">TSo</span><span class="o">.</span><span class="n">coll_dist</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="n">TSo</span><span class="o">.</span><span class="n">coll_time</span> <span class="o">=</span> <span class="p">[]</span>
           
-        <span class="c1">### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points, points_colreg_lines, Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)</span>
+        <span class="c1">### TS_VO_check = (pos_TS_rel, len_TS, wid_TS, speed_TS, ang_TS, VO_vert, hull_vert, tang_points,  Check_coll, col_rule, col_con, point_coll,dist_coll, time_coll)</span>
         <span class="n">vo_added</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">obj</span><span class="o">.</span><span class="n">vo</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ts_info</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
         <span class="n">col_con_added</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">obj</span><span class="o">.</span><span class="n">colreg_con</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ts_info</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
         <span class="c1"># if np.any(TS_VO_check[:,9]):</span>
