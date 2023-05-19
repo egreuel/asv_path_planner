@@ -4,13 +4,8 @@ ghp-import
 pytest
 numpy
 matplotlib
-math
 shapely
 geopy
 scipy
-rclpy
-time
-csv
-atexit
 sensor_msgs
 std_msgs
