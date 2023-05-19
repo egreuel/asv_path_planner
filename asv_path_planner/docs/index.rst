@@ -20,6 +20,7 @@ compliance with COLREGs.
    MARUS Simulator
    Quickstart
    Results
+   Test
 
 .. include:: modules.rst
 
