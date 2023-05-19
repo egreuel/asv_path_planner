@@ -3,12 +3,12 @@ sphinx_rtd_theme
 ghp-import
 pytest
 numpy
-matplotlib.pyplot
+matplotlib
 math
-shapely.geometry
+shapely
 geopy
 scipy
-rclpy.node
+rclpy
 time
 csv
 atexit
