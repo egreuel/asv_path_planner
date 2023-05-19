@@ -20,8 +20,6 @@ compliance with COLREGs.
    MARUS Simulator
    Quickstart
    Results
-   Testo
-
 
 .. include:: modules.rst
 
