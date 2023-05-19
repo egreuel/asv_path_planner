@@ -18,6 +18,9 @@ compliance with COLREGs.
    COLREGs
    Velocity Obstacle
    MARUS Simulator
+   Quickstart
+   Results
+
 
 .. include:: modules.rst
 
