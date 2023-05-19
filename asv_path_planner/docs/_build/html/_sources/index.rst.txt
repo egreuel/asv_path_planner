@@ -11,7 +11,7 @@ The collision avoidacne algorithm is based on the Velocity Obstacle (VO) methode
 compliance with COLREGs.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    Introduction
@@ -20,8 +20,7 @@ compliance with COLREGs.
    MARUS Simulator
    Quickstart
    Results
-   Test
-
+  
 .. include:: modules.rst
 
 Indices and tables
