@@ -1,4 +1,4 @@
 ==========
 Quickstart
 ==========
-Here asdr the MARUS simulator
+Here Quickstart guide
