@@ -2,3 +2,15 @@ sphinx
 sphinx_rtd_theme
 ghp-import
 pytest
+numpy
+matplotlib.pyplot
+math
+shapely.geometry
+geopy
+scipy
+rclpy.node
+time
+csv
+atexit
+sensor_msgs
+std_msgs
