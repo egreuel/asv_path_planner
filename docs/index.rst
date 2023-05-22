@@ -10,7 +10,7 @@ collision aovidance algorithm to guide autonomous surface vehicles through the e
 The collision avoidacne algorithm is based on the Velocity Obstacle (VO) methode and acts in 
 compliance with COLREGs.
 
-LALALALALA
+That worked! :D
 
 .. toctree::
    :maxdepth: 3
