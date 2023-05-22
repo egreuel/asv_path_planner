@@ -667,7 +667,7 @@ class RosScriptNode(Node):
         # Setup for the csv file
         fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
         rows = [simu_time, dist_os_ts_1, dist_os_ts_2,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
-        filename = "simulation_results_.csv"
+        filename = "src/asv_path_planner/Raw data/simulation_results_.csv"
         # writing to csv file  
         with open(filename, 'w') as csvfile:  
             # creating a csv writer object  
