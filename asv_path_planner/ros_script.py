@@ -667,6 +667,7 @@ class RosScriptNode(Node):
         # Setup for the csv file
         fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
         rows = [simu_time, dist_os_ts_1, dist_os_ts_2,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
+        
         filename = "src/asv_path_planner/Raw data/simulation_results_.csv"
         # writing to csv file  
         with open(filename, 'w') as csvfile:  
@@ -677,7 +678,7 @@ class RosScriptNode(Node):
             csvwriter.writerow(fields)  
                 
             # writing the data rows  
-            csvwriter.writerows(rows)
+            csvwriter.writerow(rows)
 
         # For plotting all data have to be of the same size     
         min_length = min(len(simu_time), len(dist_os_ts_1), len(dist_os_ts_2), len(self.speed_com), len(self.ang_com), len(os_speed), len(os_ang), len(self.elapsed_time), len(self.coll_check))
