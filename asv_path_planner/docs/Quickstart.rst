@@ -1,4 +1,0 @@
-==========
-Quickstart
-==========
-Here Quickstart guide
