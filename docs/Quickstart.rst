@@ -10,9 +10,14 @@ Requirements
 - Ubuntu 22.04
 - Unity 2021.3.15f1
 - MARUS simulator
-- pip install shapely
-- Requirement.txt
-- virtual environment (venv) to asv_path_planner
+- requirement.txt
+
+Change directory to asv_path_planner and install the requirements from the requirements.txt file:
+
+.. code:: bash
+    
+    $ pip install -r requirements.txt
+
 
 Minimal example
 ---------------
