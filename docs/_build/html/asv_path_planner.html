@@ -47,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
 </ul>
@@ -61,9 +62,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.exit_handler"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.exit_handler()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_os"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_os()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp_2()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_3"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp_3()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_4"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp_4()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_1()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_2()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_3"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_3()</span></code></a></li>
@@ -146,7 +144,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">asv_path_planner.ros_script.</span></span><span class="sig-name descname"><span class="pre">RosScriptNode</span></span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode" title="Permalink to this definition"></a></dt>
-<dd><p>This class defines the ROS node which is used to connect to the MARUS simulator</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></p>
+<p>This class defines the ROS node which is used to connect to the MARUS simulator</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.angle_diff">
 <span class="sig-name descname"><span class="pre">angle_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.angle_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.angle_diff" title="Permalink to this definition"></a></dt>
@@ -252,39 +251,6 @@ commands to the thrusters of the OS</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp">
 <span class="sig-name descname"><span class="pre">gps_callback_tp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp" title="Permalink to this definition"></a></dt>
-<dd><p>Callback function to receive GPS data from the target point/destination inside the unity simulation</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_2">
-<span class="sig-name descname"><span class="pre">gps_callback_tp_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_2" title="Permalink to this definition"></a></dt>
-<dd><p>Callback function to receive GPS data from the target point/destination inside the unity simulation</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_3">
-<span class="sig-name descname"><span class="pre">gps_callback_tp_3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp_3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_3" title="Permalink to this definition"></a></dt>
-<dd><p>Callback function to receive GPS data from the target point/destination inside the unity simulation</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pose</strong> (<em>NavSatFix</em>) – GPS coordinates</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_4">
-<span class="sig-name descname"><span class="pre">gps_callback_tp_4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NavSatFix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.gps_callback_tp_4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp_4" title="Permalink to this definition"></a></dt>
 <dd><p>Callback function to receive GPS data from the target point/destination inside the unity simulation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

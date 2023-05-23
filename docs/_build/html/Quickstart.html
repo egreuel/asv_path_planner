@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Results" href="Results.html" />
-    <link rel="prev" title="Introduction" href="Introduction.html" /> 
+    <link rel="prev" title="Installation" href="Installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,10 +48,10 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#integration-in-ros2-and-use-with-marus-simulatior">Integration in ROS2 and use with MARUS simulatior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#integration-in-ros2-and-use-with-marus-simulator">Integration in ROS2 and use with MARUS simulator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
@@ -87,20 +87,6 @@
   <section id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading"></a></h1>
 <p>Here Quickstart guide</p>
-<section id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
-<ul class="simple">
-<li><p>ROS2 humble</p></li>
-<li><p>Ubuntu 22.04</p></li>
-<li><p>Unity 2021.3.15f1</p></li>
-<li><p>MARUS simulator</p></li>
-<li><p>requirement.txt</p></li>
-</ul>
-<p>Change directory to asv_path_planner and install the requirements from the requirements.txt file:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</pre></div>
-</div>
-</section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this heading"></a></h2>
 <p>This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
@@ -186,8 +172,24 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 </pre></div>
 </div>
 </section>
-<section id="integration-in-ros2-and-use-with-marus-simulatior">
-<h2>Integration in ROS2 and use with MARUS simulatior<a class="headerlink" href="#integration-in-ros2-and-use-with-marus-simulatior" title="Permalink to this heading"></a></h2>
+<section id="integration-in-ros2-and-use-with-marus-simulator">
+<h2>Integration in ROS2 and use with MARUS simulator<a class="headerlink" href="#integration-in-ros2-and-use-with-marus-simulator" title="Permalink to this heading"></a></h2>
+<p>This section describes how the collision avoidance algorithm is integrated in ROS2 and then used
+in the MARUS simulator.</p>
+<p>1. Clone the asv_path_planner package in your ROS2 workspace in the source folder. The repository can
+be found on github.com/egreuel/ROS2_WS_VO.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/ROS2_WS_VO.git
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Within the directory install the requirements from the requirements.txt file:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Install Unity and the MARUS simulator as described in the wiki of <a class="reference external" href="https://github.com/MARUSimulator/marus-example">https://github.com/MARUSimulator/marus-example</a>. But instead</p></li>
+</ol>
 </section>
 </section>
 
@@ -195,7 +197,7 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="Results.html" class="btn btn-neutral float-right" title="Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

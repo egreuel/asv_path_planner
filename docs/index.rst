@@ -10,6 +10,7 @@ compliance with COLREGs.
    :caption: Contents:
 
    Introduction
+   Installation
    Quickstart
    Results
   

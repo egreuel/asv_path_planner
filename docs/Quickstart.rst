@@ -3,22 +3,6 @@ Quickstart
 ==========
 Here Quickstart guide
 
-Requirements
-------------
-
-- ROS2 humble
-- Ubuntu 22.04
-- Unity 2021.3.15f1
-- MARUS simulator
-- requirement.txt
-
-Change directory to asv_path_planner and install the requirements from the requirements.txt file:
-
-.. code:: bash
-    
-    $ pip install -r requirements.txt
-
-
 Minimal example
 ---------------
 This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
@@ -96,5 +80,22 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 
     new_vel = vo.calc_vel_final(all_ts, os, False)
 
-Integration in ROS2 and use with MARUS simulatior
--------------------------------------------------
+Integration in ROS2 and use with MARUS simulator
+------------------------------------------------
+This section describes how the collision avoidance algorithm is integrated in ROS2 and then used
+in the MARUS simulator.
+
+1. Clone the asv_path_planner package in your ROS2 workspace in the source folder. The repository can
+be found on github.com/egreuel/ROS2_WS_VO.
+
+.. code:: bash
+
+    $ git clone https://github.com/egreuel/ROS2_WS_VO.git
+
+2. Within the directory install the requirements from the requirements.txt file:
+
+.. code:: bash
+    
+    $ pip install -r requirements.txt
+
+3. Install Unity and the MARUS simulator as described in the wiki of https://github.com/MARUSimulator/marus-example. But instead 

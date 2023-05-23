@@ -65,7 +65,7 @@ class RosScriptNode(Node):
         self.vel_ts_3 = 1.0
         self.vel_des_ts_3 = 1.0
         
-        self.os_max_speed = 3.0 # slow: 1.0, fast: 3.0
+        self.os_max_speed = 5.0 # slow: 1.0, fast: 3.0
         self.os_des_speed = 3.0 # slow: 1.0, fast: 3.0
 
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
@@ -118,19 +118,19 @@ class RosScriptNode(Node):
             NavSatFix, "/target_point", self.gps_callback_tp, 10)
         # Subscriber and publsher for target ship 1 (GPS coordinates, Thruster output)
         self.gps_sub_ts_1 = self.create_subscription(
-            NavSatFix, "/marus_boat_2/gps", self.gps_callback_ts_1, 10)
+            NavSatFix, "/marus_boat_1/gps", self.gps_callback_ts_1, 10)
         self.thruster_pub_ts_1 = self.create_publisher(
-            Float32MultiArray, "/marus_boat_2/pwm_out", 10)
+            Float32MultiArray, "/marus_boat_1/pwm_out", 10)
         # Subscriber and publsher for target ship 2 (GPS coordinates, Thruster output)
         self.gps_sub_ts_2 = self.create_subscription(
-            NavSatFix, "/marus_boat_3/gps", self.gps_callback_ts_2, 10)
+            NavSatFix, "/marus_boat_2/gps", self.gps_callback_ts_2, 10)
         self.thruster_pub_ts_2 = self.create_publisher(
-            Float32MultiArray, "/marus_boat_3/pwm_out", 10)
-        # Subscriber and publsher for target ship 2 (GPS coordinates, Thruster output)
+            Float32MultiArray, "/marus_boat_2/pwm_out", 10)
+        # Subscriber and publsher for target ship 3 (GPS coordinates, Thruster output)
         self.gps_sub_ts_3 = self.create_subscription(
-            NavSatFix, "/marus_boat_4/gps", self.gps_callback_ts_3, 10)
+            NavSatFix, "/marus_boat_3/gps", self.gps_callback_ts_3, 10)
         self.thruster_pub_ts_3 = self.create_publisher(
-            Float32MultiArray, "/marus_boat_4/pwm_out", 10)
+            Float32MultiArray, "/marus_boat_3/pwm_out", 10)
         
         # Subscriber and publsher for owm ship (GPS coordinates, Thruster output)
         self.gps_sub_os = self.create_subscription(
@@ -587,7 +587,7 @@ class RosScriptNode(Node):
         min_dist_3 = round(min_dist_3, 2)
         ind_min_dist_3 = dist_os_ts_3.argmin()
         time_min_dist_3 = simu_time[ind_min_dist_3]
-        plt.scatter(time_min_dist_3, min_dist_3, marker=".", c="blue", zorder=2, label=f"min. distance to TS 3 = {min_dist_2} m", linewidth=2.5)
+        plt.scatter(time_min_dist_3, min_dist_3, marker=".", c="blue", zorder=2, label=f"min. distance to TS 3 = {min_dist_3} m", linewidth=2.5)
 
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
