@@ -1,1 +1,1 @@
-# ROS2_WS_VO
+# Package asv_path_planner
