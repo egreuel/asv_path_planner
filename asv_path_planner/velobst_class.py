@@ -772,10 +772,10 @@ class VO:
         unc_VO_vert = np.array(unc_VO_vert)
         unc_VO_vert = np.resize(unc_VO_vert, (unc_VO_hull.vertices.shape[0], 2))
 
-        # # Plot the vertices of the poylgon
-        # if plotting:
-        #     # plt.scatter(unc_VO_vert[:,0], unc_VO_vert[:,1], marker='.', linewidths=(0.1))
-        #     plt.fill(unc_VO[unc_VO_hull.vertices,0], unc_VO[unc_VO_hull.vertices,1], 'r', alpha=1 ,zorder=0.5, edgecolor='black', linewidth=1.5)
+        # Plot the vertices of the poylgon
+        if plotting:
+            plt.scatter(unc_VO_vert[:,0], unc_VO_vert[:,1], marker='.', linewidths=(0.1))
+            plt.fill(unc_VO[unc_VO_hull.vertices,0], unc_VO[unc_VO_hull.vertices,1], 'r', alpha=1 ,zorder=0.5, edgecolor='black', linewidth=1.5)
 
         return np.array(unc_VO_vert)
 
@@ -868,9 +868,9 @@ class VO:
             # Time to collision
             time_coll = dist_coll / vel_OS[0]
 
-        # if plotting:
-        #     plt.scatter(point_coll[0], point_coll[1],
-        #                 marker='x', c='black', linewidths=(0.7))
+        if plotting:
+            plt.scatter(point_coll[0], point_coll[1],
+                        marker='x', c='black', linewidths=(0.7))
         return np.array([point_coll, dist_coll, time_coll], dtype=object)
 
     def calc_colreg_con(self, vel_TS_xy, pos_TS_rel,colr_rule):
@@ -891,18 +891,15 @@ class VO:
             perp_line = np.array([-vect_col_line[1], vect_col_line[0]])
             bound_left = perp_line + vel_TS_xy
             colreg_con = np.array([bound_left, vel_TS_xy, (pos_TS_rel + vel_TS_xy)])
-            # if plotting:
-            #     colreg_con_2 = np.array([bound_left_2, vel_TS_xy, (pos_TS_rel + vel_TS_xy)])
-            #     plt.plot(colreg_con_2[:,0], colreg_con_2[:,1], c='purple',zorder=0.05)
-            #     plt.plot(colreg_con_2[:,0], colreg_con_2[:,1], c='purple',zorder=0.05,linestyle='dashed')
-            #     # Add the patch to the Axes
-            #     plt.gca().add_patch(Rectangle((vel_TS_xy[0],vel_TS_xy[1]),3,3,linewidth=1,edgecolor='purple',facecolor='none', angle=-32))
-                # plt.plot(colreg_con[:,0], colreg_con[:,1], c='purple',zorder=0.)
-                # plt.fill(colreg_con[:,0], colreg_con[:,1], c='purple',zorder=0, alpha=0.3,linewidth=0.5)
-                # plt.annotate("COLREG \ncontrains", (-25,20),c="purple")
-                # plt.annotate("$V_1$", (-20,20),c="purple")
-                # plt.annotate("$V_2$", (15,0),c="purple")
-                # plt.annotate("$V_3$", (-22,-15),c="purple")
+            if plotting:
+                # Add the patch to the Axes
+                # plt.gca().add_patch(Rectangle((vel_TS_xy[0],vel_TS_xy[1]),3,3,linewidth=1,edgecolor='purple',facecolor='none', angle=-32))
+                plt.plot(colreg_con[:,0], colreg_con[:,1], c='purple',zorder=0.)
+                plt.fill(colreg_con[:,0], colreg_con[:,1], c='purple',zorder=0, alpha=0.3,linewidth=0.5)
+                plt.annotate("COLREG \ncontrains", (-25,20),c="purple")
+                plt.annotate("$V_1$", (-20,20),c="purple")
+                plt.annotate("$V_2$", (15,0),c="purple")
+                plt.annotate("$V_3$", (-22,-15),c="purple")
         return np.array(colreg_con)
 
     def calc_free_vel_space(self, velobs, vel_space_free):
@@ -994,10 +991,10 @@ class VO:
             
             new_vel = self.vect_to_ang_mag(new_vel_xy)
             
-            # if plotting:
-            #     plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
-            #                 scale_units='xy', angles='xy', color='blue', zorder=6)
-            #     plt.annotate('$V_{new}$', (new_vel_xy[0],new_vel_xy[1]), (new_vel_xy[0]+0,new_vel_xy[1]-1), zorder=6, c="blue")
+            if plotting:
+                plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
+                            scale_units='xy', angles='xy', color='blue', zorder=6)
+                plt.annotate('$V_{new}$', (new_vel_xy[0],new_vel_xy[1]), (new_vel_xy[0]+0,new_vel_xy[1]-1), zorder=6, c="blue")
                 
         else:
             # print("No velocity is outside the velocity obstacle")
@@ -1053,9 +1050,9 @@ class VO:
             new_vel_xy = ([vel_space_free_xy[index_j, 0],
                     vel_space_free_xy[index_j, 1]])
             new_vel = self.vect_to_ang_mag(new_vel_xy)
-            # if plotting:
-            #     plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
-            #                scale_units='xy', angles='xy', color='blue', zorder=4, width=0.003)
+            if plotting:
+                plt.quiver(0, 0, new_vel_xy[0], new_vel_xy[1], scale=1,
+                           scale_units='xy', angles='xy', color='blue', zorder=4, width=0.003)
 
         else:
             # print("No velocity is outside the velocity obstacle")
@@ -1070,7 +1067,7 @@ class VO:
         most_common_index = mode(similar_rows[0]).mode[0]
         return arr[most_common_index]
 
-    def calc_vel_final(self, ts_info, os_info, this, pos_os):
+    def calc_vel_final(self, ts_info, os_info, plot):
         """Calculate the veloctiy obstacle and COLREG contrains for all TS and calculate the optimal velocity to avoid a collision
 
         Args:
@@ -1083,23 +1080,23 @@ class VO:
             numpy.array(float): optimal velocity for OS to avoid a collision
         """
         global plotting
-        plotting = this
+        plotting = plot
         global pos_OS_xy
-        pos_OS_xy = pos_os
+        pos_OS_xy = [0,0]
 
-        # if plotting:
-        #     # Create a circle around the OS with the maximum speed of the OS --> all possible velocities of OS
-        #     # Parametric equation circle
-        #     c_angle = np.linspace(0, np.deg2rad(360), 150)
-        #     x = self.max_speed_OS * np.cos(c_angle)
-        #     y = self.max_speed_OS * np.sin(c_angle)
-        #     # List of all circle points = c_points
-        #     c_points = np.column_stack((x, y))
-        #     c_points[:,0] = c_points[:,0] + pos_OS_xy[0]
-        #     c_points[:,1] = c_points[:,1] + pos_OS_xy[1]
-        #     plt.plot(c_points[:, 0], c_points[:, 1], 'black',zorder=6)
-        #     plt.fill(c_points[:, 0], c_points[:, 1], 'lightgray',
-        #               alpha=0.5, zorder=0, edgecolor='black', linewidth=1.5)
+        if plotting:
+            # Create a circle around the OS with the maximum speed of the OS --> all possible velocities of OS
+            # Parametric equation circle
+            c_angle = np.linspace(0, np.deg2rad(360), 150)
+            x = self.max_speed_OS * np.cos(c_angle)
+            y = self.max_speed_OS * np.sin(c_angle)
+            # List of all circle points = c_points
+            c_points = np.column_stack((x, y))
+            c_points[:,0] = c_points[:,0] + pos_OS_xy[0]
+            c_points[:,1] = c_points[:,1] + pos_OS_xy[1]
+            plt.plot(c_points[:, 0], c_points[:, 1], 'black',zorder=6)
+            plt.fill(c_points[:, 0], c_points[:, 1], 'lightgray',
+                      alpha=0.5, zorder=0, edgecolor='black', linewidth=1.5)
         
         vel_OS = os_info[0]
         global vel_OSxy

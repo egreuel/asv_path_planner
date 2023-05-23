@@ -426,7 +426,7 @@ class RosScriptNode(Node):
                 if self.flag:
                     starting_time = perf_counter_ns()
                     # Calculate the VOs and the new optimal velocity
-                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False, np.array([0,0]))
+                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)
@@ -622,7 +622,7 @@ class RosScriptNode(Node):
                 if self.flag:
                     starting_time = perf_counter_ns()
                     # Calculate the VOs and the new optimal velocity
-                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False, np.array([0,0]))
+                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)

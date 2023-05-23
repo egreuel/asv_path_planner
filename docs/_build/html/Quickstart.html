@@ -103,6 +103,88 @@
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this heading"></a></h2>
+<p>This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
+is facing an head-on encounter with one target ship (TS).</p>
+<div class="literal-block-wrapper docutils container" id="min-example">
+<div class="code-block-caption"><span class="caption-text">min_example.py</span><a class="headerlink" href="#min-example" title="Permalink to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span><span class="sd">This is a minimal example on how to use the collision avoidance algorithm</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="c1">#!/usr/bin/env python3</span>
+<span class="linenos"> 7</span><span class="kn">from</span> <span class="nn">velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="linenos"> 8</span><span class="kn">from</span> <span class="nn">ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="c1"># Properties of the own ship (OS)</span>
+<span class="linenos">11</span><span class="n">vel_OS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">12</span><span class="n">vel_des</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">13</span><span class="n">os</span> <span class="o">=</span> <span class="p">[</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">]</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="c1"># Declare an object of the target ship (TS) class to initalize an obstacle and add properties</span>
+<span class="linenos">16</span><span class="c1"># to the obstacle (e.g. obtained by sensors or AIS)</span>
+<span class="linenos">17</span><span class="n">ts</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+<span class="linenos">18</span><span class="n">ts</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">19</span><span class="n">ts</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="linenos">20</span><span class="n">ts</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.0</span>
+<span class="linenos">21</span><span class="n">ts</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="linenos">22</span><span class="n">ts</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">270</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="c1"># Add all obstacles to a list</span>
+<span class="linenos">25</span><span class="n">all_ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span><span class="p">]</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="c1"># Declare an object of the velocity obstacle class with inital parameters needed by the</span>
+<span class="linenos">28</span><span class="c1"># algorithm</span>
+<span class="linenos">29</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VO</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="c1"># Use the collision avoidance algorithm and calculate new velocity for the OS</span>
+<span class="linenos">32</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vo</span><span class="o">.</span><span class="n">calc_vel_final</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New velocity is: &quot;</span><span class="p">,</span> <span class="n">new_vel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>1. Import the classes VO and TS from the velobst_class.py and ts_class.py as dependencies. In this example
+the .py files are in the same folder as the minimal example.</p>
+<div class="highlight-python notranslate" id="imports"><div class="highlight"><pre><span></span><span class="linenos">7</span><span class="kn">from</span> <span class="nn">velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="linenos">8</span><span class="kn">from</span> <span class="nn">ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+</pre></div>
+</div>
+<p>2. Define the properties of the own ship (OS): current velocity of the OS and the desired velocity of the OS.
+The velocity is always a vector consiting of speed and orientation angle.</p>
+<div class="highlight-python notranslate" id="vo"><div class="highlight"><pre><span></span><span class="linenos">11</span><span class="n">vel_OS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">12</span><span class="n">vel_des</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">13</span><span class="n">os</span> <span class="o">=</span> <span class="p">[</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>3. Define the properties of the target ship (TS) obtained by sensors or AIS as an object of the TS class:
+relative position of TS to OS, length and width of TS, current speed and orientation angle (velocity) of TS</p>
+<div class="highlight-python notranslate" id="ts"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="n">ts</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+<span class="linenos">18</span><span class="n">ts</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">19</span><span class="n">ts</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="linenos">20</span><span class="n">ts</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.0</span>
+<span class="linenos">21</span><span class="n">ts</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="linenos">22</span><span class="n">ts</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">270</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Add all objects of the TS class (all obstacles) in a list:</p></li>
+</ol>
+<div class="highlight-python notranslate" id="all-ts"><div class="highlight"><pre><span></span><span class="linenos">25</span><span class="n">all_ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>5. Declare and object of the VO class with initial parameters for the collision avoidance algorithm. The
+initial parameters are: length and width of OS, maximum speed of OS, time to collision, time threshhold to collision,
+safety factor, uncertainties in speed and orientation of TS, resolution of speed and orientation of the velocity space.</p>
+<div class="highlight-python notranslate" id="vo-init"><div class="highlight"><pre><span></span><span class="linenos">29</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VO</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Use the calc_vel_final() function of the VO class to calculate the new velocity to avoid a collision.</p></li>
+</ol>
+<div class="highlight-python notranslate" id="new-vel"><div class="highlight"><pre><span></span><span class="linenos">32</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vo</span><span class="o">.</span><span class="n">calc_vel_final</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="integration-in-ros2-and-use-with-marus-simulatior">
 <h2>Integration in ROS2 and use with MARUS simulatior<a class="headerlink" href="#integration-in-ros2-and-use-with-marus-simulatior" title="Permalink to this heading"></a></h2>
