@@ -62,8 +62,8 @@ class RosScriptNode(Node):
         self.vel_des_ts_1 = 3.0
         self.vel_ts_2 = 3.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
         self.vel_des_ts_2 = 3.0
-        self.vel_ts_3 = 3.0
-        self.vel_des_ts_3 = 3.0
+        self.vel_ts_3 = 1.0
+        self.vel_des_ts_3 = 1.0
         
         self.os_max_speed = 3.0 # slow: 1.0, fast: 3.0
         self.os_des_speed = 3.0 # slow: 1.0, fast: 3.0
@@ -83,10 +83,7 @@ class RosScriptNode(Node):
         self.wait_bool_ts_3 = False
         self.wait_bool_os = False
         self.wait_bool_tp = False # Start the algorithm once position of the TSs are recieved
-        self.wait_bool_tp_2 = False
-        self.wait_bool_tp_3 = False
-        self.wait_bool_tp_4 = False
-
+        
         # PID speed control parameters (found with Ziegler-Nichols methode)
         self.kp = 0.36
         self.ki = 0.15
@@ -119,15 +116,6 @@ class RosScriptNode(Node):
         # Subscriber for the target/destination the OS should go to
         self.gps_sub_tp = self.create_subscription(
             NavSatFix, "/target_point", self.gps_callback_tp, 10)
-        # Subscriber for the target/destination the OS should go to
-        self.gps_sub_tp = self.create_subscription(
-            NavSatFix, "/target_point_2", self.gps_callback_tp_2, 10)
-        # Subscriber for the target/destination the OS should go to
-        self.gps_sub_tp = self.create_subscription(
-            NavSatFix, "/target_point_3", self.gps_callback_tp_3, 10)
-        # Subscriber for the target/destination the OS should go to
-        self.gps_sub_tp = self.create_subscription(
-            NavSatFix, "/target_point_4", self.gps_callback_tp_4, 10)
         # Subscriber and publsher for target ship 1 (GPS coordinates, Thruster output)
         self.gps_sub_ts_1 = self.create_subscription(
             NavSatFix, "/marus_boat_2/gps", self.gps_callback_ts_1, 10)
@@ -250,39 +238,6 @@ class RosScriptNode(Node):
         self.gps_tp = np.array([gps_lat, gps_lon])
         self.wait_bool_tp = True
 
-    def gps_callback_tp_2(self, pose: NavSatFix):
-        """Callback function to receive GPS data from the target point/destination inside the unity simulation
-
-        Args:
-            pose (NavSatFix): GPS coordinates
-        """
-        gps_lat = pose.latitude
-        gps_lon = pose.longitude
-        self.gps_tp_2 = np.array([gps_lat, gps_lon])
-        self.wait_bool_tp_2 = True
-
-    def gps_callback_tp_3(self, pose: NavSatFix):
-        """Callback function to receive GPS data from the target point/destination inside the unity simulation
-
-        Args:
-            pose (NavSatFix): GPS coordinates
-        """
-        gps_lat = pose.latitude
-        gps_lon = pose.longitude
-        self.gps_tp_3 = np.array([gps_lat, gps_lon])
-        self.wait_bool_tp_3 = True
-    
-    def gps_callback_tp_4(self, pose: NavSatFix):
-        """Callback function to receive GPS data from the target point/destination inside the unity simulation
-
-        Args:
-            pose (NavSatFix): GPS coordinates
-        """
-        gps_lat = pose.latitude
-        gps_lon = pose.longitude
-        self.gps_tp_4 = np.array([gps_lat, gps_lon])
-        self.wait_bool_tp_4 = True
-
     # Callback function to receive GPS coordinates of target ship 1 (TS 1) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_1(self, pose: NavSatFix):
         """Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and
@@ -361,97 +316,12 @@ class RosScriptNode(Node):
         self.last_gps_time_2 = gps_time
         self.last_gps_2 = self.gps_2
 
-        if self.wait_bool_os and self.wait_bool_ts_1 and self.wait_bool_ts_3 and self.wait_bool_tp and self.wait_bool_tp_2 and self.wait_bool_tp_3 and self.wait_bool_tp_4: # Only start this callback, if every TS has received GPS data once
-             
-            # Calculate relative position of TS to OS
-            self.ts_1.pos = self.vo.calc_coord_gps_to_xy(self.gps_2, self.gps_1)
-            self.os.pos = self.vo.calc_coord_gps_to_xy(self.gps_2, self.gps)
-            self.ts_3.pos = self.vo.calc_coord_gps_to_xy(self.gps_2, self.gps_3)
-            
-            # Calculate the relative position of the target point to OS 
-            pos_TP_rel = self.vo.calc_coord_gps_to_xy(self.gps_2, self.gps_tp_3)
-            # Calculate relative bearing of TP to OS for the desired velocity (Pure pursuit guidance)
-            ang_TP = math.degrees(np.arctan2(pos_TP_rel[1]+2, pos_TP_rel[0]+2))
-            ang_TP = (ang_TP+360) % 360
-            ang_TP = self.vo.calc_ang_n_to_e(ang_TP)
-
-            # Save the time for each iteration and store it in a list
-            self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
-           
-            # OS velocity calculated from GPS data
-            vel_OS = np.array([self.ts_2.speed, self.ts_2.ang])
-
-            # Desired velocity with desired speed and angle to TP
-            vel_des = np.array([self.vel_des_ts_2, ang_TP])
-            
-            # Store the parameter that checks if OS is colliding with safety area around TS
-            self.coll_check.append(self.vo.coll_safety)
-
-            # If both ships are within the detection range they have to be assigned to a list
-            if distance.great_circle(self.gps_2, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_1,self.os, self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.ts_1]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.os]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.os, self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_2).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.ts_1, self.os]
-                self.flag = True
-            elif distance.great_circle(self.gps_2, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps_2, self.gps_2).meters > self.detec_range and distance.great_circle(self.gps_2, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_1, self.ts_3]
-                self.flag = True
-            else:
-                self.flag = False
-
-            # Array of information of the OS needed by the VO algorithm
-            info_OS = np.array([vel_OS, vel_des], dtype=object)
-
-            # for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil if the OS is not moving yet (Start up phase)
-            if self.thetime < 1.5:
-                self.new_vel = vel_des
-                if gps_time_diff > 0:
-                    thrust = self.compute_pid(self.new_vel[0], self.ts_2.speed, gps_time_diff)
-                    msg = Float32MultiArray()
-                    msg.data = [thrust, thrust, 0.0]
-            else:
-                if self.flag:
-                    starting_time = perf_counter_ns()
-                    # Calculate the VOs and the new optimal velocity
-                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False)
-                    self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
-                else:
-                    self.elapsed_time.append(0)
-                    self.new_vel = vel_des
-                print("New vel TS: ", self.new_vel, "OS vel TS:", vel_OS, "Time TS: ",(perf_counter_ns()-self.start_time)/1000000)
-                
-                # Control output for changing the course angle based on the new velocity     
-                if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
-                    thrust = self.compute_pid(self.new_vel[0], self.ts_2.speed, gps_time_diff)   
-                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
-                    msg = Float32MultiArray()
-                    msg.data = [thrust+rot, thrust-rot, 0.0]
-                elif self.angle_diff(vel_OS[1], self.new_vel[1]) < -5:
-                    thrust = self.compute_pid(self.new_vel[0], self.ts_2.speed, gps_time_diff)
-                    rot = self.compute_pd(self.angle_diff(vel_OS[1], self.new_vel[1]), gps_time_diff)
-                    msg = Float32MultiArray()
-                    msg.data = [thrust+rot, thrust-rot, 0.0]
-                else:
-                    thrust = self.compute_pid(self.new_vel[0], self.ts_2.speed, gps_time_diff)
-                    msg = Float32MultiArray()
-                    msg.data = [thrust, thrust, 0.0]
-            
-            # publish the new values for the thrusters to unity
-            if gps_time_diff > 0:
-                self.thruster_pub_ts_2.publish(msg)
+       # Publish the values of the thrusters to move the ship
+        if gps_time_diff > 0:
+            thrust = self.compute_pid_1(self.vel_ts_2, self.ts_2.speed, gps_time_diff)
+            msg = Float32MultiArray()
+            msg.data = [thrust, thrust, 0.0]
+            self.thruster_pub_ts_2.publish(msg)
      
     def gps_callback_ts_3(self, pose: NavSatFix):
         """Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and
@@ -537,7 +407,7 @@ class RosScriptNode(Node):
         self.last_gps_time = gps_time
         self.last_gps = self.gps
 
-        if self.wait_bool_ts_1 and self.wait_bool_ts_2 and self.wait_bool_ts_3 and self.wait_bool_tp  and self.wait_bool_tp_2 and self.wait_bool_tp_3 and self.wait_bool_tp_4: # Only start this callback, if every TS has received GPS data once
+        if self.wait_bool_ts_1 and self.wait_bool_ts_2 and self.wait_bool_ts_3 and self.wait_bool_tp: # Only start this callback, if every TS has received GPS data once
             
             # Calculate relative position of TS to OS
             self.ts_1.pos = self.vo.calc_coord_gps_to_xy(self.gps, self.gps_1)
@@ -552,7 +422,7 @@ class RosScriptNode(Node):
             self.os_pos.append(self.ref_os)
             self.ts_pos_1.append(self.ref_ts_1)
             self.ts_pos_2.append(self.ref_ts_2)
-            self.ts_pos_2.append(self.ref_ts_3)
+            self.ts_pos_3.append(self.ref_ts_3)
 
             # Save the time for each iteration and store it in a list
             self.thetime = round(((perf_counter_ns()-self.start_time)/1000000000), 3)
@@ -658,15 +528,18 @@ class RosScriptNode(Node):
         os_position = np.array(self.os_pos)
         ts_position = np.array(self.ts_pos_1)
         ts_position_2 = np.array(self.ts_pos_2)
+        ts_position_3 = np.array(self.ts_pos_3)
+
         os_speed = np.array(self.os_speed)
         os_ang = np.array(self.os_ang)
         dist_os_ts_1 = np.array(self.dist_os_ts_1)
         dist_os_ts_2 = np.array(self.dist_os_ts_2)
+        dist_os_ts_3 = np.array(self.dist_os_ts_3)
         simu_time = np.array(self.simu_time)
         
         # Setup for the csv file
-        fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
-        rows = [simu_time, dist_os_ts_1, dist_os_ts_2,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
+        fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Distance to TS 3", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
+        rows = [simu_time, dist_os_ts_1, dist_os_ts_2, dist_os_ts_3,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
         
         filename = "src/asv_path_planner/Raw data/simulation_results_.csv"
         # writing to csv file  
@@ -686,6 +559,7 @@ class RosScriptNode(Node):
         simu_time = simu_time[15:min_length]
         dist_os_ts_1 = dist_os_ts_1[15:min_length]
         dist_os_ts_2 = dist_os_ts_2[15:min_length]
+        dist_os_ts_3 = dist_os_ts_3[15:min_length]
         self.speed_com = self.speed_com[15:min_length]
         self.ang_com = self.ang_com[15:min_length]
         os_speed = os_speed[15:min_length]
@@ -698,6 +572,7 @@ class RosScriptNode(Node):
         ax1 = fig1.add_subplot(111)
         plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
         plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
+        plt.plot(simu_time, dist_os_ts_3, c="orange", linestyle="dotted", label="Distance between OS and TS 3", linewidth=2.5)
         min_dist = min(dist_os_ts_1)
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
@@ -708,6 +583,11 @@ class RosScriptNode(Node):
         ind_min_dist_2 = dist_os_ts_2.argmin()
         time_min_dist_2 = simu_time[ind_min_dist_2]
         plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
+        min_dist_3 = min(dist_os_ts_3)
+        min_dist_3 = round(min_dist_3, 2)
+        ind_min_dist_3 = dist_os_ts_3.argmin()
+        time_min_dist_3 = simu_time[ind_min_dist_3]
+        plt.scatter(time_min_dist_3, min_dist_3, marker=".", c="blue", zorder=2, label=f"min. distance to TS 3 = {min_dist_2} m", linewidth=2.5)
 
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
@@ -762,14 +642,16 @@ class RosScriptNode(Node):
         os_timestamp = np.empty((0,2))
         ts_timestamp = np.empty((0,2))
         ts_timestamp_2 = np.empty((0,2))
+        ts_timestamp_3 = np.empty((0,2))
         ref_tp = self.vo.calc_coord_gps_to_xy(self.ref_point, self.gps_tp)
         prev_timestamp = simu_time[0]
-        for timestamp, os_pos, ts_pos, ts_pos2 in zip(simu_time, os_position, ts_position, ts_position_2):
+        for timestamp, os_pos, ts_pos, ts_pos2, ts_pos3 in zip(simu_time, os_position, ts_position, ts_position_2, ts_position_3):
             time_diff = timestamp - prev_timestamp
             if time_diff >= 7.0:
                 os_timestamp = np.vstack((os_timestamp, os_pos))
                 ts_timestamp = np.vstack((ts_timestamp, ts_pos))
                 ts_timestamp_2 = np.vstack((ts_timestamp_2, ts_pos2))
+                ts_timestamp_3 = np.vstack((ts_timestamp_3, ts_pos3))
                 prev_timestamp = timestamp
         
         
@@ -779,6 +661,8 @@ class RosScriptNode(Node):
         plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
         plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
         plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
+        plt.scatter(ts_timestamp_3[:,0], ts_timestamp_3[:,1], c="black", marker="2", linewidth=1.5, s=50)
+        plt.plot(ts_position_3[:,0], ts_position_3[:,1], c="red",zorder=0.05, linestyle=(0, (1, 10)), label="TS 3 path")
         plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
         plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
 
@@ -835,6 +719,24 @@ class RosScriptNode(Node):
         vert_TS_2[:, 0] = vert_TS_2[:, 0]+ts_position_2[-1,0]
         vert_TS_2[:, 1] = vert_TS_2[:, 1]+ts_position_2[-1,1]
         plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
+
+        # Calculate the vertices of the TS around it
+        vert_TS_3 = np.array([[-0.5*self.ts_3.width, -0.5*self.ts_3.length],
+                            [0.5*self.ts_3.width, -0.5*self.ts_3.length],
+                            [0.5*self.ts_3.width, 0.5*self.ts_3.length],
+                            [0, self.ts_3.length],
+                            [-0.5*self.ts_3.width, 0.5*self.ts_3.length]])
+
+        # Rotate the vertices in the direction the TS is facing
+        rot_M_TS_3 = np.array([[np.cos(np.deg2rad(self.ts_3.ang)), -np.sin(np.deg2rad(self.ts_3.ang))],
+                            [np.sin(np.deg2rad(self.ts_3.ang)), np.cos(np.deg2rad(self.ts_3.ang))]])
+
+        vert_TS_3[:] = np.dot(vert_TS_3[:], rot_M_TS_3)
+        
+        # Add the Position of the TS
+        vert_TS_3[:, 0] = vert_TS_3[:, 0]+ts_position_3[-1,0]
+        vert_TS_3[:, 1] = vert_TS_3[:, 1]+ts_position_3[-1,1]
+        plt.fill(vert_TS_3[:,0],vert_TS_3[:,1], "orange", hatch="----", edgecolor="black", linewidth=0.5, label="TS 3")
 
         plt.legend(loc="best", fontsize="10")
         
