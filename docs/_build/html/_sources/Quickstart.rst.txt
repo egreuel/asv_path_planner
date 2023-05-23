@@ -3,6 +3,9 @@ Quickstart
 ==========
 Here Quickstart guide
 
+
+.. _minimal-example:
+
 Minimal example
 ---------------
 This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
