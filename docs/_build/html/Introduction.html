@@ -131,7 +131,7 @@ The most important rules for collision avoidance are defined in Part B - Streeri
 For this collision avoidance algorithm rules 8 and 13-17 are considered. These are the rules that are describing
 which actions should be taken in case of an encounter between two vessels. It follows a short description of each rule:</p>
 <ul class="simple">
-<li><p><strong>Rule 8</strong> (Action to avoid a collision): actions should be made in ample time, alteration of course shall be obvious to the other vessels, alteration of course is preferred</p></li>
+<li><p><strong>Rule 8</strong> (Action to avoid a collision): actions should be made in ample time, alteration of course shall be obvious to the other vessels, alteration of course is preferred, collision avoidance action shall result in passing at a safe distance</p></li>
 <li><p><strong>Rule 13</strong> (Overtaking): Vessel coming from a direction more than 22.5° abaft your own vessels beam –&gt; Own vessel is being overtaken, other vessel is overtaking</p></li>
 <li><p><strong>Rule 14</strong> (Head-on situation): Vessels meeting on reciprocal or nearly reciprocal courses shall both alter their course to starboard</p></li>
 <li><p><strong>Rule 15</strong> (Crossing situation): Vessels having the other vessel on their starboard side shall keep out of the way and so are the give-away vessel</p></li>
@@ -140,10 +140,30 @@ which actions should be taken in case of an encounter between two vessels. It fo
 </ul>
 <p>In general when a vessel is in any doubt as wether it is in a specific situation, it shall assume it is the case. Also these rules only apply if the current course involve risk
 of collision.</p>
+<p>The COLREG rules are quite vague which make it hard to be implemented in autonomous systems. The only quantified value is defined in Rule 13, which is the 22.5° abaft beam. In this algorithm an area +- 15° from
+the bow of the OS is defnied for head-on encounters. Furthermore a substantial action and obvious alteration of course is defined at a value of at least 30° from the initial course. These values were derived from
+official law cases of collisions on sea. The safe distance at which the own vessel should pass during the avoidance manouver is defined as a multiple of the own vessel size. How many ship sizes considerd to be safe depends
+on the vessels properties like speed, size, turning speed, etc.
+The above defined areas for each rule result in the following sectors for rule selection:</p>
+<figure class="align-default" id="id1">
+<img alt="_images/COLREGclassification.png" src="_images/COLREGclassification.png" />
+<figcaption>
+<p><span class="caption-text">COLREG rule selection sectors (Source: Xia et al., 2020, DOI:10.1109/ACCESS.2020.3038187)</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
 </section>
 <section id="velocity-obstacle-algorithm">
 <h2>Velocity Obstacle algorithm<a class="headerlink" href="#velocity-obstacle-algorithm" title="Permalink to this heading"></a></h2>
-<p>The Velocity Obstacle (VO) algorithm was introduced by Fiorini and Schiller in 1996 for motion planning in dynamic environments.</p>
+<p>The Velocity Obstacle (VO) algorithm was introduced by Fiorini and Schiller in 1996 for motion planning in dynamic environments. In the VO algorithm, obstacles are represented as cones in the velocity
+space. The cones, called velocity obstacles, represent the set of constant velocities causing a collision between the vehicle and an obstacle at some future time. Maintaining a velocity outside of the velocity
+obstacle guarantees a collision-free trajectory of the vessel. Navigation among multiple moving obstacles is possible by avoiding the velocities inside the union of all individual velocity obstacles. Besides the VO
+other contrains can be added to the velocity space to obtain a COLREG compliant trajectory.</p>
+<figure class="align-default" id="id2">
+<img alt="_images/test.svg" src="_images/test.svg" /><figcaption>
+<p><span class="caption-text">Test</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>!!! Here VO algorithm explained !!!</p>
 </section>
 </section>
 

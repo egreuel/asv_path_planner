@@ -105,5 +105,5 @@ Evaluation of the collision avoidance algorithm with MARUSimulator
 
     $ ros2 run asv_path_planner ros_script
 
-
+!!! Here add what to change for 2 or 1 ship and what to do if you want more ships !!!
  
