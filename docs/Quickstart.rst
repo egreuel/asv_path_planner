@@ -1,8 +1,6 @@
 ==========
 Quickstart
 ==========
-Here Quickstart guide
-
 
 .. _minimal-example:
 
@@ -83,22 +81,29 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 
     new_vel = vo.calc_vel_final(all_ts, os, False)
 
-Integration in ROS2 and use with MARUS simulator
-------------------------------------------------
-This section describes how the collision avoidance algorithm is integrated in ROS2 and then used
-in the MARUS simulator.
+Evaluation of the collision avoidance algorithm with MARUSimulator
+------------------------------------------------------------------
 
-1. Clone the asv_path_planner package in your ROS2 workspace in the source folder. The repository can
-be found on github.com/egreuel/ROS2_WS_VO.
+1. Build and source colcon workspace. Position yourself in root of the workspace (e.g. ``cd ~/ros_ws/src``) and run:
 
 .. code:: bash
 
-    $ git clone https://github.com/egreuel/ROS2_WS_VO.git
+    $ source /opt/ros/{ROS_DISTRO}/setup.bash && colcon build
+    $ source ~/ros_ws/install/setup.bash
 
-2. Within the directory install the requirements from the requirements.txt file:
+2. Run the ROS server with:
 
 .. code:: bash
-    
-    $ pip install -r requirements.txt
 
-3. Install Unity and the MARUS simulator as described in the wiki of https://github.com/MARUSimulator/marus-example. But instead 
+    $ ros2 launch grpc_ros_adapter ros2_server_launch.py
+
+3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
+
+4. Run the collision avoidance algorithm with:
+
+.. code:: bash
+
+    $ ros2 run asv_path_planner ros_script
+
+
+ 

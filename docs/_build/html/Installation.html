@@ -50,10 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation-minimal-example">Installation minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation-for-the-use-of-the-marus-simulator-with-ros2">Installation for the use of the MARUS simulator with ROS2</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-for-the-use-of-the-marusimulator-with-ros2">Installation for the use of the MARUSimulator with ROS2</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
@@ -91,7 +88,8 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
 <p>In the following two types of installations are displayed. The first one for the minimal example,
 which allows to use the algorithm in any personal project. The second describes the installation for
-the use of the MARUS simulator with ROS2.</p>
+the use of the MARUSimulator with ROS2 where the collision avoidance algorithm can be tested with up to 3
+target ships. With small changes in the code it can be tested with even more target ships.</p>
 <section id="installation-minimal-example">
 <h2>Installation minimal example<a class="headerlink" href="#installation-minimal-example" title="Permalink to this heading"></a></h2>
 <ol class="arabic simple">
@@ -102,18 +100,35 @@ the use of the MARUS simulator with ROS2.</p>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Change directory asv_path_planner where you should find a requirements.txt file. Install all dependencies by:</p></li>
+<li><p>Change directory to asv_path_planner where you should find a requirements.txt file. Install python dependencies by running:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </pre></div>
 </div>
 <p>With this all requirements for the minimal example are done and you can check out the quickstart guide for the <a class="reference internal" href="Quickstart.html#minimal-example"><span class="std std-ref">Minimal example</span></a>.</p>
 </section>
-<section id="installation-for-the-use-of-the-marus-simulator-with-ros2">
-<h2>Installation for the use of the MARUS simulator with ROS2<a class="headerlink" href="#installation-for-the-use-of-the-marus-simulator-with-ros2" title="Permalink to this heading"></a></h2>
-<section id="requirements">
-<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h3>
-</section>
+<section id="installation-for-the-use-of-the-marusimulator-with-ros2">
+<h2>Installation for the use of the MARUSimulator with ROS2<a class="headerlink" href="#installation-for-the-use-of-the-marusimulator-with-ros2" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>This installation guide is valid for linux and windows.</p></li>
+<li><p>For the installation for MARUSimulator in Unity and the ROS backend please follow the instructions on: <a class="reference external" href="https://github.com/MARUSimulator/marus-example/wiki/2.-Installation">https://github.com/MARUSimulator/marus-example/wiki/2.-Installation</a>. Please make sure to use ROS2 humble or galactic for this package. <strong>Instead of using the marus-example repository from git&#64;github.com:MARUSimulator/marus-example.git please use the following:</strong></p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/marus-example.git
+</pre></div>
+</div>
+<p>The example scene for the test of the collision avoidance algorithm with 3 target ships then can be found in <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>.</p>
+<ol class="arabic simple" start="3">
+<li><p>Clone asv_path_planner repository in the <code class="docutils literal notranslate"><span class="pre">src</span></code> folder of the ROS workspace (e.g. ~/ros_ws/src):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/asv_path_planner.git
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Change directory to asv_path_planner where you should find a requirements.txt file. Install the python dependencies by running:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
 </section>
 </section>
 

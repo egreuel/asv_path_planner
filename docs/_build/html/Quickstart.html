@@ -51,7 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#integration-in-ros2-and-use-with-marus-simulator">Integration in ROS2 and use with MARUS simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-of-the-collision-avoidance-algorithm-with-marusimulator">Evaluation of the collision avoidance algorithm with MARUSimulator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
@@ -86,7 +86,6 @@
              
   <section id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading"></a></h1>
-<p>Here Quickstart guide</p>
 <section id="minimal-example">
 <span id="id1"></span><h2>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this heading"></a></h2>
 <p>This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
@@ -172,24 +171,28 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 </pre></div>
 </div>
 </section>
-<section id="integration-in-ros2-and-use-with-marus-simulator">
-<h2>Integration in ROS2 and use with MARUS simulator<a class="headerlink" href="#integration-in-ros2-and-use-with-marus-simulator" title="Permalink to this heading"></a></h2>
-<p>This section describes how the collision avoidance algorithm is integrated in ROS2 and then used
-in the MARUS simulator.</p>
-<p>1. Clone the asv_path_planner package in your ROS2 workspace in the source folder. The repository can
-be found on github.com/egreuel/ROS2_WS_VO.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/ROS2_WS_VO.git
+<section id="evaluation-of-the-collision-avoidance-algorithm-with-marusimulator">
+<h2>Evaluation of the collision avoidance algorithm with MARUSimulator<a class="headerlink" href="#evaluation-of-the-collision-avoidance-algorithm-with-marusimulator" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Build and source colcon workspace. Position yourself in root of the workspace (e.g. <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">~/ros_ws/src</span></code>) and run:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>/opt/ros/<span class="o">{</span>ROS_DISTRO<span class="o">}</span>/setup.bash<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>colcon<span class="w"> </span>build
+$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~/ros_ws/install/setup.bash
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Within the directory install the requirements from the requirements.txt file:</p></li>
+<li><p>Run the ROS server with:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>launch<span class="w"> </span>grpc_ros_adapter<span class="w"> </span>ros2_server_launch.py
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Install Unity and the MARUS simulator as described in the wiki of <a class="reference external" href="https://github.com/MARUSimulator/marus-example">https://github.com/MARUSimulator/marus-example</a>. But instead</p></li>
+<li><p>Open the marus-example project in Unity and select the example scene from <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.</p></li>
+<li><p>Run the collision avoidance algorithm with:</p></li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>run<span class="w"> </span>asv_path_planner<span class="w"> </span>ros_script
+</pre></div>
+</div>
 </section>
 </section>
 

@@ -5,15 +5,36 @@ This chapter gives an overview of the reasons for the developed collision avoida
 Also it explains the functional principle of the algorithm and which extra features have been implemented. At the beginning of this chapter some vocabulary, which will
 be used in the further course, is explained and defined.
 
-Motivation
+Vocabulary
 ----------
 
-- a lot of collisions
-- many fatalities due to collision
-- most collisions are due to human errors
-- shortage of qualified labor
-- reduce risk
-- reduce costs
+- **Own ship (OS)** - the autonomous surface vehicle using the collision avoidance algorithm
+- **Target ship (TS)** - the obstacle that the OS has to avoid (e.g. other vessels, static objects, etc.)
+- **Heading** - the compass direction in which the vessels bow or nose is pointed --> not equal to the direction the vessel acutally travels
+- **Course** - intended path of a vessels over the surface of the Earth
+- **Course over ground (COG)** - acutal direction the vessel travels over the surface of earth
+- **Course, heading angles** - North = 0°, East = 90°, South = 180°, West = 270°
+- **Collision Cone (CC)** - set of realtive velocities of the OS to TS leading to a collision at any time
+- **Velocity Obstacle (VO)** - set of absolute velocities of OS leading to a collision at any time
+- **Velocity** - a vector with magnitude as speed [m/s] and direction as COG [°]
+
+Motivation
+----------
+The interest in automating processes has increased in the last decade to support or even substitute humans in their work. There are several
+reasons to automate processes. To increase safety by assisting humans in dangerous task or by removing the human factor completely. In the
+course of this, great attention was paid to autonomous robots in military and civil purposes. Some examples are autonomous cars, lawn movers
+or vacuum cleaners. Autonomous robots use sensors and actuators to interact with the physical surroundings and take the right course of action.
+Therefor they have to operate in static but also changing dynamic environments.  Of increasing interest here are autonomous ships and autonomous
+surface vehicles (ASVs). The complex environment ships are moving in is quite challenging. An ASV has to be able to detect static and dynamic obstacles
+like other vehicles, shallow waters or islands. Furthermore ASVs has to follow an optimal path while avoiding obstacles. While humans may not be able
+to react and choose an optimal path fast enough, this could be possible with USVs. The optimizations here can be related to energy consumption, time
+consumption or safety in form of collision avoidance. Due to the reason, that for now there will be also human driven vehicles on the sea, an ASV has
+to be able not just to choose the optimal path, but also choose an action in compliance with the COLREGs. According to the Annual overview of
+marine casualties 2022 the most accidents are caused by human actions with 59.6\,\% of all incidences. Collision at sea cost lives, money and often have
+a major impact on the local environment. Besides this it is also estimated that there will be a lack of over approx. 147,500 qualified personnel by the year 2025.
+An autonomous system offers the possibility of increasing safety, reducing costs and counteracting the lack of personnel. To obtain a safe autonomous system a reliable
+guidance, navigation and control (GNC) system is required. Due to the aforementioned points, the collision avoidance algorithm plays an important part in making the GNC system reliable.
+
 
 COLREGs
 -------
@@ -36,6 +57,6 @@ of collision.
 
 Velocity Obstacle algorithm
 ---------------------------
-The velocity obstacle (VO) algorithm was introduced by Fiorini and Schiller in 1996 for motion planning in dynamic environments. 
+The Velocity Obstacle (VO) algorithm was introduced by Fiorini and Schiller in 1996 for motion planning in dynamic environments. 
 
 
