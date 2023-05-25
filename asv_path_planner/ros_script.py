@@ -99,15 +99,29 @@ class RosScriptNode(Node):
         self.int_error = 0
         self.last_error = 0
         self.output = 0
+        
+        self.error_ang = 0
+        self.der_error_ang = 0
+        self.last_error_ang = 0
+        self.output_ang = 0
+
         self.error_1 = 0
         self.der_error_1 = 0
         self.int_error_1 = 0
         self.last_error_1 = 0
         self.output_1 = 0
-        self.error_ang = 0
-        self.der_error_ang = 0
-        self.last_error_ang = 0
-        self.output_ang = 0
+
+        self.error_2 = 0
+        self.der_error_2 = 0
+        self.int_error_2 = 0
+        self.last_error_2 = 0
+        self.output_2 = 0
+
+        self.error_3 = 0
+        self.der_error_3 = 0
+        self.int_error_3 = 0
+        self.last_error_3 = 0
+        self.output_3 = 0
 
         # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
         self.vo = VO(self.os.length, self.os.width, self.os_max_speed, 15, 7.5, 6, 0.5, 5, 0.25, 3) # Initalize the VO algorithm
@@ -453,31 +467,20 @@ class RosScriptNode(Node):
             # Store the parameter that checks if OS is colliding with safety area around TS
             self.coll_check.append(self.vo.coll_safety)
 
-            # If both ships are within the detection range they have to be assigned to a list
-            if distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_1,self.ts_2, self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters > self.detec_range and distance.great_circle(self.gps, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.ts_1]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.ts_2]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_2, self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters > self.detec_range and distance.great_circle(self.gps, self.gps_2).meters > self.detec_range and distance.great_circle(self.gps, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_3]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters < self.detec_range and distance.great_circle(self.gps, self.gps_3).meters > self.detec_range:
-                self.TS_all = [self.ts_1, self.ts_2]
-                self.flag = True
-            elif distance.great_circle(self.gps, self.gps_1).meters < self.detec_range and distance.great_circle(self.gps, self.gps_2).meters > self.detec_range and distance.great_circle(self.gps, self.gps_3).meters < self.detec_range:
-                self.TS_all = [self.ts_1, self.ts_3]
-                self.flag = True
-            else:
+            # Check wether any of the target ships is within a range of 50 meters and add them to TS_all
+            all_ts = [self.ts_1, self.ts_2, self.ts_3]
+            all_ts_gps = [self.gps_1, self.gps_2, self.gps_3]
+            TS_all = []
+            for ship, pos in zip(all_ts, all_ts_gps):
+                if distance.great_circle(self.gps, pos) < 50:
+                    TS_all.append(ship)
+                else:
+                    pass
+            if TS_all == []:
                 self.flag = False
-
+            else:
+                self.flag = True
+            
             # Array of information of the OS needed by the VO algorithm
             info_OS = np.array([vel_OS, vel_des], dtype=object)
 
@@ -492,7 +495,7 @@ class RosScriptNode(Node):
                 if self.flag:
                     starting_time = perf_counter_ns()
                     # Calculate the VOs and the new optimal velocity
-                    self.new_vel = self.vo.calc_vel_final(self.TS_all, info_OS, False)
+                    self.new_vel = self.vo.calc_vel_final(TS_all, info_OS, False)
                     self.elapsed_time.append((perf_counter_ns()-starting_time)/1000000)
                 else:
                     self.elapsed_time.append(0)
