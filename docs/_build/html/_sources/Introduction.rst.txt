@@ -66,6 +66,8 @@ The above defined areas for each rule results in the following sectors for rule 
 
 .. _colregclass:
 .. figure:: img/COLREGclassification.png
+    :width: 70%
+    :align: center
 
     COLREG rule selection sectors (Source: Xia et al., 2020, DOI:10.1109/ACCESS.2020.3038187)
 
@@ -95,6 +97,10 @@ lead to a collision in the distant future. If the time to collision of a velocit
 that the velocity space is completely occupied by the CC in case there are many obstacles around the OS. Furthermore, this prevents the OS from trying to avoid obstacles where a
 collision would only take place in 2 hours, for example, since the situation can still change completely during this time.
 
+$$CC = \{v_r\,|\,v_rt\,\cap\,T\,\neq\,\emptyset,\,\forall_t\,\geq\,TTC\}$$
+
+
+
 .. _CC:
 .. figure:: img/2_row_collision_cone_cropped.svg
     :width: 75%
@@ -105,6 +111,8 @@ collision would only take place in 2 hours, for example, since the situation can
 The collision cone is specific only to a pair of OS/TS. To take into account several TS it is necessary to create an object comparable to the CC, which takes into account absolute velocities.
 This can be easily achieved by adding the velocity of the TS (V\ :sub:`TS`) to each velocity in the CC or equivalent translating the CC by V\ :sub:`TS` as seen in :numref:`velobst`.
 This is the so called Velocity Obstacle (VO) and is a set of absolute velocities leading to a collision at any time in the future greater then the TTC.
+
+$$VO = CC\,\oplus\,V_{TS}$$
 
 .. _velobst:
 .. figure:: img/2_row_velocity_obstacle_cropped.svg
@@ -123,3 +131,33 @@ it was done with expansion of the TS with the OS. With the Minkowsi sum the unce
     :align: center
 
     Extension of the VO with uncertainties in the velocity of TS
+
+From this point on it would be possible to choose a speed outside the VO to avoid a collision. However, the further rules of the COLREGs must still be considered. Which specify, among
+other things, on which side an obstacle must be avoided. Conveniently, the VO already divides the velocity space into three areas (see :numref:`colregcon`), which we can use for the implementation of the COLREGs.
+
+- V\ :sub:`1`: All velocities resulting in passing with TS on starboard side
+- V\ :sub:`2`: All velocities resulting in passing with TS on port side
+- V\ :sub:`3`: All velocities resulting in moving away from TS
+
+The velocities inside V\ :sub:`1` are equal to the velocities that should be avoided according to COLREG in case the OS is the give-away vessel and also in cases where the OS is the stand-on vessel but the
+TS is not taking any actions at all to avoid the collision. All velocities outside the VO and outside the COLREG constrains can be choosen by the OS to avoid a collision in compliance with COLREGs. The COLREG
+contrains are only calculated if the current velocity of the OS enters the VO of a TS (= risk of collison) and the situation requires to apply the COLREG contrains. For example in an overtaking scenario no
+COLREG constrains have to be applied, because Rule 13 does not state on which side the TS shall be overtaken.
+
+.. _colregcon:
+.. figure:: img/Colreg_cons_2_cropped.svg
+    :width: 50%
+    :align: center
+
+    Velocity Obstacle dividing the velocity space in three areas
+
+From the hard constrains, the VO and the COLREG contrains, we determined a space in velocity space in which any velocity leads to avoid the collision. The velocity space is discretized to select the optimal
+velocity. This is done in velocity steps from 0 to the maximum possible speed of the OS and a course angle of 0-360 degrees. The so-called discretized velocity space. The finer the steps are, the more velocities
+are obtained which have an effect on the speed of the algorithm. 
+
+.. _discrete:
+.. figure:: img/2_row_discrete_vel_space_cropped.svg
+    :width: 100%
+    :align: center
+
+    Discretized velocity space with optimal velocity displayed
