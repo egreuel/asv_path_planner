@@ -59,11 +59,8 @@ class RosScriptNode(Node):
         
         # OS and TS speed setup
         self.vel_ts_1 = 3.0 # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
-        self.vel_des_ts_1 = 3.0
         self.vel_ts_2 = 3.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
-        self.vel_des_ts_2 = 3.0
-        self.vel_ts_3 = 1.0
-        self.vel_des_ts_3 = 1.0
+        self.vel_ts_3 = 3.0
         
         self.os_max_speed = 5.0 # slow: 1.0, fast: 3.0
         self.os_des_speed = 3.0 # slow: 1.0, fast: 3.0
@@ -93,35 +90,16 @@ class RosScriptNode(Node):
         self.kp_ang = 0.014
         self.kd_ang = 0.0082
        
-        # Variables for the PID and PD control       
-        self.error = 0
-        self.der_error = 0
-        self.int_error = 0
+        # Variables for the PID and PD control     
         self.last_error = 0
-        self.output = 0
-        
-        self.error_ang = 0
-        self.der_error_ang = 0
+        self.int_error = 0
         self.last_error_ang = 0
-        self.output_ang = 0
-
-        self.error_1 = 0
-        self.der_error_1 = 0
-        self.int_error_1 = 0
         self.last_error_1 = 0
-        self.output_1 = 0
-
-        self.error_2 = 0
-        self.der_error_2 = 0
-        self.int_error_2 = 0
+        self.int_error_1 = 0
         self.last_error_2 = 0
-        self.output_2 = 0
-
-        self.error_3 = 0
-        self.der_error_3 = 0
-        self.int_error_3 = 0
+        self.int_error_2 = 0
         self.last_error_3 = 0
-        self.output_3 = 0
+        self.int_error_3 = 0
 
         # VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
         self.vo = VO(self.os.length, self.os.width, self.os_max_speed, 15, 7.5, 6, 0.5, 5, 0.25, 3) # Initalize the VO algorithm
@@ -184,16 +162,16 @@ class RosScriptNode(Node):
         Returns:
             float: Thruster input value from 0 to 1
         """
-        self.error = setpoint - vel  
-        self.int_error += self.error * time_step
-        self.der_error = (self.error - self.last_error) / time_step
-        self.last_error = self.error
-        self.output = self.kp*self.error + self.ki*self.int_error + self.kd*self.der_error
-        if self.output >= 1:
-            self.output = 1.0
-        elif self.output <= 0:
-            self.output = 0.0
-        return self.output
+        error = setpoint - vel  
+        self.int_error += error * time_step
+        der_error = (error - self.last_error) / time_step
+        self.last_error = error
+        output = self.kp*error + self.ki*self.int_error + self.kd*der_error
+        if output >= 1:
+            output = 1.0
+        elif output <= 0:
+            output = 0.0
+        return output
 
     # PID speed controller for thruster output   
     def compute_pid_1(self, setpoint, vel, time_step):
@@ -207,16 +185,62 @@ class RosScriptNode(Node):
         Returns:
             float: Thruster input value from 0 to 1
         """
-        self.error_1 = setpoint - vel  
-        self.int_error_1 += self.error_1 * time_step
-        self.der_error_1 = (self.error_1 - self.last_error_1) / time_step
-        self.last_error_1 = self.error_1
-        self.output_1 = self.kp*self.error_1 + self.ki*self.int_error_1 + self.kd*self.der_error_1
-        if self.output_1 >= 1:
-            self.output_1 = 1.0
-        elif self.output_1 <= 0:
-            self.output_1 = 0.0
-        return self.output_1
+        error_1 = setpoint - vel  
+        self.int_error_1 += error_1 * time_step
+        der_error_1 = (error_1 - self.last_error_1) / time_step
+        self.last_error_1 = error_1
+        output_1 = self.kp*error_1 + self.ki*self.int_error_1 + self.kd*der_error_1
+        if output_1 >= 1:
+            output_1 = 1.0
+        elif output_1 <= 0:
+            output_1 = 0.0
+        return output_1
+    
+     # PID speed controller for thruster output   
+    def compute_pid_2(self, setpoint, vel, time_step):
+        """PID controller to maintain a given speed for TS
+
+        Args:
+            setpoint (float [m/s]): Desired speed
+            vel (float [m/s]): Current speed
+            time_step (float [m/s]): Time step between measurments
+
+        Returns:
+            float: Thruster input value from 0 to 1
+        """
+        error_2 = setpoint - vel  
+        self.int_error_2 += error_2 * time_step
+        der_error_2 = (error_2 - self.last_error_2) / time_step
+        self.last_error_2 = error_2
+        output_2 = self.kp*error_2 + self.ki*self.int_error_2 + self.kd*der_error_2
+        if output_2 >= 1:
+            output_2 = 1.0
+        elif output_2 <= 0:
+            output_2 = 0.0
+        return output_2
+    
+     # PID speed controller for thruster output   
+    def compute_pid_3(self, setpoint, vel, time_step):
+        """PID controller to maintain a given speed for TS
+
+        Args:
+            setpoint (float [m/s]): Desired speed
+            vel (float [m/s]): Current speed
+            time_step (float [m/s]): Time step between measurments
+
+        Returns:
+            float: Thruster input value from 0 to 1
+        """
+        error_3 = setpoint - vel  
+        self.int_error_3 += error_3 * time_step
+        der_error_3 = (error_3 - self.last_error_3) / time_step
+        self.last_error_3 = error_3
+        output_3 = self.kp*error_3 + self.ki*self.int_error_3 + self.kd*der_error_3
+        if output_3 >= 1:
+            output_3 = 1.0
+        elif output_3 <= 0:
+            output_3 = 0.0
+        return output_3
     
     # PD heading control for thruster output
     def compute_pd(self, error, time_step):
@@ -230,15 +254,15 @@ class RosScriptNode(Node):
         Returns:
             float: Thruster input value from -0.5 to 0.5
         """
-        self.error_ang = error
-        self.der_error_ang = (self.error_ang - self.last_error_ang) / time_step
-        self.last_error_ang = self.error_ang
-        self.output_ang = self.kp_ang*self.error_ang + self.kd_ang*self.der_error_ang
-        if self.output_ang >= 0.5:
-            self.output_ang = 0.5
-        elif self.output_ang <= -0.5:
-            self.output_ang = -0.5
-        return self.output_ang
+        error_ang = error
+        der_error_ang = (error_ang - self.last_error_ang) / time_step
+        self.last_error_ang = error_ang
+        output_ang = self.kp_ang*error_ang + self.kd_ang*der_error_ang
+        if output_ang >= 0.5:
+            output_ang = 0.5
+        elif output_ang <= -0.5:
+            output_ang = -0.5
+        return output_ang
     
     # Callback function to receive GPS coordinates of the target point/destination (TP)
     def gps_callback_tp(self, pose: NavSatFix):
@@ -332,7 +356,7 @@ class RosScriptNode(Node):
 
        # Publish the values of the thrusters to move the ship
         if gps_time_diff > 0:
-            thrust = self.compute_pid_1(self.vel_ts_2, self.ts_2.speed, gps_time_diff)
+            thrust = self.compute_pid_2(self.vel_ts_2, self.ts_2.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_2.publish(msg)
@@ -376,7 +400,7 @@ class RosScriptNode(Node):
 
         # Publish the values of the thrusters to move the ship
         if gps_time_diff > 0:
-            thrust = self.compute_pid_1(self.vel_ts_3, self.ts_3.speed, gps_time_diff)
+            thrust = self.compute_pid_3(self.vel_ts_3, self.ts_3.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_3.publish(msg)

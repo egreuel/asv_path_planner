@@ -59,6 +59,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pd"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pd()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_3"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.compute_pid_3()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.exit_handler"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.exit_handler()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_os"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_os()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_tp()</span></code></a></li>
@@ -211,6 +213,48 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid_1">
 <span class="sig-name descname"><span class="pre">compute_pid_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_1" title="Permalink to this definition"></a></dt>
+<dd><p>PID controller to maintain a given speed for TS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>setpoint</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Desired speed</p></li>
+<li><p><strong>vel</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Current speed</p></li>
+<li><p><strong>time_step</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Time step between measurments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Thruster input value from 0 to 1</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid_2">
+<span class="sig-name descname"><span class="pre">compute_pid_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_2" title="Permalink to this definition"></a></dt>
+<dd><p>PID controller to maintain a given speed for TS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>setpoint</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Desired speed</p></li>
+<li><p><strong>vel</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Current speed</p></li>
+<li><p><strong>time_step</strong> (<em>float</em><em> [</em><em>m/s</em><em>]</em>) – Time step between measurments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Thruster input value from 0 to 1</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.compute_pid_3">
+<span class="sig-name descname"><span class="pre">compute_pid_3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.compute_pid_3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.compute_pid_3" title="Permalink to this definition"></a></dt>
 <dd><p>PID controller to maintain a given speed for TS</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

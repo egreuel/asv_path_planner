@@ -106,7 +106,7 @@ be used in the further course, is explained and defined.</p>
 </ul>
 </section>
 <section id="motivation">
-<h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this heading"></a></h2>
+<span id="id1"></span><h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this heading"></a></h2>
 <p>The interest in automating processes has increased in the last decade to support or even substitute humans in their work. There are several
 reasons to automate processes. To increase safety by assisting humans in dangerous task or by removing the human factor completely. In the
 course of this, great attention was paid to autonomous robots in military and civil purposes. Some examples are autonomous cars, lawn movers
@@ -123,7 +123,7 @@ An autonomous system offers the possibility of increasing safety, reducing costs
 guidance, navigation and control (GNC) system is required. Due to the aforementioned points, the collision avoidance algorithm plays an important part in making the GNC system reliable.</p>
 </section>
 <section id="colregs">
-<h2>COLREGs<a class="headerlink" href="#colregs" title="Permalink to this heading"></a></h2>
+<span id="id2"></span><h2>COLREGs<a class="headerlink" href="#colregs" title="Permalink to this heading"></a></h2>
 <p>The International Regulations for Preventing Collisions at Sea 1972 (COLREGs) are published
 by the International Maritime Organization (IMO) and define, among other things, the “rules of the road”
 or navigation rules to be followed by ships and other vessels at sea to prevent collisions between two or more vessels.
@@ -144,26 +144,58 @@ of collision.</p>
 the bow of the OS is defnied for head-on encounters. Furthermore a substantial action and obvious alteration of course is defined at a value of at least 30° from the initial course. These values were derived from
 official law cases of collisions on sea. The safe distance at which the own vessel should pass during the avoidance manouver is defined as a multiple of the own vessel size. How many ship sizes considerd to be safe depends
 on the vessels properties like speed, size, turning speed, etc.
-The above defined areas for each rule result in the following sectors for rule selection:</p>
-<figure class="align-default" id="id1">
-<img alt="_images/COLREGclassification.png" src="_images/COLREGclassification.png" />
+The above defined areas for each rule results in the following sectors for rule selection:</p>
+<figure class="align-default" id="id3">
+<span id="colregclass"></span><img alt="_images/COLREGclassification.png" src="_images/COLREGclassification.png" />
 <figcaption>
-<p><span class="caption-text">COLREG rule selection sectors (Source: Xia et al., 2020, DOI:10.1109/ACCESS.2020.3038187)</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">COLREG rule selection sectors (Source: Xia et al., 2020, DOI:10.1109/ACCESS.2020.3038187)</span><a class="headerlink" href="#id3" title="Permalink to this image"></a></p>
 </figcaption>
 </figure>
 </section>
 <section id="velocity-obstacle-algorithm">
-<h2>Velocity Obstacle algorithm<a class="headerlink" href="#velocity-obstacle-algorithm" title="Permalink to this heading"></a></h2>
+<span id="velocityobstacle"></span><h2>Velocity Obstacle algorithm<a class="headerlink" href="#velocity-obstacle-algorithm" title="Permalink to this heading"></a></h2>
 <p>The Velocity Obstacle (VO) algorithm was introduced by Fiorini and Schiller in 1996 for motion planning in dynamic environments. In the VO algorithm, obstacles are represented as cones in the velocity
 space. The cones, called velocity obstacles, represent the set of constant velocities causing a collision between the vehicle and an obstacle at some future time. Maintaining a velocity outside of the velocity
 obstacle guarantees a collision-free trajectory of the vessel. Navigation among multiple moving obstacles is possible by avoiding the velocities inside the union of all individual velocity obstacles. Besides the VO
 other contrains can be added to the velocity space to obtain a COLREG compliant trajectory.</p>
-<figure class="align-default" id="id2">
-<img alt="_images/test.svg" src="_images/test.svg" /><figcaption>
-<p><span class="caption-text">Test</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+<p>To explain the principle of the algorithm we are looking at a scenario with a single target ship that the own ship has to avoid. (see <a class="reference internal" href="#expanded"><span class="std std-numref">Fig. 2</span></a>)</p>
+<p>The first step in calculating the Velocity Obstacle is to expand the obstacle size with the size of the own ship so that for the calcualtions the OS can be seen as a point. This
+is done with the Minkowski sum which adds all points of one shape to the shape of the other (see <a class="reference internal" href="#expanded"><span class="std std-numref">Fig. 2</span></a>). As mentioned before in chapter <a class="reference internal" href="#colregs"><span class="std std-ref">COLREGs</span></a>, Rule 8 states that the OS
+shall pass at a safe distance. This safe distance here is defined as a multiple of the OS shape and is also added to the shape of the TS with the help of the Minkowski sum.</p>
+<figure class="align-default" id="id4">
+<span id="expanded"></span><img alt="_images/3_row_expanded_cropped.svg" src="_images/3_row_expanded_cropped.svg" /><figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Expension of TS with OS shape and safety area</span><a class="headerlink" href="#id4" title="Permalink to this image"></a></p>
 </figcaption>
 </figure>
-<p>!!! Here VO algorithm explained !!!</p>
+<p>In the next step the collision cone (CC) is calculated. It is the area formed by the two tanget lines formed from the center of OS to the expanded shape of TS (see <a class="reference internal" href="#cc"><span class="std std-numref">Fig. 3</span></a>).
+The CC is a set of all relative velocities that would lead to a collision with the TS at any time in the future. The CC can be further reduced by removing all velocities that would
+lead to a collision in the distant future. If the time to collision of a velocity is greater than the set time to collision (TTC), it is removed from the CC. This reduces the risk
+that the velocity space is completely occupied by the CC in case there are many obstacles around the OS. Furthermore, this prevents the OS from trying to avoid obstacles where a
+collision would only take place in 2 hours, for example, since the situation can still change completely during this time.</p>
+<figure class="align-center" id="id5">
+<span id="cc"></span><a class="reference internal image-reference" href="_images/2_row_collision_cone_cropped.svg"><img alt="_images/2_row_collision_cone_cropped.svg" src="_images/2_row_collision_cone_cropped.svg" width="75%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Collision Cone visualisation</span><a class="headerlink" href="#id5" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The collision cone is specific only to a pair of OS/TS. To take into account several TS it is necessary to create an object comparable to the CC, which takes into account absolute velocities.
+This can be easily achieved by adding the velocity of the TS (V<sub>TS</sub>) to each velocity in the CC or equivalent translating the CC by V<sub>TS</sub> as seen in <a class="reference internal" href="#velobst"><span class="std std-numref">Fig. 4</span></a>.
+This is the so called Velocity Obstacle (VO) and is a set of absolute velocities leading to a collision at any time in the future greater then the TTC.</p>
+<figure class="align-center" id="id6">
+<span id="velobst"></span><a class="reference internal image-reference" href="_images/2_row_velocity_obstacle_cropped.svg"><img alt="_images/2_row_velocity_obstacle_cropped.svg" src="_images/2_row_velocity_obstacle_cropped.svg" width="75%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Velocity obstacle visualisation</span><a class="headerlink" href="#id6" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>In the most cases the velocity of target ships is measured by sensor or is calculated based on measurements obtained by sensors. This and the fact that the target ship movement is not
+always constant as assumed by the VO algorithm, there are uncertainties in the velocity of the TS. TO account for these uncertainties, they can be added to the VO in same fashion as
+it was done with expansion of the TS with the OS. With the Minkowsi sum the uncertainties can be added to the VO as seen in <a class="reference internal" href="#uncert"><span class="std std-numref">Fig. 5</span></a>.</p>
+<figure class="align-center" id="id7">
+<span id="uncert"></span><a class="reference internal image-reference" href="_images/VO_unc_2_cropped.svg"><img alt="_images/VO_unc_2_cropped.svg" src="_images/VO_unc_2_cropped.svg" width="35%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Extension of the VO with uncertainties in the velocity of TS</span><a class="headerlink" href="#id7" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
 </section>
 </section>
 
