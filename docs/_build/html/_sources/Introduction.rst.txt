@@ -151,9 +151,20 @@ COLREG constrains have to be applied, because Rule 13 does not state on which si
 
     Velocity Obstacle dividing the velocity space in three areas
 
-From the hard constrains, the VO and the COLREG contrains, we determined a space in velocity space in which any velocity leads to avoid the collision. The velocity space is discretized to select the optimal
+From the hard constrains, the VO and the COLREG contrains, we determined a space in the velocity space in which any choosen velocity avoids the collision. The velocity space is discretized to select the optimal
 velocity. This is done in velocity steps from 0 to the maximum possible speed of the OS and a course angle of 0-360 degrees. The so-called discretized velocity space. The finer the steps are, the more velocities
-are obtained which have an effect on the speed of the algorithm. 
+are obtained which have an effect on the speed of the algorithm. For every velocity in the discretized velocity space it is checked wether they are inside the VO and COLREG constrains or outside. Every velocity outside
+the constrains is a velocity which assures that a collision is avoided. To select the optimal velocity out of those, a cost function is implemented (see :ref:`cost function <cost function>`). The more the speed deviates from the current speed, the higher the cost.
+The more the course deviates from the desired course, the higher the cost. As mentioned before, an evasive maneuver should be clearly visible. We have defined a course change of 30 degrees here. The further the course
+difference is from the new speed to the current speed, the higher the cost:
+
+.. _cost function:
+
+$$J = w_1\cdot\Delta(\theta_{des}-\theta_{free}) + w_2\cdot\Delta(v_{des}-v_{free}) + w_3\cdot\Delta(\theta_{OS+30}-\theta_{free})$$ 
+
+$w_1$, $w_2$ and $w_3$ are the weights to set the cost function and were determined experimentally.
+With this cost function the new velocity for the OS is calculated. In :numref:`discrete` the new velocity is displayed as a blue arrow. In this example it is a right crossing 
+scenario and the OS has to avoid the collision by changing its course to starboard and crossing behind the TS. 
 
 .. _discrete:
 .. figure:: img/2_row_discrete_vel_space_cropped.svg
@@ -161,3 +172,24 @@ are obtained which have an effect on the speed of the algorithm.
     :align: center
 
     Discretized velocity space with optimal velocity displayed
+
+The Velocity Obstacle algorithm can be used with multiple obstacles as well. Therefor all individual COLREG constrains and VOs are combined. All velocities outside the union of each
+individual constrains are the velocities avoiding a collision. In :numref:`multiple` the OS can be seen surrounded by four TSs. The velocity of the OS is inside three velcity obstacles.
+One is a left-crossing, one head-on and one right-crossing scenario. For the Head-on and the right-crossing scenario COLRGE constrains has to be calculated and are added to the velocity space.
+
+.. _multiple:
+.. figure:: img/VO_4_TS_cropped.svg
+    :width: 50%
+    :align: center
+
+    Multiple target ships around the own ship
+
+The Velocity Obstacle algorithm can be used not only to make fully autonomous systems and thus replace humans, but also offers the possibility to support humans. For example,
+a display can be created that shows the velocity space and gives a suggestion for a new velocity (see :numref:`display`).
+
+.. _display:
+.. figure:: img/VO_4_TS_disp_cropped.svg
+    :width: 50%
+    :align: center
+
+    Display of the result of the VO algorithm to assist humans
