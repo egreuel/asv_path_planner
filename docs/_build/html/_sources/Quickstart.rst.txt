@@ -81,6 +81,8 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 
     new_vel = vo.calc_vel_final(all_ts, os, False)
 
+.. _marus:
+
 Evaluation of the collision avoidance algorithm with MARUSimulator
 ------------------------------------------------------------------
 

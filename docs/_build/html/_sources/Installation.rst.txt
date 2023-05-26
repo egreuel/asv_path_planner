@@ -46,3 +46,4 @@ The example scene for the test of the collision avoidance algorithm with 3 targe
 
     $ pip install -r requirements.txt
 
+With this the installation is completed and and you can hop into the :ref:`quickstart guide <marus>` and use the MARUSimulator to test the algorithm.
