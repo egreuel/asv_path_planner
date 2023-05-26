@@ -1,0 +1,7 @@
+ros_script:
+  ros__parameters:
+    os_max_speed: 5.0
+    os_des_speed: 3.0
+    vel_ts_1: 3.0
+    vel_ts_2: 3.0
+    vel_ts_3: 3.0

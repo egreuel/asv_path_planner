@@ -58,6 +58,12 @@ class RosScriptNode(Node):
         self.ts_3.width = 3.5
         
         # OS and TS speed setup
+        self.declare_parameter('vel_ts_1', 0.0)
+        self.declare_parameter('vel_ts_2', 0.0)
+        self.declare_parameter('vel_ts_3', 0.0)
+
+        self.declare_parameter('os_max_speed', 0.0)
+        self.declare_parameter('os_des_speed', 0.0)
         self.vel_ts_1 = 3.0 # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
         self.vel_ts_2 = 3.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
         self.vel_ts_3 = 3.0
@@ -284,6 +290,7 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
+        vel_ts_1 = self.get_parameter('vel_ts_1').value
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -316,14 +323,22 @@ class RosScriptNode(Node):
 
         # Publish the values of the thrusters to move the ship
         if gps_time_diff > 0:
-            thrust = self.compute_pid_1(self.vel_ts_1, self.ts_1.speed, gps_time_diff)
+            thrust = self.compute_pid_1(vel_ts_1, self.ts_1.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_1.publish(msg)
+            self.ts_1.speed = 0
+            self.ts_1.ang = 0
 
     # Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_2(self, pose: NavSatFix):
-          
+        """Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and
+        orientation and also publishing thruster inputs
+
+        Args:
+            pose (NavSatFix): GPS coordinates
+        """
+        vel_ts_2 = self.get_parameter('vel_ts_2').value  
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -356,11 +371,12 @@ class RosScriptNode(Node):
 
        # Publish the values of the thrusters to move the ship
         if gps_time_diff > 0:
-            thrust = self.compute_pid_2(self.vel_ts_2, self.ts_2.speed, gps_time_diff)
+            thrust = self.compute_pid_2(vel_ts_2, self.ts_2.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_2.publish(msg)
-     
+            
+               
     def gps_callback_ts_3(self, pose: NavSatFix):
         """Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and
         orientation and also publishing thruster inputs
@@ -368,6 +384,7 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
+        vel_ts_3 = self.get_parameter('vel_ts_3').value
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -400,7 +417,7 @@ class RosScriptNode(Node):
 
         # Publish the values of the thrusters to move the ship
         if gps_time_diff > 0:
-            thrust = self.compute_pid_3(self.vel_ts_3, self.ts_3.speed, gps_time_diff)
+            thrust = self.compute_pid_3(vel_ts_3, self.ts_3.speed, gps_time_diff)
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_3.publish(msg)
@@ -414,7 +431,8 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
-            
+        self.os_max_speed = self.get_parameter('os_max_speed').value
+        self.os_des_speed = self.get_parameter('os_des_speed').value    
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)

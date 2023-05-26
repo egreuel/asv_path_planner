@@ -37,7 +37,7 @@ The velocity is always a vector consiting of speed and orientation angle.
     vel_des = [3.0, 90]
     os = [vel_OS, vel_des]
 
-3. Define the properties of the target ship (TS) obtained by sensors or AIS as an object of the TS class:
+3. Define the properties of the target ship (TS) obtained by sensors or the automatic identification system (AIS) as an object of the TS class:
 relative position of TS to OS, length and width of TS, current speed and orientation angle (velocity) of TS
 
 .. code-block:: python
@@ -99,7 +99,8 @@ Evaluation of the collision avoidance algorithm with MARUSimulator
 
     $ ros2 launch grpc_ros_adapter ros2_server_launch.py
 
-3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
+3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. 
+Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
 
 4. Run the collision avoidance algorithm with:
 
@@ -107,7 +108,9 @@ Evaluation of the collision avoidance algorithm with MARUSimulator
 
     $ ros2 run asv_path_planner ros_script
 
-5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called **self.vel_ts_1**, **self.vel_ts_2** and **self.vel_ts_3**. To change the speed change the value to the desired speed in m/s. The maximum speed is limited by the thrusters selected in the Unity scene.
+5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called
+**self.vel_ts_1**, **self.vel_ts_2** and **self.vel_ts_3**. To change the speed change the value to the desired speed in m/s. The maximum speed
+is limited by the thrusters selected in the Unity scene.
 
 6. Change the speed of the own ship by altering the code in ros_script.py. The variables storing the speed of the OS are called **self.os_des_speed** and **self.os_max_speed**:
 

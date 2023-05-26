@@ -142,7 +142,7 @@ The velocity is always a vector consiting of speed and orientation angle.</p>
 <span class="linenos">13</span><span class="n">os</span> <span class="o">=</span> <span class="p">[</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>3. Define the properties of the target ship (TS) obtained by sensors or AIS as an object of the TS class:
+<p>3. Define the properties of the target ship (TS) obtained by sensors or the automatic identification system (AIS) as an object of the TS class:
 relative position of TS to OS, length and width of TS, current speed and orientation angle (velocity) of TS</p>
 <div class="highlight-python notranslate" id="ts"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="n">ts</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
 <span class="linenos">18</span><span class="n">ts</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
@@ -186,15 +186,18 @@ $<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>launch<span class="w"> </span>grpc_ros_adapter<span class="w"> </span>ros2_server_launch.py
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
-<li><p>Open the marus-example project in Unity and select the example scene from <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.</p></li>
+<p>3. Open the marus-example project in Unity and select the example scene from <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>.
+Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.</p>
+<ol class="arabic simple" start="4">
 <li><p>Run the collision avoidance algorithm with:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>run<span class="w"> </span>asv_path_planner<span class="w"> </span>ros_script
 </pre></div>
 </div>
-<ol class="arabic" start="5">
-<li><p>Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called <strong>self.vel_ts_1</strong>, <strong>self.vel_ts_2</strong> and <strong>self.vel_ts_3</strong>. To change the speed change the value to the desired speed in m/s. The maximum speed is limited by the thrusters selected in the Unity scene.</p></li>
+<p>5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called
+<strong>self.vel_ts_1</strong>, <strong>self.vel_ts_2</strong> and <strong>self.vel_ts_3</strong>. To change the speed change the value to the desired speed in m/s. The maximum speed
+is limited by the thrusters selected in the Unity scene.</p>
+<ol class="arabic" start="6">
 <li><p>Change the speed of the own ship by altering the code in ros_script.py. The variables storing the speed of the OS are called <strong>self.os_des_speed</strong> and <strong>self.os_max_speed</strong>:</p>
 <blockquote>
 <div><ul class="simple">
