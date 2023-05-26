@@ -193,10 +193,16 @@ $<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>run<span class="w"> </span>asv_path_planner<span class="w"> </span>ros_script
 </pre></div>
 </div>
-<ol class="arabic simple" start="5">
-<li><p>Change the speed of the target ships by altering the code in ros_script.py:</p></li>
-<li><p>Change the speed of the own ship by altering the code in ros_script.py:</p></li>
-<li><p>To add more obstacles the following parts of the code have do be duplicated:</p></li>
+<ol class="arabic" start="5">
+<li><p>Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called <strong>self.vel_ts_1</strong>, <strong>self.vel_ts_2</strong> and <strong>self.vel_ts_3</strong>. To change the speed change the value to the desired speed in m/s. The maximum speed is limited by the thrusters selected in the Unity scene.</p></li>
+<li><p>Change the speed of the own ship by altering the code in ros_script.py. The variables storing the speed of the OS are called <strong>self.os_des_speed</strong> and <strong>self.os_max_speed</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>self.os_des_speed</strong> - Speed [m/s] the OS is traveling with if no collision avoidance manouver force it to go faster or slower</p></li>
+<li><p><strong>self.max_os_speed</strong> - maximum possible speed [m/s] the OS is able to travel with, which prevents the algorithm to select a new velocity with higher speed than the OS is capable of</p></li>
+</ul>
+</div></blockquote>
+</li>
 </ol>
 </section>
 </section>
