@@ -998,8 +998,7 @@ class VO:
                 
         else:
             # print("No velocity is outside the velocity obstacle")
-            new_vel = self.latest_new_vel
-            # new_vel = []
+            new_vel = []
 
         return np.array(new_vel)
 
@@ -1056,17 +1055,23 @@ class VO:
 
         else:
             # print("No velocity is outside the velocity obstacle")
-            new_vel = self.latest_new_vel
-            # new_vel = []
+            new_vel = []
+            
         return np.array(new_vel)
 
     def extract_most_common_vel(self, arr, threshold):
-        """ Function to calculate the most common velocity"""
-        distances = cdist(arr, arr, 'euclidean')
-        similar_rows = np.where(distances <= threshold)
-        most_common_index = mode(similar_rows[0]).mode[0]
-        return arr[most_common_index]
+        """ Function to extract the most common velocity"""
+        
+        # Use numpy.unique() with the return_counts=True parameter to find the unique identifiers and their counts
+        unique_identifiers, counts = np.unique(arr, axis=0, return_counts=True)
+        # Find the index of the most common identifier
+        most_common_index = np.argmax(counts)
+        # Extract the most common speed and course from the unique identifiers
+        most_common_vel = unique_identifiers[most_common_index]
 
+        return np.array(most_common_vel)
+
+       
     def calc_vel_final(self, ts_info, os_info, plot):
         """Calculate the veloctiy obstacle and COLREG contrains for all TS and calculate the optimal velocity to avoid a collision
 

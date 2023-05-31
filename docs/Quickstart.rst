@@ -99,8 +99,7 @@ Evaluation of the collision avoidance algorithm with MARUSimulator
 
     $ ros2 launch grpc_ros_adapter ros2_server_launch.py
 
-3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. 
-Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
+3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
 
 4. Run the collision avoidance algorithm with:
 
@@ -108,13 +107,13 @@ Start the scene by pressing the play button. Make sure the connection to ROS is 
 
     $ ros2 run asv_path_planner ros_script
 
-5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called
-**self.vel_ts_1**, **self.vel_ts_2** and **self.vel_ts_3**. To change the speed change the value to the desired speed in m/s. The maximum speed
-is limited by the thrusters selected in the Unity scene.
+5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called **self.vel_ts_1**, **self.vel_ts_2** and **self.vel_ts_3**. To change the speed change the value to the desired speed in m/s. The maximum speed is limited by the thrusters selected in the Unity scene.
 
 6. Change the speed of the own ship by altering the code in ros_script.py. The variables storing the speed of the OS are called **self.os_des_speed** and **self.os_max_speed**:
 
     - **self.os_des_speed** - Speed [m/s] the OS is traveling with if no collision avoidance manouver force it to go faster or slower
     - **self.max_os_speed** - maximum possible speed [m/s] the OS is able to travel with, which prevents the algorithm to select a new velocity with higher speed than the OS is capable of
+
+7. Change the detection range of the OS. In the initial simulation it it assumed, that the sensors on board of the OS can detect obstacles within a range of 50 m. To change this the variable **self.detec_range** has to be altered to your wishes. 
 
  

@@ -17,6 +17,7 @@ Vocabulary
 - **Collision Cone (CC)** - set of realtive velocities of the OS to TS leading to a collision at any time
 - **Velocity Obstacle (VO)** - set of absolute velocities of OS leading to a collision at any time
 - **Velocity** - a vector with magnitude as speed [m/s] and direction as COG [°]
+- **desired velocity** - the velocity the OS to move from the current position to the next waypoint (given by the global path planner)
 
 .. _motivation:
 
@@ -162,7 +163,9 @@ difference is from the new speed to the current speed, the higher the cost:
 
 $$J = w_1\cdot\Delta(\theta_{des}-\theta_{free}) + w_2\cdot\Delta(v_{des}-v_{free}) + w_3\cdot\Delta(\theta_{OS+30}-\theta_{free})$$ 
 
-$w_1$, $w_2$ and $w_3$ are the weights to set the cost function and were determined experimentally.
+$w_1$, $w_2$ and $w_3$ are the weights to set the cost function and were determined experimentally. The first time the velocity of the OS enters the VO, it is stored as the inital velocity of the OS. This velocity
+is then used during the avoidance manouver to calculate the COLREG rule and is used in the cost function to calculate the optimal velocity. The avoidacne manouver ends, once the current velocity of the OS and the 
+desired velocity of the OS are outside the velocity Obstacle. 
 With this cost function the new velocity for the OS is calculated. In :numref:`discrete` the new velocity is displayed as a blue arrow. In this example it is a right crossing 
 scenario and the OS has to avoid the collision by changing its course to starboard and crossing behind the TS. 
 

@@ -105,6 +105,7 @@ be used in the further course, is explained and defined.</p>
 <li><p><strong>Collision Cone (CC)</strong> - set of realtive velocities of the OS to TS leading to a collision at any time</p></li>
 <li><p><strong>Velocity Obstacle (VO)</strong> - set of absolute velocities of OS leading to a collision at any time</p></li>
 <li><p><strong>Velocity</strong> - a vector with magnitude as speed [m/s] and direction as COG [°]</p></li>
+<li><p><strong>desired velocity</strong> - the velocity the OS to move from the current position to the next waypoint (given by the global path planner)</p></li>
 </ul>
 </section>
 <section id="motivation">
@@ -230,7 +231,9 @@ difference is from the new speed to the current speed, the higher the cost:</p>
 <p id="cost-function"><div class="math notranslate nohighlight">
 \[J = w_1\cdot\Delta(\theta_{des}-\theta_{free}) + w_2\cdot\Delta(v_{des}-v_{free}) + w_3\cdot\Delta(\theta_{OS+30}-\theta_{free})\]</div>
 </p>
-<p><span class="math notranslate nohighlight">\(w_1\)</span>, <span class="math notranslate nohighlight">\(w_2\)</span> and <span class="math notranslate nohighlight">\(w_3\)</span> are the weights to set the cost function and were determined experimentally.
+<p><span class="math notranslate nohighlight">\(w_1\)</span>, <span class="math notranslate nohighlight">\(w_2\)</span> and <span class="math notranslate nohighlight">\(w_3\)</span> are the weights to set the cost function and were determined experimentally. The first time the velocity of the OS enters the VO, it is stored as the inital velocity of the OS. This velocity
+is then used during the avoidance manouver to calculate the COLREG rule and is used in the cost function to calculate the optimal velocity. The avoidacne manouver ends, once the current velocity of the OS and the
+desired velocity of the OS are outside the velocity Obstacle.
 With this cost function the new velocity for the OS is calculated. In <a class="reference internal" href="#discrete"><span class="std std-numref">Fig. 7</span></a> the new velocity is displayed as a blue arrow. In this example it is a right crossing
 scenario and the OS has to avoid the collision by changing its course to starboard and crossing behind the TS.</p>
 <figure class="align-center" id="id9">

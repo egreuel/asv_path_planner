@@ -16,3 +16,6 @@ Left-crossing
 Overtaking
 ----------
 
+Multiple ship encounters
+------------------------
+

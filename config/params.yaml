@@ -1,7 +1,20 @@
 ros_script:
   ros__parameters:
-    os_max_speed: 5.0
+    os_max_speed: 6.0
     os_des_speed: 3.0
     vel_ts_1: 3.0
-    vel_ts_2: 3.0
-    vel_ts_3: 3.0
+    vel_ts_2: 6.0
+    vel_ts_3: 6.0
+    length_os: 3.0
+    width_os: 1.5
+    length_ts_1: 6.0
+    width_ts_1: 3.0
+    length_ts_2: 6.0
+    width_ts_2: 3.0
+    length_ts_3: 6.0
+    width_ts_3: 3.0
+    vel_kp: 0.36
+    vel_ki: 0.15
+    vel_kd: 0.072
+    head_kp: 0.014
+    head_kd: 0.0082

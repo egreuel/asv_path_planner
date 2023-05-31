@@ -4,19 +4,21 @@ This is the ROS script to use the MARUS simulator and test the collision avoidan
 """
 
 #!/usr/bin/env python3
-from .velobst_class import VO
-from .ts_class import TS
-from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix
-from std_msgs.msg import Float32MultiArray
-from time import perf_counter_ns
-from matplotlib import pyplot as plt
-from geopy import distance
 import atexit
 import numpy as np
 import math
 import rclpy
 import csv
+from .velobst_class import VO
+from .ts_class import TS
+from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
+from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import Float32MultiArray
+from time import perf_counter_ns
+from matplotlib import pyplot as plt 
+from geopy import distance
 
 class RosScriptNode(Node):
     """
@@ -26,10 +28,59 @@ class RosScriptNode(Node):
     def __init__(self):
         super().__init__("ros_script")
         atexit.register(self.exit_handler)
+        
+        self.declare_parameter('vel_ts_1', 3.0)
+        self.declare_parameter('vel_ts_2', 6.0)
+        self.declare_parameter('vel_ts_3', 6.0)
+        self.declare_parameter('os_max_speed', 6.0)
+        self.declare_parameter('os_des_speed', 3.0)
+        self.declare_parameter('detec_range', 50)
+        self.declare_parameter('length_os', 3.0) 
+        self.declare_parameter('width_os', 1.5)
+        self.declare_parameter('length_ts_1', 6.0)
+        self.declare_parameter('width_ts_1', 3.0)
+        self.declare_parameter('length_ts_2', 6.0)
+        self.declare_parameter('width_ts_2', 3.0)
+        self.declare_parameter('length_ts_3', 6.0)
+        self.declare_parameter('width_ts_3', 3.0)
+        self.declare_parameter('vel_kp', 0.36)
+        self.declare_parameter('vel_ki', 0.15)
+        self.declare_parameter('vel_kd', 0.072)
+        self.declare_parameter('head_kp', 0.014)
+        self.declare_parameter('head_kd', 0.0082)
+       
+        self.vel_ts_1 = self.get_parameter('vel_ts_1').value # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
+        self.vel_ts_2 = self.get_parameter('vel_ts_2').value # input for simulation to move the TS (slow: 3.0, fast: 6.0)
+        self.vel_ts_3 = self.get_parameter('vel_ts_3').value
+        self.os_max_speed = self.get_parameter('os_max_speed').value
+        self.os_des_speed = self.get_parameter('os_des_speed').value
+        self.detec_range = self.get_parameter('detec_range').value
+        self.os = TS()
+        self.os.length = self.get_parameter('length_os').value
+        self.os.width = self.get_parameter('width_os').value
+        self.ts_1 = TS()
+        self.ts_1.length = self.get_parameter('length_ts_1').value
+        self.ts_1.width = self.get_parameter('width_ts_1').value
+        self.ts_2 = TS()
+        self.ts_2.length = self.get_parameter('length_ts_2').value
+        self.ts_2.width = self.get_parameter('width_ts_2').value
+        self.ts_3 = TS()
+        self.ts_3.length = self.get_parameter('length_ts_3').value
+        self.ts_3.width = self.get_parameter('width_ts_3').value
+        # PID speed control parameters (found with Ziegler-Nichols methode)
+        self.kp = self.get_parameter('vel_kp').value
+        self.ki = self.get_parameter('vel_ki').value
+        self.kd = self.get_parameter('vel_kd').value
+        # PD heading control parameters (found with Ziegler-Nichols methode)
+        self.kp_ang = self.get_parameter('head_kp').value
+        self.kd_ang = self.get_parameter('head_kd').value
+
+        
+        # self.detec_range = 50 # Range in which obstacles can be detected around the OS  
+
         self.os_pos = []
         self.os_speed = []
         self.os_ang = []
-        self.detec_range = 50 # Range in which obstacles can be detected around the OS
         self.ts_pos_1 = []
         self.ts_pos_2 = []
         self.ts_pos_3 = []
@@ -43,33 +94,6 @@ class RosScriptNode(Node):
         self.ang_com = []
         self.coll_check = []
         self.start_time = perf_counter_ns()
-        # OS and TS dimensions
-        self.os = TS()
-        self.os.length = 3.0
-        self.os.width = 1.5
-        self.ts_1 = TS()
-        self.ts_1.length = 6.0
-        self.ts_1.width = 3.5
-        self.ts_2 = TS()
-        self.ts_2.length = 6.0
-        self.ts_2.width = 3.5
-        self.ts_3 = TS()
-        self.ts_3.length = 6.0
-        self.ts_3.width = 3.5
-        
-        # OS and TS speed setup
-        self.declare_parameter('vel_ts_1', 0.0)
-        self.declare_parameter('vel_ts_2', 0.0)
-        self.declare_parameter('vel_ts_3', 0.0)
-
-        self.declare_parameter('os_max_speed', 0.0)
-        self.declare_parameter('os_des_speed', 0.0)
-        self.vel_ts_1 = 3.0 # input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)
-        self.vel_ts_2 = 3.0 # input for simulation to move the TS (slow: 3.0, fast: 6.0)
-        self.vel_ts_3 = 3.0
-        
-        self.os_max_speed = 5.0 # slow: 1.0, fast: 3.0
-        self.os_des_speed = 3.0 # slow: 1.0, fast: 3.0
 
         self.ref_point = [45.001799636812144, 15.002536642856318] # Just for plotting
         self.last_gps = None
@@ -86,15 +110,6 @@ class RosScriptNode(Node):
         self.wait_bool_ts_3 = False
         self.wait_bool_os = False
         self.wait_bool_tp = False # Start the algorithm once position of the TSs are recieved
-        
-        # PID speed control parameters (found with Ziegler-Nichols methode)
-        self.kp = 0.36
-        self.ki = 0.15
-        self.kd = 0.072
-
-        # PD heading control parameters (found with Ziegler-Nichols methode)
-        self.kp_ang = 0.014
-        self.kd_ang = 0.0082
        
         # Variables for the PID and PD control     
         self.last_error = 0
@@ -136,7 +151,52 @@ class RosScriptNode(Node):
         self.thruster_pub_os = self.create_publisher(
             Float32MultiArray, "/marus_boat/pwm_out", 10)
 
+        # Callback function for parameter callback
+        self.add_on_set_parameters_callback(self.param_callback)
+
         self.get_logger().info("Node started!")
+    
+    def param_callback(self, params: list[Parameter]):
+        for param in params:
+            if param.name == "vel_ts_1":
+                self.vel_ts_1 = param.value
+            if param.name == "vel_ts_2":
+                self.vel_ts_2 = param.value
+            if param.name == "vel_ts_3":
+                self.vel_ts_3 = param.value
+            if param.name == "os_max_speed":
+                self.os_max_speed = param.value
+            if param.name == "os_des_speed":
+                self.os_des_speed = param.value
+            if param.name == "detec_range":
+                self.detec_range = param.value
+            if param.name == "length_os":
+                self.os.length = param.value
+            if param.name == "width_os":
+                self.os.width = param.value
+            if param.name == "length_ts_1":
+                self.ts_1.length = param.value
+            if param.name == "width_ts_1":
+                self.ts_1.width = param.value
+            if param.name == "length_ts_2":
+                self.ts_2.length = param.value
+            if param.name == "width_ts_2":
+                self.ts_2.width = param.value
+            if param.name == "length_ts_3":
+                self.ts_3.length = param.value
+            if param.name == "width_ts_3":
+                self.ts_3.width = param.value
+            if param.name == "vel_kp":
+                self.kp = param.value
+            if param.name == "vel_ki":
+                self.ki = param.value
+            if param.name == "vel_kd":
+                self.kd = param.value
+            if param.name == "head_kp":
+                self.kp_ang = param.value
+            if param.name == "head_kd":
+                self.kd_ang = param.value
+        return SetParametersResult(successful=True)
 
     # Calculate the course difference between two courses (new velocity and current velocity)
     def angle_diff(self, ref_angle, angle):
@@ -290,7 +350,8 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
-        vel_ts_1 = self.get_parameter('vel_ts_1').value
+        
+        vel_ts_1 = self.vel_ts_1
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -327,9 +388,7 @@ class RosScriptNode(Node):
             msg = Float32MultiArray()
             msg.data = [thrust, thrust, 0.0]
             self.thruster_pub_ts_1.publish(msg)
-            self.ts_1.speed = 0
-            self.ts_1.ang = 0
-
+            
     # Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS
     def gps_callback_ts_2(self, pose: NavSatFix):
         """Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and
@@ -338,7 +397,8 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
-        vel_ts_2 = self.get_parameter('vel_ts_2').value  
+        
+        vel_ts_2 = self.vel_ts_2
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -384,7 +444,8 @@ class RosScriptNode(Node):
         Args:
             pose (NavSatFix): GPS coordinates
         """
-        vel_ts_3 = self.get_parameter('vel_ts_3').value
+       
+        vel_ts_3 = self.vel_ts_3
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -430,9 +491,8 @@ class RosScriptNode(Node):
 
         Args:
             pose (NavSatFix): GPS coordinates
-        """
-        self.os_max_speed = self.get_parameter('os_max_speed').value
-        self.os_des_speed = self.get_parameter('os_des_speed').value    
+        # """
+        
         gps_time_sec = pose.header.stamp.sec
         gps_time_nanosec =  pose.header.stamp.nanosec
         gps_time = gps_time_sec + gps_time_nanosec*(10**-9)
@@ -514,7 +574,7 @@ class RosScriptNode(Node):
             all_ts_gps = [self.gps_1, self.gps_2, self.gps_3]
             TS_all = []
             for ship, pos in zip(all_ts, all_ts_gps):
-                if distance.great_circle(self.gps, pos) < 50:
+                if distance.great_circle(self.gps, pos).meters < self.detec_range:
                     TS_all.append(ship)
                 else:
                     pass
@@ -542,8 +602,9 @@ class RosScriptNode(Node):
                 else:
                     self.elapsed_time.append(0)
                     self.new_vel = vel_des
+
                 print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
-                
+                                
                 # Control output for changing the course angle based on the new velocity     
                 if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
                     thrust = self.compute_pid(self.new_vel[0], self.os.speed, gps_time_diff)   

@@ -138,8 +138,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.5</span>
         
         <span class="c1"># OS and TS speed setup</span>
+        <span class="c1"># self.declare_parameter(&#39;vel_ts_1&#39;, 0.0)</span>
+        <span class="c1"># self.declare_parameter(&#39;vel_ts_2&#39;, 0.0)</span>
+        <span class="c1"># self.declare_parameter(&#39;vel_ts_3&#39;, 0.0)</span>
+
+        <span class="c1"># self.declare_parameter(&#39;os_max_speed&#39;, 0.0)</span>
+        <span class="c1"># self.declare_parameter(&#39;os_des_speed&#39;, 0.0)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="c1"># input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="c1"># input for simulation to move the TS (slow: 3.0, fast: 6.0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="mf">6.0</span> <span class="c1"># input for simulation to move the TS (slow: 3.0, fast: 6.0)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="mf">3.0</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="mf">5.0</span> <span class="c1"># slow: 1.0, fast: 3.0</span>
@@ -364,6 +370,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># vel_ts_1 = self.get_parameter(&#39;vel_ts_1&#39;).value</span>
+        <span class="n">vel_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -396,14 +404,21 @@
 
         <span class="c1"># Publish the values of the thrusters to move the ship</span>
         <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_1</span><span class="p">(</span><span class="n">vel_ts_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
             <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_1</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
-
+            
     <span class="c1"># Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS</span>
 <div class="viewcode-block" id="RosScriptNode.gps_callback_ts_2"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
-          
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># vel_ts_2 = self.get_parameter(&#39;vel_ts_2&#39;).value  </span>
+        <span class="n">vel_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -436,11 +451,12 @@
 
        <span class="c1"># Publish the values of the thrusters to move the ship</span>
         <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_2</span><span class="p">(</span><span class="n">vel_ts_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
             <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_2</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
-     
+            
+               
 <div class="viewcode-block" id="RosScriptNode.gps_callback_ts_3"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_3">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and</span>
 <span class="sd">        orientation and also publishing thruster inputs</span>
@@ -448,6 +464,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># vel_ts_3 = self.get_parameter(&#39;vel_ts_3&#39;).value</span>
+        <span class="n">vel_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -480,7 +498,7 @@
 
         <span class="c1"># Publish the values of the thrusters to move the ship</span>
         <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_3</span><span class="p">(</span><span class="n">vel_ts_3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
             <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_3</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
@@ -493,8 +511,11 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-            
+<span class="sd">        # &quot;&quot;&quot;</span>
+        <span class="c1"># self.os_max_speed = self.get_parameter(&#39;os_max_speed&#39;).value</span>
+        <span class="c1"># self.os_des_speed = self.get_parameter(&#39;os_des_speed&#39;).value  </span>
+
+
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -576,7 +597,7 @@
             <span class="n">all_ts_gps</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">]</span>
             <span class="n">TS_all</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">ship</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">all_ts_gps</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span><span class="p">:</span>
                     <span class="n">TS_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ship</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">pass</span>
@@ -604,7 +625,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vel_des</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New vel: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">,</span> <span class="s2">&quot;OS vel:&quot;</span><span class="p">,</span> <span class="n">vel_OS</span><span class="p">,</span> <span class="s2">&quot;Time: &quot;</span><span class="p">,(</span><span class="n">perf_counter_ns</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span><span class="o">/</span><span class="mi">1000000</span><span class="p">)</span>
+                <span class="c1"># print(&quot;New vel: &quot;, self.new_vel, &quot;OS vel:&quot;, vel_OS, &quot;Time: &quot;,(perf_counter_ns()-self.start_time)/1000000)</span>
                 
                 <span class="c1"># Control output for changing the course angle based on the new velocity     </span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
