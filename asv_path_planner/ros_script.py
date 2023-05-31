@@ -29,11 +29,11 @@ class RosScriptNode(Node):
         super().__init__("ros_script")
         atexit.register(self.exit_handler)
         
-        self.declare_parameter('vel_ts_1', 3.0)
-        self.declare_parameter('vel_ts_2', 6.0)
-        self.declare_parameter('vel_ts_3', 6.0)
-        self.declare_parameter('os_max_speed', 6.0)
-        self.declare_parameter('os_des_speed', 3.0)
+        self.declare_parameter('vel_ts_1', 2.0)
+        self.declare_parameter('vel_ts_2', 0.0)
+        self.declare_parameter('vel_ts_3', 0.0)
+        self.declare_parameter('os_max_speed', 1.0)
+        self.declare_parameter('os_des_speed', 1.0)
         self.declare_parameter('detec_range', 50)
         self.declare_parameter('length_os', 3.0) 
         self.declare_parameter('width_os', 1.5)
@@ -603,7 +603,7 @@ class RosScriptNode(Node):
                     self.elapsed_time.append(0)
                     self.new_vel = vel_des
 
-                print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+                # print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
                                 
                 # Control output for changing the course angle based on the new velocity     
                 if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
