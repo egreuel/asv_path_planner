@@ -84,19 +84,21 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1">#!/usr/bin/env python3</span>
-<span class="kn">from</span> <span class="nn">.velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
-<span class="kn">from</span> <span class="nn">.ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
-<span class="kn">from</span> <span class="nn">rclpy.node</span> <span class="kn">import</span> <span class="n">Node</span>
-<span class="kn">from</span> <span class="nn">sensor_msgs.msg</span> <span class="kn">import</span> <span class="n">NavSatFix</span>
-<span class="kn">from</span> <span class="nn">std_msgs.msg</span> <span class="kn">import</span> <span class="n">Float32MultiArray</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter_ns</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">geopy</span> <span class="kn">import</span> <span class="n">distance</span>
 <span class="kn">import</span> <span class="nn">atexit</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">rclpy</span>
 <span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">.velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="kn">from</span> <span class="nn">.ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+<span class="kn">from</span> <span class="nn">rclpy.node</span> <span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">rclpy.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span> <span class="nn">rcl_interfaces.msg</span> <span class="kn">import</span> <span class="n">SetParametersResult</span>
+<span class="kn">from</span> <span class="nn">sensor_msgs.msg</span> <span class="kn">import</span> <span class="n">NavSatFix</span>
+<span class="kn">from</span> <span class="nn">std_msgs.msg</span> <span class="kn">import</span> <span class="n">Float32MultiArray</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter_ns</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span> 
+<span class="kn">from</span> <span class="nn">geopy</span> <span class="kn">import</span> <span class="n">distance</span>
 
 <div class="viewcode-block" id="RosScriptNode"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode">[docs]</a><span class="k">class</span> <span class="nc">RosScriptNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -106,10 +108,59 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;ros_script&quot;</span><span class="p">)</span>
         <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exit_handler</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_1&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_3&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;os_max_speed&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;os_des_speed&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;detec_range&#39;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_os&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_os&#39;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_1&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_2&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_2&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_3&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_3&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kp&#39;</span><span class="p">,</span> <span class="mf">0.36</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ki&#39;</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kd&#39;</span><span class="p">,</span> <span class="mf">0.072</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;head_kp&#39;</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;head_kd&#39;</span><span class="p">,</span> <span class="mf">0.0082</span><span class="p">)</span>
+       
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span> <span class="c1"># input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span> <span class="c1"># input for simulation to move the TS (slow: 3.0, fast: 6.0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;os_max_speed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;os_des_speed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;detec_range&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_os&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_os&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="c1"># PID speed control parameters (found with Ziegler-Nichols methode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kp&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ki</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ki&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="c1"># PD heading control parameters (found with Ziegler-Nichols methode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;head_kp&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;head_kd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+        
+        <span class="c1"># self.detec_range = 50 # Range in which obstacles can be detected around the OS  </span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">os_pos</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">os_speed</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">os_ang</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span> <span class="o">=</span> <span class="mi">50</span> <span class="c1"># Range in which obstacles can be detected around the OS</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_1</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_2</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_3</span> <span class="o">=</span> <span class="p">[]</span>
@@ -123,33 +174,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter_ns</span><span class="p">()</span>
-        <span class="c1"># OS and TS dimensions</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">3.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.5</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.5</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.5</span>
-        
-        <span class="c1"># OS and TS speed setup</span>
-        <span class="c1"># self.declare_parameter(&#39;vel_ts_1&#39;, 0.0)</span>
-        <span class="c1"># self.declare_parameter(&#39;vel_ts_2&#39;, 0.0)</span>
-        <span class="c1"># self.declare_parameter(&#39;vel_ts_3&#39;, 0.0)</span>
-
-        <span class="c1"># self.declare_parameter(&#39;os_max_speed&#39;, 0.0)</span>
-        <span class="c1"># self.declare_parameter(&#39;os_des_speed&#39;, 0.0)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="c1"># input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="mf">6.0</span> <span class="c1"># input for simulation to move the TS (slow: 3.0, fast: 6.0)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="mf">3.0</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="mf">5.0</span> <span class="c1"># slow: 1.0, fast: 3.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="c1"># slow: 1.0, fast: 3.0</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.001799636812144</span><span class="p">,</span> <span class="mf">15.002536642856318</span><span class="p">]</span> <span class="c1"># Just for plotting</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span> <span class="o">=</span> <span class="kc">None</span>
@@ -166,15 +190,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_3</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_os</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_tp</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Start the algorithm once position of the TSs are recieved</span>
-        
-        <span class="c1"># PID speed control parameters (found with Ziegler-Nichols methode)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kp</span> <span class="o">=</span> <span class="mf">0.36</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ki</span> <span class="o">=</span> <span class="mf">0.15</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kd</span> <span class="o">=</span> <span class="mf">0.072</span>
-
-        <span class="c1"># PD heading control parameters (found with Ziegler-Nichols methode)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span> <span class="o">=</span> <span class="mf">0.014</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span> <span class="o">=</span> <span class="mf">0.0082</span>
        
         <span class="c1"># Variables for the PID and PD control     </span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_error</span> <span class="o">=</span> <span class="mi">0</span>
@@ -216,7 +231,52 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_os</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
             <span class="n">Float32MultiArray</span><span class="p">,</span> <span class="s2">&quot;/marus_boat/pwm_out&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 
+        <span class="c1"># Callback function for parameter callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_on_set_parameters_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_callback</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Node started!&quot;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="RosScriptNode.param_callback"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.param_callback">[docs]</a>    <span class="k">def</span> <span class="nf">param_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;os_max_speed&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;os_des_speed&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;detec_range&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_os&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_os&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_kp&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kp</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ki&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ki</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_kd&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kd</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;head_kp&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;head_kd&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">SetParametersResult</span><span class="p">(</span><span class="n">successful</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
     <span class="c1"># Calculate the course difference between two courses (new velocity and current velocity)</span>
 <div class="viewcode-block" id="RosScriptNode.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_angle</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
@@ -370,7 +430,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># vel_ts_1 = self.get_parameter(&#39;vel_ts_1&#39;).value</span>
+        
         <span class="n">vel_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
@@ -417,7 +477,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># vel_ts_2 = self.get_parameter(&#39;vel_ts_2&#39;).value  </span>
+        
         <span class="n">vel_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
@@ -464,7 +524,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># vel_ts_3 = self.get_parameter(&#39;vel_ts_3&#39;).value</span>
+       
         <span class="n">vel_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span>
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
@@ -512,10 +572,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pose (NavSatFix): GPS coordinates</span>
 <span class="sd">        # &quot;&quot;&quot;</span>
-        <span class="c1"># self.os_max_speed = self.get_parameter(&#39;os_max_speed&#39;).value</span>
-        <span class="c1"># self.os_des_speed = self.get_parameter(&#39;os_des_speed&#39;).value  </span>
-
-
+        
         <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
         <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
         <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
@@ -625,8 +682,9 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vel_des</span>
+
                 <span class="c1"># print(&quot;New vel: &quot;, self.new_vel, &quot;OS vel:&quot;, vel_OS, &quot;Time: &quot;,(perf_counter_ns()-self.start_time)/1000000)</span>
-                
+                                
                 <span class="c1"># Control output for changing the course angle based on the new velocity     </span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
                     <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>   
@@ -669,7 +727,7 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Sim Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 1&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 2&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 3&quot;</span><span class="p">,</span> <span class="s2">&quot;Speed Com&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle Com&quot;</span><span class="p">,</span> <span class="s2">&quot;Speed OS&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle OS&quot;</span><span class="p">,</span> <span class="s2">&quot;Run Time&quot;</span><span class="p">,</span> <span class="s2">&quot;OS pos&quot;</span><span class="p">,</span> <span class="s2">&quot;TS pos&quot;</span><span class="p">,</span> <span class="s2">&quot;Coll check&quot;</span><span class="p">]</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_1</span><span class="p">,</span> <span class="n">dist_os_ts_2</span><span class="p">,</span> <span class="n">dist_os_ts_3</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="p">,</span> <span class="n">os_speed</span><span class="p">,</span> <span class="n">os_ang</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="p">,</span> <span class="n">os_position</span><span class="p">,</span> <span class="n">ts_position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="p">]</span>
         
-        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;src/asv_path_planner/Raw data/simulation_results_.csv&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;src/asv_path_planner/Simulation output/simulation_results_.csv&quot;</span>
         <span class="c1"># writing to csv file  </span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>  
             <span class="c1"># creating a csv writer object  </span>
@@ -698,23 +756,24 @@
         <span class="c1"># Plot the distance between TS and OS over time</span>
         <span class="n">fig1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 1&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 2&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_3</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 3&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+             
         <span class="n">min_dist</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_1</span><span class="p">)</span>
         <span class="n">min_dist</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">ind_min_dist</span> <span class="o">=</span> <span class="n">dist_os_ts_1</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
         <span class="n">time_min_dist</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 1&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time_min_dist</span><span class="p">,</span> <span class="n">min_dist</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;min. distance to TS 1 = </span><span class="si">{</span><span class="n">min_dist</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
         <span class="n">min_dist_2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_2</span><span class="p">)</span>
         <span class="n">min_dist_2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist_2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">ind_min_dist_2</span> <span class="o">=</span> <span class="n">dist_os_ts_2</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
         <span class="n">time_min_dist_2</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist_2</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 2&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time_min_dist_2</span><span class="p">,</span> <span class="n">min_dist_2</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;min. distance to TS 2 = </span><span class="si">{</span><span class="n">min_dist_2</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
         <span class="n">min_dist_3</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_3</span><span class="p">)</span>
         <span class="n">min_dist_3</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist_3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">ind_min_dist_3</span> <span class="o">=</span> <span class="n">dist_os_ts_3</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
         <span class="n">time_min_dist_3</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist_3</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_3</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 3&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time_min_dist_3</span><span class="p">,</span> <span class="n">min_dist_3</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;min. distance to TS 3 = </span><span class="si">{</span><span class="n">min_dist_3</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
 
         <span class="c1"># plt.title(&quot;Distance betweenn OS and TS&quot;)</span>
@@ -723,6 +782,8 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
         <span class="n">ax1</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax1</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
         
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Distance.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
         <span class="c1"># Plot the current speed and the desired speed (calculated by VO algorithm) of the OS</span>
         <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
@@ -733,7 +794,9 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Speed [m/s]&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
         <span class="n">ax2</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax2</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
-        
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Speed.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
         <span class="c1"># Plot the current orientation and the desired orientation (calculated by VO algorithm) of the OS</span>
         <span class="n">fig3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig3</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
@@ -745,6 +808,8 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
         <span class="n">ax3</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax3</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
         
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Orientation.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
         <span class="c1"># Plot of the VO Algorithm run time</span>
         <span class="c1"># fig4 = plt.figure()</span>
         <span class="c1"># ax4 = fig4.add_subplot(111)</span>
@@ -763,6 +828,8 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;In/Out safety area&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
         <span class="n">ax5</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax5</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Collision.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
 
         <span class="c1"># Plot the trajectory of the ships</span>
         <span class="n">fig6</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
@@ -878,7 +945,8 @@
        
         <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x [m]&#39;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y [m]&#39;</span><span class="p">)</span>
-       
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Trajectory.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
 
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

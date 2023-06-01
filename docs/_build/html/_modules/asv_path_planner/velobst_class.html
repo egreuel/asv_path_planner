@@ -1078,8 +1078,7 @@
                 
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># print(&quot;No velocity is outside the velocity obstacle&quot;)</span>
-            <span class="n">new_vel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_new_vel</span>
-            <span class="c1"># new_vel = []</span>
+            <span class="n">new_vel</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_vel</span><span class="p">)</span></div>
 
@@ -1136,17 +1135,23 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># print(&quot;No velocity is outside the velocity obstacle&quot;)</span>
-            <span class="n">new_vel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_new_vel</span>
-            <span class="c1"># new_vel = []</span>
+            <span class="n">new_vel</span> <span class="o">=</span> <span class="p">[]</span>
+            
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_vel</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VO.extract_most_common_vel"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.extract_most_common_vel">[docs]</a>    <span class="k">def</span> <span class="nf">extract_most_common_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to calculate the most common velocity&quot;&quot;&quot;</span>
-        <span class="n">distances</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">)</span>
-        <span class="n">similar_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">distances</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">)</span>
-        <span class="n">most_common_index</span> <span class="o">=</span> <span class="n">mode</span><span class="p">(</span><span class="n">similar_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">mode</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">arr</span><span class="p">[</span><span class="n">most_common_index</span><span class="p">]</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to extract the most common velocity&quot;&quot;&quot;</span>
+        
+        <span class="c1"># Use numpy.unique() with the return_counts=True parameter to find the unique identifiers and their counts</span>
+        <span class="n">unique_identifiers</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Find the index of the most common identifier</span>
+        <span class="n">most_common_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="c1"># Extract the most common speed and course from the unique identifiers</span>
+        <span class="n">most_common_vel</span> <span class="o">=</span> <span class="n">unique_identifiers</span><span class="p">[</span><span class="n">most_common_index</span><span class="p">]</span>
 
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">most_common_vel</span><span class="p">)</span></div>
+
+       
 <div class="viewcode-block" id="VO.calc_vel_final"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.velobst_class.VO.calc_vel_final">[docs]</a>    <span class="k">def</span> <span class="nf">calc_vel_final</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts_info</span><span class="p">,</span> <span class="n">os_info</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the veloctiy obstacle and COLREG contrains for all TS and calculate the optimal velocity to avoid a collision</span>
 

@@ -67,6 +67,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_1()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_2()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_3"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.gps_callback_ts_3()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asv_path_planner.ros_script.RosScriptNode.param_callback"><code class="docutils literal notranslate"><span class="pre">RosScriptNode.param_callback()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#asv_path_planner.ros_script.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
@@ -339,6 +340,11 @@ orientation and also publishing thruster inputs</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="asv_path_planner.ros_script.RosScriptNode.param_callback">
+<span class="sig-name descname"><span class="pre">param_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">rclpy.parameter.Parameter</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/ros_script.html#RosScriptNode.param_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.ros_script.RosScriptNode.param_callback" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -779,7 +785,7 @@ outside, if outside check which side</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="asv_path_planner.velobst_class.VO.extract_most_common_vel">
 <span class="sig-name descname"><span class="pre">extract_most_common_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/asv_path_planner/velobst_class.html#VO.extract_most_common_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#asv_path_planner.velobst_class.VO.extract_most_common_vel" title="Permalink to this definition"></a></dt>
-<dd><p>Function to calculate the most common velocity</p>
+<dd><p>Function to extract the most common velocity</p>
 </dd></dl>
 
 <dl class="py method">

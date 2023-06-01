@@ -29,11 +29,11 @@ class RosScriptNode(Node):
         super().__init__("ros_script")
         atexit.register(self.exit_handler)
         
-        self.declare_parameter('vel_ts_1', 2.0)
+        self.declare_parameter('vel_ts_1', 0.0)
         self.declare_parameter('vel_ts_2', 0.0)
         self.declare_parameter('vel_ts_3', 0.0)
-        self.declare_parameter('os_max_speed', 1.0)
-        self.declare_parameter('os_des_speed', 1.0)
+        self.declare_parameter('os_max_speed', 0.0)
+        self.declare_parameter('os_des_speed', 0.0)
         self.declare_parameter('detec_range', 50)
         self.declare_parameter('length_os', 3.0) 
         self.declare_parameter('width_os', 1.5)
@@ -595,6 +595,7 @@ class RosScriptNode(Node):
                     msg.data = [thrust, thrust, 0.0]
             else:
                 if self.flag:
+                    print("häää")
                     starting_time = perf_counter_ns()
                     # Calculate the VOs and the new optimal velocity
                     self.new_vel = self.vo.calc_vel_final(TS_all, info_OS, False)
@@ -603,7 +604,7 @@ class RosScriptNode(Node):
                     self.elapsed_time.append(0)
                     self.new_vel = vel_des
 
-                # print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
+                print("New vel: ", self.new_vel, "OS vel:", vel_OS, "Time: ",(perf_counter_ns()-self.start_time)/1000000)
                                 
                 # Control output for changing the course angle based on the new velocity     
                 if self.angle_diff(vel_OS[1], self.new_vel[1]) > 5:
@@ -647,7 +648,7 @@ class RosScriptNode(Node):
         fields = ["Sim Time", "Distance to TS 1", "Distance to TS 2", "Distance to TS 3", "Speed Com", "Angle Com", "Speed OS", "Angle OS", "Run Time", "OS pos", "TS pos", "Coll check"]
         rows = [simu_time, dist_os_ts_1, dist_os_ts_2, dist_os_ts_3,self.speed_com, self.ang_com, os_speed, os_ang, self.elapsed_time, os_position, ts_position, self.coll_check]
         
-        filename = "src/asv_path_planner/Raw data/simulation_results_.csv"
+        filename = "src/asv_path_planner/Simulation output/simulation_results_.csv"
         # writing to csv file  
         with open(filename, 'w') as csvfile:  
             # creating a csv writer object  
@@ -676,24 +677,25 @@ class RosScriptNode(Node):
         # Plot the distance between TS and OS over time
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(111)
-        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
-        plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
-        plt.plot(simu_time, dist_os_ts_3, c="orange", linestyle="dotted", label="Distance between OS and TS 3", linewidth=2.5)
+             
         min_dist = min(dist_os_ts_1)
         min_dist = round(min_dist, 2)
         ind_min_dist = dist_os_ts_1.argmin()
         time_min_dist = simu_time[ind_min_dist]
+        plt.plot(simu_time, dist_os_ts_1, c="blue", label="Distance between OS and TS 1", linewidth=2.5)
         plt.scatter(time_min_dist, min_dist, marker="x", c="orange", zorder=2, label=f"min. distance to TS 1 = {min_dist} m", linewidth=2.5)
         min_dist_2 = min(dist_os_ts_2)
         min_dist_2 = round(min_dist_2, 2)
         ind_min_dist_2 = dist_os_ts_2.argmin()
         time_min_dist_2 = simu_time[ind_min_dist_2]
-        plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
+        # plt.plot(simu_time, dist_os_ts_2, c="red", linestyle="dashed", label="Distance between OS and TS 2", linewidth=2.5)
+        # plt.scatter(time_min_dist_2, min_dist_2, marker="+", c="green", zorder=2, label=f"min. distance to TS 2 = {min_dist_2} m", linewidth=2.5)
         min_dist_3 = min(dist_os_ts_3)
         min_dist_3 = round(min_dist_3, 2)
         ind_min_dist_3 = dist_os_ts_3.argmin()
         time_min_dist_3 = simu_time[ind_min_dist_3]
-        plt.scatter(time_min_dist_3, min_dist_3, marker=".", c="blue", zorder=2, label=f"min. distance to TS 3 = {min_dist_3} m", linewidth=2.5)
+        # plt.plot(simu_time, dist_os_ts_3, c="orange", linestyle="dotted", label="Distance between OS and TS 3", linewidth=2.5)
+        # plt.scatter(time_min_dist_3, min_dist_3, marker=".", c="blue", zorder=2, label=f"min. distance to TS 3 = {min_dist_3} m", linewidth=2.5)
 
         # plt.title("Distance betweenn OS and TS")
         plt.xlabel("Time [s]")
@@ -701,6 +703,8 @@ class RosScriptNode(Node):
         plt.legend(loc="best", fontsize="10")
         ax1.set_aspect(1.0/ax1.get_data_ratio(), adjustable='box')
         
+        plt.savefig("src/asv_path_planner/Simulation output/Distance.pdf", format="pdf", bbox_inches="tight")
+
         # Plot the current speed and the desired speed (calculated by VO algorithm) of the OS
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111)
@@ -711,7 +715,9 @@ class RosScriptNode(Node):
         plt.ylabel("Speed [m/s]")
         plt.legend(loc="best", fontsize="10")
         ax2.set_aspect(1.0/ax2.get_data_ratio(), adjustable='box')
-        
+
+        plt.savefig("src/asv_path_planner/Simulation output/Speed.pdf", format="pdf", bbox_inches="tight")
+
         # Plot the current orientation and the desired orientation (calculated by VO algorithm) of the OS
         fig3 = plt.figure()
         ax3 = fig3.add_subplot(111)
@@ -723,6 +729,8 @@ class RosScriptNode(Node):
         plt.legend(loc="best", fontsize="10")
         ax3.set_aspect(1.0/ax3.get_data_ratio(), adjustable='box')
         
+        plt.savefig("src/asv_path_planner/Simulation output/Orientation.pdf", format="pdf", bbox_inches="tight")
+
         # Plot of the VO Algorithm run time
         # fig4 = plt.figure()
         # ax4 = fig4.add_subplot(111)
@@ -741,6 +749,8 @@ class RosScriptNode(Node):
         plt.ylabel("In/Out safety area")
         plt.legend(loc="best", fontsize="10")
         ax5.set_aspect(1.0/ax5.get_data_ratio(), adjustable='box')
+
+        plt.savefig("src/asv_path_planner/Simulation output/Collision.pdf", format="pdf", bbox_inches="tight")
 
         # Plot the trajectory of the ships
         fig6 = plt.figure()
@@ -765,10 +775,10 @@ class RosScriptNode(Node):
         plt.plot(os_position[:,0], os_position[:,1], c="teal",zorder=0.5, linestyle="--", label="OS path", linewidth=1.5)
         plt.scatter(ts_timestamp[:,0], ts_timestamp[:,1], c="black", marker="3", linewidth=1.5, s=50)
         plt.plot(ts_position[:,0], ts_position[:,1], c="red",zorder=0.05, linestyle="-.", label="TS 1 path", linewidth=2.5)
-        plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
-        plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
-        plt.scatter(ts_timestamp_3[:,0], ts_timestamp_3[:,1], c="black", marker="2", linewidth=1.5, s=50)
-        plt.plot(ts_position_3[:,0], ts_position_3[:,1], c="red",zorder=0.05, linestyle=(0, (1, 10)), label="TS 3 path")
+        # plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c="black", marker="2", linewidth=1.5, s=50)
+        # plt.plot(ts_position_2[:,0], ts_position_2[:,1], c="red",zorder=0.05, linestyle=":", label="TS 2 path")
+        # plt.scatter(ts_timestamp_3[:,0], ts_timestamp_3[:,1], c="black", marker="2", linewidth=1.5, s=50)
+        # plt.plot(ts_position_3[:,0], ts_position_3[:,1], c="red",zorder=0.05, linestyle=(0, (1, 10)), label="TS 3 path")
         plt.plot((os_position[0,0],ref_tp[0]),(os_position[0,1],ref_tp[1]),c="gray",zorder=0.02, alpha=1.0, label="global path", linewidth=1.5)
         plt.scatter(ref_tp[0],ref_tp[1],c="dimgray", marker="+", label="OS goal", linewidth=2.5)
 
@@ -824,7 +834,7 @@ class RosScriptNode(Node):
         # Add the Position of the TS
         vert_TS_2[:, 0] = vert_TS_2[:, 0]+ts_position_2[-1,0]
         vert_TS_2[:, 1] = vert_TS_2[:, 1]+ts_position_2[-1,1]
-        plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
+        # plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], "orange", hatch="////", edgecolor="black", linewidth=0.5, label="TS 2")
 
         # Calculate the vertices of the TS around it
         vert_TS_3 = np.array([[-0.5*self.ts_3.width, -0.5*self.ts_3.length],
@@ -842,7 +852,7 @@ class RosScriptNode(Node):
         # Add the Position of the TS
         vert_TS_3[:, 0] = vert_TS_3[:, 0]+ts_position_3[-1,0]
         vert_TS_3[:, 1] = vert_TS_3[:, 1]+ts_position_3[-1,1]
-        plt.fill(vert_TS_3[:,0],vert_TS_3[:,1], "orange", hatch="----", edgecolor="black", linewidth=0.5, label="TS 3")
+        # plt.fill(vert_TS_3[:,0],vert_TS_3[:,1], "orange", hatch="----", edgecolor="black", linewidth=0.5, label="TS 3")
 
         plt.legend(loc="best", fontsize="10")
         
@@ -856,7 +866,8 @@ class RosScriptNode(Node):
        
         plt.xlabel('x [m]')
         plt.ylabel('y [m]')
-       
+
+        plt.savefig("src/asv_path_planner/Simulation output/Trajectory.pdf", format="pdf", bbox_inches="tight")
         plt.show()
 
 def main(args=None):

@@ -86,34 +86,58 @@ safety factor, uncertainties in speed and orientation of TS, resolution of speed
 Evaluation of the collision avoidance algorithm with MARUSimulator
 ------------------------------------------------------------------
 
-1. Build and source colcon workspace. Position yourself in root of the workspace (e.g. ``cd ~/ros_ws/src``) and run:
+1. Build and source colcon workspace. Position yourself in the root directory of the workspace (e.g. ``cd ~/ros_ws/src``) and run:
 
 .. code:: bash
 
-    $ source /opt/ros/{ROS_DISTRO}/setup.bash && colcon build
+    $ source /opt/ros/{ROS_DISTRO}/setup.bash
     $ source ~/ros_ws/install/setup.bash
+    $ colcon build
 
-2. Run the ROS server with:
+2. Run the ROS server in a new terminal with:
 
 .. code:: bash
 
+    $ source /opt/ros/{ROS_DISTRO}/setup.bash
     $ ros2 launch grpc_ros_adapter ros2_server_launch.py
 
-3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
+3. Open the marus-example project in Unity and select the example scene from ``Assets/Scenes/Head-on_Left_Right_fast.unity``. 
 
-4. Run the collision avoidance algorithm with:
+.. _marussimu_1:
+.. figure:: img/MARUS_1.png
+    :width: 100%
+    :align: center
+
+    Image of the unity user interface and the console output that verifies the ROS connection
+
+
+4. Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.
+
+.. _marussimu_2:
+.. figure:: img/MARUS.png
+    :width: 100%
+    :align: center
+
+    Image of the unity user interface and the console output that verifies the ROS connection
+
+5. For each scene a seperate folder can be found in ``Assets/Scenes/``. Here are the results of the first simulation stored as well as the parameters for the collision avoidance as a ``params.yaml`` file. Copy and paste the content of the .yaml file for your loaded unity scene and insert it into ``asv_path_planner/config/params.yaml``. Make sure to save the file again so that the "Date modified" is up-to-date. (To change parameters like speed of OS and TSs or detection range of the OS for your own simulation scenes, change the parameters inside the ``/asv_path_planner/config/params.yaml`` file.)
+
+6. Run the collision avoidance algorithm with:
 
 .. code:: bash
 
-    $ ros2 run asv_path_planner ros_script
+    $ ros2 run asv_path_planner ros_script --ros-args --params-file ~/ros2_ws/src/asv_path_planner/config/params.yaml
 
-5. Change the speed of the target ships by altering the code in ros_script.py. The variables storing the speed of the TS are called **self.vel_ts_1**, **self.vel_ts_2** and **self.vel_ts_3**. To change the speed change the value to the desired speed in m/s. The maximum speed is limited by the thrusters selected in the Unity scene.
+6. (Optional) After changing the params.yaml file the package has to be build once more. Position yourself in the root directory of the workspace and run:
 
-6. Change the speed of the own ship by altering the code in ros_script.py. The variables storing the speed of the OS are called **self.os_des_speed** and **self.os_max_speed**:
+.. code:: bash
 
-    - **self.os_des_speed** - Speed [m/s] the OS is traveling with if no collision avoidance manouver force it to go faster or slower
-    - **self.max_os_speed** - maximum possible speed [m/s] the OS is able to travel with, which prevents the algorithm to select a new velocity with higher speed than the OS is capable of
+    $ colcon build --packages-above asv_path_planner
 
-7. Change the detection range of the OS. In the initial simulation it it assumed, that the sensors on board of the OS can detect obstacles within a range of 50 m. To change this the variable **self.detec_range** has to be altered to your wishes. 
+7. (Optional) Run the collision avoidance algorithm with:
 
- 
+.. code:: bash
+
+    $ ros2 launch asv_path_planner simulation.launch.py
+
+8. All data collected during the simulation and all figures are store after shutdown in ``asv_path_planner/Simulation output``.

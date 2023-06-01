@@ -1,8 +1,8 @@
 ros_script:
   ros__parameters:
-    os_max_speed: 9.0 # Maximum possible speed of the own ship (OS) [m/s]
-    os_des_speed: 3.0 # Desired speed of the own ship [m/s]
-    vel_ts_1: 6.0 # Speed of the target ship (TS) 1 [m/s]
+    os_max_speed: 3.0 # Maximum possible speed of the own ship (OS) [m/s]
+    os_des_speed: 1.0 # Desired speed of the own ship [m/s]
+    vel_ts_1: 3.0 # Speed of the target ship (TS) 1 [m/s]
     vel_ts_2: 0.0 # Speed of the target ship (TS) 2 [m/s]
     vel_ts_3: 0.0 # Speed of the target ship (TS) 3 [m/s]
     length_os: 3.0 # Length of the OS [m], shape assumed to be a rectangle

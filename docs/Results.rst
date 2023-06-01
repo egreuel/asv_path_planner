@@ -6,16 +6,26 @@ all TSs do not take any action even if they are supposed to. The speed of the TS
 
 Head-on
 -------
+For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS.
 
 Right-crossing
 --------------
+For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
 
 Left-crossing
 -------------
+For the left-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
 
 Overtaking
 ----------
 
+Being overtaken
+---------------
+
+Static obstacle
+---------------
+
 Multiple ship encounters
 ------------------------
+
 
