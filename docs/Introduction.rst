@@ -83,6 +83,8 @@ other contrains can be added to the velocity space to obtain a COLREG compliant 
 
 To explain the principle of the algorithm we are looking at a scenario with a single target ship that the own ship has to avoid. (see :numref:`expanded`)  
 
+.. _safety area:
+
 The first step in calculating the Velocity Obstacle is to expand the obstacle size with the size of the own ship so that for the calcualtions the OS can be seen as a point. This
 is done with the Minkowski sum which adds all points of one shape to the shape of the other (see :numref:`expanded`). As mentioned before in chapter :ref:`colregs`, Rule 8 states that the OS
 shall pass at a safe distance. This safe distance here is defined as a multiple of the OS shape and is also added to the shape of the TS with the help of the Minkowski sum.

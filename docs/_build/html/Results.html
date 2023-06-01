@@ -53,8 +53,9 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Results</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#head-on">Head-on</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#right-crossing">Right-crossing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overtaking-static-obstacle">Overtaking + static obstacle</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#left-crossing">Left-crossing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#overtaking">Overtaking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#being-overtaken">Being-overtaken</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multiple-ship-encounters">Multiple ship encounters</a></li>
 </ul>
 </li>
@@ -90,21 +91,34 @@
   <section id="results">
 <h1>Results<a class="headerlink" href="#results" title="Permalink to this heading"></a></h1>
 <p>This section presents some results of the VO algorithm tested in the MARUSimulator. Several different encounters with different amount of TS has been tested. In the simulation
-all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can only detect TSs that are at a distance of 50 m or closer.</p>
+all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can in most situations only detect TSs that are at a distance of 50 m or closer.</p>
+<p>The collision avoidance algorithm was tested beforehand in a less realistic and simpler simulation. In the turtlesim simulation provided by ROS. This was used to test the basic functionality of the algorithm and
+is not part of this documentation.</p>
+<p>For each simulation the distance between the ships, the trajectory of the ships, and the current and desired speed and course of the OS are recorded and plotted. Also it is checked if at any point during the maneuver
+the OS enters the defined <a class="reference internal" href="Introduction.html#safety-area"><span class="std std-ref">safety area</span></a> around the TS .</p>
 <section id="head-on">
 <h2>Head-on<a class="headerlink" href="#head-on" title="Permalink to this heading"></a></h2>
+<p>For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS.</p>
 </section>
 <section id="right-crossing">
 <h2>Right-crossing<a class="headerlink" href="#right-crossing" title="Permalink to this heading"></a></h2>
+<p>For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS.</p>
+</section>
+<section id="overtaking-static-obstacle">
+<h2>Overtaking + static obstacle<a class="headerlink" href="#overtaking-static-obstacle" title="Permalink to this heading"></a></h2>
+<p>For the overtaking scenarios two situations are displayed here. One where the TS is moving slower then the OS on the same course over ground and one where the TS is not moving at all and so being a static obstacle.</p>
 </section>
 <section id="left-crossing">
 <h2>Left-crossing<a class="headerlink" href="#left-crossing" title="Permalink to this heading"></a></h2>
+<p>For the left-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS.</p>
 </section>
-<section id="overtaking">
-<h2>Overtaking<a class="headerlink" href="#overtaking" title="Permalink to this heading"></a></h2>
+<section id="being-overtaken">
+<h2>Being-overtaken<a class="headerlink" href="#being-overtaken" title="Permalink to this heading"></a></h2>
+<p>For the being-overtaken scenario two situations are displayed here. Both situations are similar in the course of the OS and TS but differs in the speed of the involved ships.</p>
 </section>
 <section id="multiple-ship-encounters">
 <h2>Multiple ship encounters<a class="headerlink" href="#multiple-ship-encounters" title="Permalink to this heading"></a></h2>
+<p>For multiple ship encounters several scenes have been simulated. Head-on scenarios with multiple TSs and Head-on scnearios with additional crossing encounters.</p>
 </section>
 </section>
 

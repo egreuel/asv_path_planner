@@ -2,7 +2,13 @@
 Results
 =======
 This section presents some results of the VO algorithm tested in the MARUSimulator. Several different encounters with different amount of TS has been tested. In the simulation
-all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can only detect TSs that are at a distance of 50 m or closer.
+all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can in most situations only detect TSs that are at a distance of 50 m or closer.
+
+The collision avoidance algorithm was tested beforehand in a less realistic and simpler simulation. In the turtlesim simulation provided by ROS. This was used to test the basic functionality of the algorithm and
+is not part of this documentation. 
+
+For each simulation the distance between the ships, the trajectory of the ships, and the current and desired speed and course of the OS are recorded and plotted. Also it is checked if at any point during the maneuver
+the OS enters the defined :ref:`safety area <safety area>` around the TS. The avoidance maneuver is only successful if the safety area is untouched. 
 
 Head-on
 -------
@@ -12,20 +18,21 @@ Right-crossing
 --------------
 For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
 
+Overtaking + static obstacle
+----------------------------
+For the overtaking scenarios two situations are displayed here. One where the TS is moving slower then the OS on the same course over ground and one where the TS is not moving at all and so being a static obstacle.
+
 Left-crossing
 -------------
 For the left-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
 
-Overtaking
-----------
-
-Being overtaken
+Being-overtaken
 ---------------
+For the being-overtaken scenario two situations are displayed here. Both situations are similar in the course of the OS and TS but differs in the speed of the involved ships.
 
-Static obstacle
----------------
 
 Multiple ship encounters
 ------------------------
+For multiple ship encounters several scenes have been simulated. Head-on scenarios with multiple TSs and Head-on scnearios with additional crossing encounters.
 
 

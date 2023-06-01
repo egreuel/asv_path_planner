@@ -61,7 +61,7 @@ of collision.
 
 The COLREG rules are quite vague which make it hard to be implemented in autonomous systems. The only quantified value is defined in Rule 13, which is the 22.5° abaft beam. In this algorithm an area +- 15° from
 the bow of the OS is defnied for head-on encounters. Furthermore a substantial action and obvious alteration of course is defined at a value of at least 30° from the initial course. These values were derived from
-official law cases of collisions on sea. The safe distance at which the own vessel should pass during the avoidance manouver is defined as a multiple of the own vessel size. How many ship sizes considerd to be safe depends 
+official law cases of collisions on sea. The safe distance at which the own vessel should pass during the avoidance maneuver is defined as a multiple of the own vessel size. How many ship sizes considerd to be safe depends 
 on the vessels properties like speed, size, turning speed, etc.
 The above defined areas for each rule results in the following sectors for rule selection:
 
@@ -82,6 +82,8 @@ obstacle guarantees a collision-free trajectory of the vessel. Navigation among 
 other contrains can be added to the velocity space to obtain a COLREG compliant trajectory.
 
 To explain the principle of the algorithm we are looking at a scenario with a single target ship that the own ship has to avoid. (see :numref:`expanded`)  
+
+.. _safety area:
 
 The first step in calculating the Velocity Obstacle is to expand the obstacle size with the size of the own ship so that for the calcualtions the OS can be seen as a point. This
 is done with the Minkowski sum which adds all points of one shape to the shape of the other (see :numref:`expanded`). As mentioned before in chapter :ref:`colregs`, Rule 8 states that the OS
@@ -164,7 +166,7 @@ difference is from the new speed to the current speed, the higher the cost:
 $$J = w_1\cdot\Delta(\theta_{des}-\theta_{free}) + w_2\cdot\Delta(v_{des}-v_{free}) + w_3\cdot\Delta(\theta_{OS+30}-\theta_{free})$$ 
 
 $w_1$, $w_2$ and $w_3$ are the weights to set the cost function and were determined experimentally. The first time the velocity of the OS enters the VO, it is stored as the inital velocity of the OS. This velocity
-is then used during the avoidance manouver to calculate the COLREG rule and is used in the cost function to calculate the optimal velocity. The avoidacne manouver ends, once the current velocity of the OS and the 
+is then used during the avoidance maneuver to calculate the COLREG rule and is used in the cost function to calculate the optimal velocity. The avoidance maneuver ends, once the current velocity of the OS and the 
 desired velocity of the OS are outside the velocity Obstacle. 
 With this cost function the new velocity for the OS is calculated. In :numref:`discrete` the new velocity is displayed as a blue arrow. In this example it is a right crossing 
 scenario and the OS has to avoid the collision by changing its course to starboard and crossing behind the TS. 
