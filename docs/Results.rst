@@ -17,21 +17,21 @@ For the head-on scenario four situations are presented here which shows the effe
 .. subfigure:: AB|CD
     :layout-sm: A|B|C|D
     :align: center
-    :gap: 0px
+    :gap: 2px
     :subcaptions: above
     :name: Head-on_1
     
 
-    .. image:: img/Head-on_1/Distance.svg
+    .. image:: img/Head-on_1/Distance-cropped-1.svg
         :alt: (A)
 
-    .. image:: img/Head-on_1/Speed.svg
+    .. image:: img/Head-on_1/Speed-cropped-1.svg
         :alt: (B)
 
-    .. image:: img/Head-on_1/Orientation_new.svg
+    .. image:: img/Head-on_1/Orientation-cropped_new.svg
         :alt: (C)
     
-    .. image:: img/Head-on_1/Trajectory.svg
+    .. image:: img/Head-on_1/Trajectory-cropped-1.svg
         :alt: (D)
 
 
@@ -40,21 +40,21 @@ For the head-on scenario four situations are presented here which shows the effe
 .. subfigure:: AB|CD
     :layout-sm: A|B|C|D
     :align: center
-    :gap: 0px
+    :gap: 2px
     :subcaptions: above
     :name: Head-on_2
     
 
-    .. image:: img/Head-on_2/Distance.svg
+    .. image:: img/Head-on_2/Distance-cropped-1.svg
         :alt: (A)
 
-    .. image:: img/Head-on_2/Speed.svg
+    .. image:: img/Head-on_2/Speed-cropped-1.svg
         :alt: (B)
 
-    .. image:: img/Head-on_2/Orientation_new.svg
+    .. image:: img/Head-on_2/Orientation-cropped_new.svg
         :alt: (C)
     
-    .. image:: img/Head-on_2/Trajectory.svg
+    .. image:: img/Head-on_2/Trajectory-cropped-1.svg
         :alt: (D)
 
 
@@ -63,21 +63,21 @@ For the head-on scenario four situations are presented here which shows the effe
 .. subfigure:: AB|CD
     :layout-sm: A|B|C|D
     :align: center
-    :gap: 0px
+    :gap: 2px
     :subcaptions: above
     :name: Head-on_3
     
 
-    .. image:: img/Head-on_3/Distance.svg
+    .. image:: img/Head-on_3/Distance-cropped-1.svg
         :alt: (A)
 
-    .. image:: img/Head-on_3/Speed_new.svg
+    .. image:: img/Head-on_3/Speed-cropped-1.svg
         :alt: (B)
 
-    .. image:: img/Head-on_3/Orientation_new.svg
+    .. image:: img/Head-on_3/Orientation-cropped_new.svg
         :alt: (C)
     
-    .. image:: img/Head-on_3/Trajectory.svg
+    .. image:: img/Head-on_3/Trajectory-cropped-1.svg
         :alt: (D)
 
 
@@ -86,21 +86,21 @@ For the head-on scenario four situations are presented here which shows the effe
 .. subfigure:: AB|CD
     :layout-sm: A|B|C|D
     :align: center
-    :gap: 0px
+    :gap: 2px
     :subcaptions: above
     :name: Head-on_4
     
 
-    .. image:: img/Head-on_4/Distance.svg
+    .. image:: img/Head-on_4/Distance-cropped-1.svg
         :alt: (A)
 
-    .. image:: img/Head-on_4/Speed.svg
+    .. image:: img/Head-on_4/Speed-cropped-1.svg
         :alt: (B)
 
-    .. image:: img/Head-on_4/Orientation_new.svg
+    .. image:: img/Head-on_4/Orientation-cropped_new.svg
         :alt: (C)
     
-    .. image:: img/Head-on_4/Trajectory.svg
+    .. image:: img/Head-on_4/Trajectory-cropped-1.svg
         :alt: (D)
 
 
@@ -111,13 +111,200 @@ Right-crossing
 --------------
 For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
 
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Right-crossing_1
+    
+
+    .. image:: img/Right-crossing_1/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Right-crossing_1/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Right-crossing_1/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Right-crossing_1/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Right-crossing_2
+    
+
+    .. image:: img/Right-crossing_2/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Right-crossing_2/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Right-crossing_2/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Right-crossing_2/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Right-crossing_3
+    
+
+    .. image:: img/Right-crossing_3/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Right-crossing_3/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Right-crossing_3/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Right-crossing_3/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
 Overtaking + static obstacle
 ----------------------------
 For the overtaking scenarios two situations are displayed here. One where the TS is moving slower then the OS on the same course over ground and one where the TS is not moving at all and so being a static obstacle.
 
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Overtaking_1
+
+
+    .. image:: img/Overtaking_1/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Overtaking_1/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Overtaking_1/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Overtaking_1/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Overtaking_2
+
+
+    .. image:: img/Overtaking_2/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Overtaking_2/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Overtaking_2/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Overtaking_2/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+
 Left-crossing
 -------------
 For the left-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Left-crossing_1
+
+
+    .. image:: img/Left-crossing_1/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Left-crossing_1/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Left-crossing_1/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Left-crossing_1/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+    
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Left-crossing_2
+
+
+    .. image:: img/Left-crossing_2/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Left-crossing_2/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Left-crossing_2/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Left-crossing_2/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Left-crossing_3
+
+
+    .. image:: img/Left-crossing_3/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Left-crossing_3/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Left-crossing_3/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Left-crossing_3/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
 
 Being-overtaken
 ---------------
@@ -172,5 +359,121 @@ For the being-overtaken scenario two situations are displayed here. Both situati
 Multiple ship encounters
 ------------------------
 For multiple ship encounters several scenes have been simulated. Head-on scenarios with multiple TSs and Head-on scnearios with additional crossing encounters.
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Head-on_double
+
+
+    .. image:: img/Head-on_double/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_double/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_double/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_double/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Head-on_double_2
+
+
+    .. image:: img/Head-on_double_2/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_double_2/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_double_2/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_double_2/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Head-on_Left-crossing
+
+
+    .. image:: img/Head-on_Left-crossing/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_Left-crossing/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_Left-crossing/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_Left-crossing/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Head-on_Right-crossing
+
+
+    .. image:: img/Head-on_Right-crossing/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_Right-crossing/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_Right-crossing/Orientation-cropped_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_Right-crossing/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 2px
+    :subcaptions: above
+    :name: Head-on_Left_Right_1
+
+
+    .. image:: img/Head-on_Left_Right_1/Distance-cropped-1.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_Left_Right_1/Speed-cropped-1.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_Left_Right_1/Orientation-cropped-1.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_Left_Right_1/Trajectory-cropped-1.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
 
 
