@@ -16,25 +16,95 @@ For the head-on scenario four situations are presented here which shows the effe
 
 .. subfigure:: AB|CD
     :layout-sm: A|B|C|D
-    :gap: 8px
+    :align: center
+    :gap: 0px
     :subcaptions: above
-    :name: myfigure
-    :class-grid: outline
+    :name: Head-on_1
+    
 
-    .. image:: img/Being-overtaken_1/Distance_new.svg
+    .. image:: img/Head-on_1/Distance.svg
         :alt: (A)
 
-    .. image:: img/Being-overtaken_1/Speed.svg
+    .. image:: img/Head-on_1/Speed.svg
         :alt: (B)
 
-    .. image:: img/Being-overtaken_1/Orientation.svg
+    .. image:: img/Head-on_1/Orientation_new.svg
         :alt: (C)
     
-    .. image:: img/Being-overtaken_1/Trajectory_new.svg
+    .. image:: img/Head-on_1/Trajectory.svg
         :alt: (D)
 
 
-    Test for multipanel
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 0px
+    :subcaptions: above
+    :name: Head-on_2
+    
+
+    .. image:: img/Head-on_2/Distance.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_2/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_2/Orientation_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_2/Trajectory.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 0px
+    :subcaptions: above
+    :name: Head-on_3
+    
+
+    .. image:: img/Head-on_3/Distance.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_3/Speed_new.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_3/Orientation_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_3/Trajectory.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 0px
+    :subcaptions: above
+    :name: Head-on_4
+    
+
+    .. image:: img/Head-on_4/Distance.svg
+        :alt: (A)
+
+    .. image:: img/Head-on_4/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Head-on_4/Orientation_new.svg
+        :alt: (C)
+    
+    .. image:: img/Head-on_4/Trajectory.svg
+        :alt: (D)
+
+
+    Results of the simulation for a head-on situation with a slow moving OS
 
 
 Right-crossing
@@ -53,6 +123,51 @@ Being-overtaken
 ---------------
 For the being-overtaken scenario two situations are displayed here. Both situations are similar in the course of the OS and TS but differs in the speed of the involved ships.
 
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 0px
+    :subcaptions: above
+    :name: Being-overtaken_1
+    
+
+    .. image:: img/Being-overtaken_1/Distance_new.svg
+        :alt: (A)
+
+    .. image:: img/Being-overtaken_1/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Being-overtaken_1/Orientation.svg
+        :alt: (C)
+    
+    .. image:: img/Being-overtaken_1/Trajectory_new.svg
+        :alt: (D)
+
+
+    Results of the simulation for a being-overtaken situation with a slow moving OS
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :align: center
+    :gap: 0px
+    :subcaptions: above
+    :name: Being-overtaken_2
+    
+
+    .. image:: img/Being-overtaken_2/Distance_new.svg
+        :alt: (A)
+
+    .. image:: img/Being-overtaken_2/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Being-overtaken_2/Orientation.svg
+        :alt: (C)
+    
+    .. image:: img/Being-overtaken_2/Trajectory_new.svg
+        :alt: (D)
+
+
+    Results of the simulation for a being-overtaken situation with a fast moving OS
 
 Multiple ship encounters
 ------------------------
