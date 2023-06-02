@@ -1,1 +1,1 @@
-# Package asv_path_planner
+# Collision Avoidance algorithm for autonomous surface vehicle (ASV) in compliance with the International Regulations for Preventing Collisions at Sea 1972 (COLREGs) based on the Velocity Obstacle (VO) algorithm!
