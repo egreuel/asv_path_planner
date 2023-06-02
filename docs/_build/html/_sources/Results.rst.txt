@@ -8,11 +8,34 @@ The collision avoidance algorithm was tested beforehand in a less realistic and 
 is not part of this documentation. 
 
 For each simulation the distance between the ships, the trajectory of the ships, and the current and desired speed and course of the OS are recorded and plotted. Also it is checked if at any point during the maneuver
-the OS enters the defined :ref:`safety area <safety area>` around the TS .
+the OS enters the defined :ref:`safety area <safety area>` around the TS. The avoidance maneuver is only successful if the safety area is untouched. 
 
 Head-on
 -------
 For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS.
+
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :gap: 8px
+    :subcaptions: above
+    :name: myfigure
+    :class-grid: outline
+
+    .. image:: img/Being-overtaken_1/Distance_new.svg
+        :alt: (A)
+
+    .. image:: img/Being-overtaken_1/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Being-overtaken_1/Orientation.svg
+        :alt: (C)
+    
+    .. image:: img/Being-overtaken_1/Trajectory_new.svg
+        :alt: (D)
+
+
+    Test for multipanel
+
 
 Right-crossing
 --------------

@@ -1,0 +1,21 @@
+ros_script:
+  ros__parameters:
+    os_max_speed: 3.0 # Maximum possible speed of the own ship (OS) [m/s]
+    os_des_speed: 1.0 # Desired speed of the own ship [m/s]
+    vel_ts_1: 3.0 # Speed of the target ship (TS) 1 [m/s]
+    vel_ts_2: 0.0 # Speed of the target ship (TS) 2 [m/s]
+    vel_ts_3: 0.0 # Speed of the target ship (TS) 3 [m/s]
+    length_os: 3.0 # Length of the OS [m], shape assumed to be a rectangle
+    width_os: 1.5 # Witdh of the OS [m], shape assumed to be a rectangle
+    length_ts_1: 6.0 # Length of the TS 1 [m], shape assumed to be a rectangle
+    width_ts_1: 3.0 # Witdh of the TS 1 [m], shape assumed to be a rectangle
+    length_ts_2: 6.0 # Length of the TS 2 [m], shape assumed to be a rectangle
+    width_ts_2: 3.0 # Witdh of the TS 2 [m], shape assumed to be a rectangle
+    length_ts_3: 6.0 # Length of the TS 3 [m], shape assumed to be a rectangle
+    width_ts_3: 3.0 # Witdh of the TS 3 [m], shape assumed to be a rectangle
+    # Controller gains for the PID speed controller and PD heading controller
+    vel_kp: 0.36
+    vel_ki: 0.15
+    vel_kd: 0.072
+    head_kp: 0.014
+    head_kd: 0.0082

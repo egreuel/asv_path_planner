@@ -88,17 +88,43 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="results">
+  
+<style>
+  .ss-layout-default-AB_CD { grid-template-areas: 'A B' 'C D'; }
+@media (max-width: 576px) {
+  .ss-layout-sm-A_B_C_D { grid-template-areas: 'A' 'B' 'C' 'D'; }
+}
+</style>
+<section id="results">
 <h1>Results<a class="headerlink" href="#results" title="Permalink to this heading"></a></h1>
 <p>This section presents some results of the VO algorithm tested in the MARUSimulator. Several different encounters with different amount of TS has been tested. In the simulation
 all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can in most situations only detect TSs that are at a distance of 50 m or closer.</p>
 <p>The collision avoidance algorithm was tested beforehand in a less realistic and simpler simulation. In the turtlesim simulation provided by ROS. This was used to test the basic functionality of the algorithm and
 is not part of this documentation.</p>
 <p>For each simulation the distance between the ships, the trajectory of the ships, and the current and desired speed and course of the OS are recorded and plotted. Also it is checked if at any point during the maneuver
-the OS enters the defined <a class="reference internal" href="Introduction.html#safety-area"><span class="std std-ref">safety area</span></a> around the TS .</p>
+the OS enters the defined <a class="reference internal" href="Introduction.html#safety-area"><span class="std std-ref">safety area</span></a> around the TS. The avoidance maneuver is only successful if the safety area is untouched.</p>
 <section id="head-on">
 <h2>Head-on<a class="headerlink" href="#head-on" title="Permalink to this heading"></a></h2>
 <p>For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS.</p>
+<figure class="sphinx-subfigure align-default" id="myfigure">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D outline" style="display: grid; gap: 8px; grid-gap: 8px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance_new.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory_new.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 12 </span><span class="caption-text">Test for multipanel</span><a class="headerlink" href="#myfigure" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
 </section>
 <section id="right-crossing">
 <h2>Right-crossing<a class="headerlink" href="#right-crossing" title="Permalink to this heading"></a></h2>

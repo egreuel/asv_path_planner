@@ -14,6 +14,29 @@ Head-on
 -------
 For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS.
 
+.. subfigure:: AB|CD
+    :layout-sm: A|B|C|D
+    :gap: 8px
+    :subcaptions: above
+    :name: myfigure
+    :class-grid: outline
+
+    .. image:: img/Being-overtaken_1/Distance_new.svg
+        :alt: (A)
+
+    .. image:: img/Being-overtaken_1/Speed.svg
+        :alt: (B)
+
+    .. image:: img/Being-overtaken_1/Orientation.svg
+        :alt: (C)
+    
+    .. image:: img/Being-overtaken_1/Trajectory_new.svg
+        :alt: (D)
+
+
+    Test for multipanel
+
+
 Right-crossing
 --------------
 For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. 

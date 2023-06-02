@@ -27,7 +27,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'sphinx_math_dollar',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
+    'sphinx_subfigure'
 ]
 
 mathjax3_config = {

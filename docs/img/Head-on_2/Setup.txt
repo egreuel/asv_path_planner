@@ -1,0 +1,6 @@
+OS speed = 3.0
+TS speed = 5.0
+Horizon = 50 m
+
+VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)
+VO(3.0, 1.75, 6.0, 15, 7.5, 6, 0.5, 5, 0.25, 3)
