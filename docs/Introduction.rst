@@ -135,6 +135,7 @@ it was done with expansion of the TS with the OS. With the Minkowsi sum the unce
 
     Extension of the VO with uncertainties in the velocity of TS
 
+
 From this point on it would be possible to choose a speed outside the VO to avoid a collision. However, the further rules of the COLREGs must still be considered. Which specify, among
 other things, on which side an obstacle must be avoided. Conveniently, the VO already divides the velocity space into three areas (see :numref:`colregcon`), which we can use for the implementation of the COLREGs.
 
