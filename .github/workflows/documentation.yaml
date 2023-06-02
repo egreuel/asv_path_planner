@@ -37,6 +37,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install sphinx sphinx_rtd_theme
           pip install sphinx_math_dollar
+          pip install sphinx-subfigure
       - name: Build HTML
         run: | 
           cd docs/
