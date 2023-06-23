@@ -38,6 +38,8 @@ jobs:
           pip install sphinx sphinx_rtd_theme
           pip install sphinx_math_dollar
           pip install sphinx-subfigure
+          pip install readthedocs-sphinx-search
+          pip install sphinx
       - name: Build HTML
         run: | 
           cd docs/
