@@ -3,4 +3,6 @@ matplotlib==3.5.1
 numpy==1.22.0
 scipy==1.8.0
 Shapely==2.0.1
-
+sphinx==5.3.0
+sphinx_rtd_theme==1.1.1
+readthedocs-sphinx-search==0.1.1
