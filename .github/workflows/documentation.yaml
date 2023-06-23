@@ -43,7 +43,7 @@ jobs:
       - name: Install Python dependencies
         uses: py-actions/py-dependency-install@v4
         with:
-          path: "requirements.txt"    
+          path: "requirements_ros.txt"    
       - name: Build HTML
         run: | 
           cd docs/
