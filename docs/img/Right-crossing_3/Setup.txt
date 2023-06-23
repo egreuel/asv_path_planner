@@ -1,6 +1,6 @@
 OS speed = 3.0
 TS speed = 3.0
-TS orientation = 180
+TS orientation = 20
 Horizon = 50 m
 
 
