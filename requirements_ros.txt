@@ -1,7 +1,7 @@
 geopy==2.3.0
 matplotlib==3.5.1
 numpy==1.22.0
-rclpy==3.3.7
+rclpy
 scipy==1.8.0
 sensor_msgs==4.2.3
 Shapely==2.0.1
