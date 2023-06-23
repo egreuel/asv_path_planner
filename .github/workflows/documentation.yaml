@@ -40,6 +40,7 @@ jobs:
           pip install sphinx-subfigure
           pip install readthedocs-sphinx-search
           pip install sphinx
+          pip install numpy
       - name: Build HTML
         run: | 
           cd docs/
