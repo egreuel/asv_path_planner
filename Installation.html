@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; Velocity Obstacle 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart" href="Quickstart.html" />
+    <link rel="prev" title="Introduction" href="Introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Velocity Obstacle
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation-minimal-example">Installation minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-for-the-use-of-the-marusimulator-with-ros2">Installation for the use of the MARUSimulator with ROS2</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">Implementation in python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Velocity Obstacle</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
+<p>In the following two types of installations are displayed. The first one for the minimal example,
+which allows to use the algorithm in any personal project. The second describes the installation for
+the use of the MARUSimulator with ROS2 where the collision avoidance algorithm can be tested with up to 3
+target ships. With small changes in the code it can be tested with even more target ships.</p>
+<section id="installation-minimal-example">
+<h2>Installation minimal example<a class="headerlink" href="#installation-minimal-example" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>This installation guide is valid for linux and windows.</p></li>
+<li><p>Clone asv_path_planner repository to your preferred folder:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/asv_path_planner.git
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Change directory to asv_path_planner where you should find a requirements.txt file. Install python dependencies by running:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>With this all requirements for the minimal example are done and you can check out the quickstart guide for the <a class="reference internal" href="Quickstart.html#minimal-example"><span class="std std-ref">Minimal example</span></a>.</p>
+</section>
+<section id="installation-for-the-use-of-the-marusimulator-with-ros2">
+<h2>Installation for the use of the MARUSimulator with ROS2<a class="headerlink" href="#installation-for-the-use-of-the-marusimulator-with-ros2" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>This installation guide is valid for linux and windows.</p></li>
+<li><p>For the installation for MARUSimulator in Unity and the ROS backend please follow the instructions on: <a class="reference external" href="https://github.com/MARUSimulator/marus-example/wiki/2.-Installation">https://github.com/MARUSimulator/marus-example/wiki/2.-Installation</a>. Please make sure to use ROS2 humble or galactic for this package. <strong>Instead of using the marus-example repository from git&#64;github.com:MARUSimulator/marus-example.git please use the following:</strong></p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/marus-example.git
+</pre></div>
+</div>
+<p>The example scene for the test of the collision avoidance algorithm with 3 target ships then can be found in <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>.</p>
+<ol class="arabic simple" start="3">
+<li><p>Clone asv_path_planner repository in the <code class="docutils literal notranslate"><span class="pre">src</span></code> folder of the ROS workspace (e.g. ~/ros_ws/src):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/egreuel/asv_path_planner.git
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Change directory to asv_path_planner where you should find a requirements.txt file. Install the python dependencies by running:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>With this the installation is completed and and you can hop into the <a class="reference internal" href="Quickstart.html#marus"><span class="std std-ref">quickstart guide</span></a> and use the MARUSimulator to test the algorithm.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Eric Greuel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

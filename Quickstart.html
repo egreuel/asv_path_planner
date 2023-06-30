@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart &mdash; Velocity Obstacle 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Results" href="Results.html" />
+    <link rel="prev" title="Installation" href="Installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Velocity Obstacle
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-of-the-collision-avoidance-algorithm-with-marusimulator">Evaluation of the collision avoidance algorithm with MARUSimulator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">Implementation in python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Velocity Obstacle</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Quickstart.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading"></a></h1>
+<section id="minimal-example">
+<span id="id1"></span><h2>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this heading"></a></h2>
+<p>This is a minimal example that shows how to use the collision avoidance algorithm. Here the own ship (OS)
+is facing an head-on encounter with one target ship (TS).</p>
+<div class="literal-block-wrapper docutils container" id="min-example">
+<div class="code-block-caption"><span class="caption-number">Listing 1 </span><span class="caption-text">min_example.py</span><a class="headerlink" href="#min-example" title="Permalink to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span><span class="sd">This is a minimal example on how to use the collision avoidance algorithm</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="c1">#!/usr/bin/env python3</span>
+<span class="linenos"> 7</span><span class="kn">from</span> <span class="nn">velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="linenos"> 8</span><span class="kn">from</span> <span class="nn">ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="c1"># Properties of the own ship (OS)</span>
+<span class="linenos">11</span><span class="n">vel_OS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">12</span><span class="n">vel_des</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">13</span><span class="n">os</span> <span class="o">=</span> <span class="p">[</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">]</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="c1"># Declare an object of the target ship (TS) class to initalize an obstacle and add properties</span>
+<span class="linenos">16</span><span class="c1"># to the obstacle (e.g. obtained by sensors or AIS)</span>
+<span class="linenos">17</span><span class="n">ts</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+<span class="linenos">18</span><span class="n">ts</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">19</span><span class="n">ts</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="linenos">20</span><span class="n">ts</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.0</span>
+<span class="linenos">21</span><span class="n">ts</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="linenos">22</span><span class="n">ts</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">270</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="c1"># Add all obstacles to a list</span>
+<span class="linenos">25</span><span class="n">all_ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span><span class="p">]</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="c1"># Declare an object of the velocity obstacle class with inital parameters needed by the</span>
+<span class="linenos">28</span><span class="c1"># algorithm</span>
+<span class="linenos">29</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VO</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="c1"># Use the collision avoidance algorithm and calculate new velocity for the OS</span>
+<span class="linenos">32</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vo</span><span class="o">.</span><span class="n">calc_vel_final</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New velocity is: &quot;</span><span class="p">,</span> <span class="n">new_vel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>1. Import the classes VO and TS from the velobst_class.py and ts_class.py as dependencies. In this example
+the .py files are in the same folder as the minimal example.</p>
+<div class="highlight-python notranslate" id="imports"><div class="highlight"><pre><span></span><span class="linenos">7</span><span class="kn">from</span> <span class="nn">velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="linenos">8</span><span class="kn">from</span> <span class="nn">ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+</pre></div>
+</div>
+<p>2. Define the properties of the own ship (OS): current velocity of the OS and the desired velocity of the OS.
+The velocity is always a vector consiting of speed and orientation angle.</p>
+<div class="highlight-python notranslate" id="vo"><div class="highlight"><pre><span></span><span class="linenos">11</span><span class="n">vel_OS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">12</span><span class="n">vel_des</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+<span class="linenos">13</span><span class="n">os</span> <span class="o">=</span> <span class="p">[</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>3. Define the properties of the target ship (TS) obtained by sensors or the automatic identification system (AIS) as an object of the TS class:
+relative position of TS to OS, length and width of TS, current speed and orientation angle (velocity) of TS</p>
+<div class="highlight-python notranslate" id="ts"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="n">ts</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+<span class="linenos">18</span><span class="n">ts</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">19</span><span class="n">ts</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
+<span class="linenos">20</span><span class="n">ts</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mf">3.0</span>
+<span class="linenos">21</span><span class="n">ts</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="linenos">22</span><span class="n">ts</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">270</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Add all objects of the TS class (all obstacles) in a list:</p></li>
+</ol>
+<div class="highlight-python notranslate" id="all-ts"><div class="highlight"><pre><span></span><span class="linenos">25</span><span class="n">all_ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>5. Declare and object of the VO class with initial parameters for the collision avoidance algorithm. The
+initial parameters are: length and width of OS, maximum speed of OS, time to collision, time threshhold to collision,
+safety factor, uncertainties in speed and orientation of TS, resolution of speed and orientation of the velocity space.</p>
+<div class="highlight-python notranslate" id="vo-init"><div class="highlight"><pre><span></span><span class="linenos">29</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VO</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Use the calc_vel_final() function of the VO class to calculate the new velocity to avoid a collision.</p></li>
+</ol>
+<div class="highlight-python notranslate" id="new-vel"><div class="highlight"><pre><span></span><span class="linenos">32</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vo</span><span class="o">.</span><span class="n">calc_vel_final</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="evaluation-of-the-collision-avoidance-algorithm-with-marusimulator">
+<span id="marus"></span><h2>Evaluation of the collision avoidance algorithm with MARUSimulator<a class="headerlink" href="#evaluation-of-the-collision-avoidance-algorithm-with-marusimulator" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Build and source colcon workspace. Position yourself in the root directory of the workspace (e.g. <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">~/ros_ws/src</span></code>) and run:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>/opt/ros/<span class="o">{</span>ROS_DISTRO<span class="o">}</span>/setup.bash
+$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~/ros_ws/install/setup.bash
+$<span class="w"> </span>colcon<span class="w"> </span>build
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Run the ROS server in a new terminal with:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>/opt/ros/<span class="o">{</span>ROS_DISTRO<span class="o">}</span>/setup.bash
+$<span class="w"> </span>ros2<span class="w"> </span>launch<span class="w"> </span>grpc_ros_adapter<span class="w"> </span>ros2_server_launch.py
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Open the marus-example project in Unity and select the example scene from <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/Head-on_Left_Right_fast.unity</span></code>.</p></li>
+</ol>
+<figure class="align-center" id="id2">
+<span id="marussimu-1"></span><a class="reference internal image-reference" href="_images/MARUS_1.png"><img alt="_images/MARUS_1.png" src="_images/MARUS_1.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 10 </span><span class="caption-text">Image of the unity user interface and the console output that verifies the ROS connection</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<ol class="arabic simple" start="4">
+<li><p>Start the scene by pressing the play button. Make sure the connection to ROS is established by checking the console output of Unity.</p></li>
+</ol>
+<figure class="align-center" id="id3">
+<span id="marussimu-2"></span><a class="reference internal image-reference" href="_images/MARUS.png"><img alt="_images/MARUS.png" src="_images/MARUS.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 11 </span><span class="caption-text">Image of the unity user interface and the console output that verifies the ROS connection</span><a class="headerlink" href="#id3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<ol class="arabic simple" start="5">
+<li><p>For each scene a seperate folder can be found in <code class="docutils literal notranslate"><span class="pre">Assets/Scenes/</span></code>. Here are the results of the first simulation stored as well as the parameters for the collision avoidance as a <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code> file. Copy and paste the content of the .yaml file for your loaded unity scene and insert it into <code class="docutils literal notranslate"><span class="pre">asv_path_planner/config/params.yaml</span></code>. Make sure to save the file again so that the “Date modified” is up-to-date. (To change parameters like speed of OS and TSs or detection range of the OS for your own simulation scenes, change the parameters inside the <code class="docutils literal notranslate"><span class="pre">/asv_path_planner/config/params.yaml</span></code> file.)</p></li>
+<li><p>Run the collision avoidance algorithm with:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>run<span class="w"> </span>asv_path_planner<span class="w"> </span>ros_script<span class="w"> </span>--ros-args<span class="w"> </span>--params-file<span class="w"> </span>~/ros2_ws/src/asv_path_planner/config/params.yaml
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>(Optional) After changing the params.yaml file the package has to be build once more. Position yourself in the root directory of the workspace and run:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>colcon<span class="w"> </span>build<span class="w"> </span>--packages-above<span class="w"> </span>asv_path_planner
+</pre></div>
+</div>
+<ol class="arabic simple" start="7">
+<li><p>(Optional) Run the collision avoidance algorithm with:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ros2<span class="w"> </span>launch<span class="w"> </span>asv_path_planner<span class="w"> </span>simulation.launch.py
+</pre></div>
+</div>
+<ol class="arabic simple" start="8">
+<li><p>All data collected during the simulation and all figures are store after shutdown in <code class="docutils literal notranslate"><span class="pre">asv_path_planner/Simulation</span> <span class="pre">output</span></code>.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Results.html" class="btn btn-neutral float-right" title="Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Eric Greuel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
