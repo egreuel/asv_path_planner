@@ -39,8 +39,7 @@ jobs:
           pip install sphinx_math_dollar
           pip install sphinx-subfigure
           pip install readthedocs-sphinx-search
-          pip3 install rclpy==3.3.8
-          pip3 install -r requirements.txt
+          pip install -r requirements.txt
 
       - name: Build HTML
         run: | 
