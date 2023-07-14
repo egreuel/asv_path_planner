@@ -20,7 +20,7 @@ release = '1.0.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-autodoc_mock_imports = ['rclpy', 'rcl_interfaces']
+autodoc_mock_imports = ['rclpy', 'rcl_interfaces','sensor_msg']
 
 extensions = [
     'sphinx.ext.autodoc',
