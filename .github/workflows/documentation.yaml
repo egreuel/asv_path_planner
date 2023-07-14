@@ -50,6 +50,13 @@ jobs:
         run: | 
           cd docs/
           make clean html
+          
+      - name: Commit HTML
+        run: |
+          git config --global user.name 'egreuel'
+          git config --global user.email 'egreuel@users.noreply.github.com'
+          git commit -am "HTML updated"
+          git push
        
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
