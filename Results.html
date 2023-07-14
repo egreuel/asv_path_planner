@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results &mdash; Velocity Obstacle 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Implementation in python" href="asv_path_planner.html" />
+    <link rel="prev" title="Quickstart" href="Quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Velocity Obstacle
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#head-on">Head-on</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#right-crossing">Right-crossing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overtaking-static-obstacle">Overtaking + static obstacle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#left-crossing">Left-crossing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#being-overtaken">Being-overtaken</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multiple-ship-encounters">Multiple ship encounters</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="asv_path_planner.html">Implementation in python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Velocity Obstacle</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Results</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Results.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+  .ss-layout-default-AB_CD { grid-template-areas: 'A B' 'C D'; }
+@media (max-width: 576px) {
+  .ss-layout-sm-A_B_C_D { grid-template-areas: 'A' 'B' 'C' 'D'; }
+}
+</style>
+<section id="results">
+<h1>Results<a class="headerlink" href="#results" title="Permalink to this heading"></a></h1>
+<p>This section presents some results of the VO algorithm tested in the MARUSimulator. Several different encounters with different amount of TS has been tested. In the simulation
+all TSs do not take any action even if they are supposed to. The speed of the TSs is constant and the OS can in most situations only detect TSs that are at a distance of 50 m or closer.</p>
+<p>The collision avoidance algorithm was tested beforehand in a less realistic and simpler simulation. In the turtlesim simulation provided by ROS. This was used to test the basic functionality of the algorithm and
+is not part of this documentation.</p>
+<p>For each simulation the distance between the ships, the trajectory of the ships, and the current and desired speed and course of the OS are recorded and plotted. Also it is checked if at any point during the maneuver
+the OS enters the defined <a class="reference internal" href="Introduction.html#safety-area"><span class="std std-ref">safety area</span></a> around the TS. The avoidance maneuver is only successful if the safety area is untouched.</p>
+<section id="head-on">
+<h2>Head-on<a class="headerlink" href="#head-on" title="Permalink to this heading"></a></h2>
+<p>For the head-on scenario four situations are presented here which shows the effect of different speeds of the TS on the avoidance maneuver as well as different detection ranges of the OS. In <a class="reference internal" href="#head-on-1"><span class="std std-numref">Fig. 12</span></a> below
+both OS and TS are moving with 3 m/s on a reciprocal course. The detection range for obstacles of the OS is set here to 50 m. It is set to 50 m because the ASV the algorithm is dedicated to is going to have a detection
+around 50 m. At about 25 seconds the velocity of the OS penetrates the velocity obstacle formed by the TS. As seen in subfigure (C) the desired orientation changes about 30° from the inital course.
+Due to the fact that the new course cannot be taken immediately, further calculations of the new speed will determine that an even greater course change is necessary. Once the collision avoidance maneuver is over,
+the OS turns back to its next point as seen in subfigure (D). As described in the COLREGs, a change in speed was avoided.</p>
+<figure class="sphinx-subfigure align-center" id="head-on-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-1.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 12 </span><span class="caption-text">Results of the simulation for a head-on situation (vel_OS: 3 m/s, vel_TS: 3 m/s, detection range: 50 m)</span><a class="headerlink" href="#head-on-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>In <a class="reference internal" href="#head-on-2"><span class="std std-numref">Fig. 13</span></a> and <a class="reference internal" href="#head-on-3"><span class="std std-numref">Fig. 14</span></a> the speed of the TS is increased to 5 and 7.5 m/s but the detection range was kept at 50 m. This results first in an even greater change of the orientation of the OS as seen in subfigure (C). In <a class="reference internal" href="#head-on-3"><span class="std std-numref">Fig. 14</span></a>
+the course change alone was not sufficient any more to avoid the collision that is why the speed changes as well as seen in subfigure (B).</p>
+<figure class="sphinx-subfigure align-center" id="head-on-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-11.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-11.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-11.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 13 </span><span class="caption-text">Results of the simulation for a head-on situation (vel_OS: 3 m/s, vel_TS: <strong>5 m/s</strong>, detection range: 50 m)</span><a class="headerlink" href="#head-on-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="head-on-3">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-12.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-12.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new2.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-12.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 14 </span><span class="caption-text">Results of the simulation for a head-on situation (vel_OS: 3 m/s, vel_TS: <strong>7.5 m/s</strong>, detection range: 50 m)</span><a class="headerlink" href="#head-on-3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>For the last simulation on the head-on scenarios the detection range of the OS was increased to 200 m and the speed of the TS was kept at 7.5 m/s. As seen in <a class="reference internal" href="#head-on-4"><span class="std std-numref">Fig. 15</span></a>, the earlier a TS can be detected the
+better the OS can avoid the collision. With 50 m detection range and a speed of the TS of 7.5 m/s the OS had to change its course drastically and also its speed. Once the TS was detected in a range of
+200 m the OS was able to avoid the collision again by just changing the course by 30° without changing the speed.</p>
+<figure class="sphinx-subfigure align-center" id="head-on-4">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-13.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-13.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new3.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-13.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 15 </span><span class="caption-text">Results of the simulation for a head-on situation (vel_OS: 3 m/s, vel_TS: 5 m/s, detection range: <strong>200 m</strong>)</span><a class="headerlink" href="#head-on-4" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>In all shown head-on situations the OS acts according to COLREGs by turning at least 30° to starboard to avoid the collision. It is also avoiding a change in speed and prefering a change in course as long it is
+possible. At all time during the maneuver the OS is keeping a safe distance to the TS. This was confirmed by checking if the OS touches the safety area defined in the collision avoidance algorithm, which was not
+the case in any situation.</p>
+</section>
+<section id="right-crossing">
+<h2>Right-crossing<a class="headerlink" href="#right-crossing" title="Permalink to this heading"></a></h2>
+<p>For the right-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. Here the speed of OS and TS was both 3 m/s for each situation.
+In all three simulations the OS is able to avoid the collision with the OS in compliance with COLREGs by avoiding to starboard and crossing behind the TS. No change in speed was necessary and the safety
+distance was always maintained. In <a class="reference internal" href="#right-crossing-3"><span class="std std-numref">Fig. 18</span></a> in the subfigure (C) it can be seen, that the orientation changes back to the goal position at about second 25 because the desired velocity
+was not inside the velocity obstacle formed by the TS anymore. Due to the fact that the controller of the OS cannot adjust the course directly, the algorithm detects another possible collision later on
+and adjusts the course again.</p>
+<figure class="sphinx-subfigure align-center" id="right-crossing-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-14.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-14.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new4.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-14.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 16 </span><span class="caption-text">Results of the simulation for a right-crossing situation with a course of TS of 0° and speed of 3 m/s</span><a class="headerlink" href="#right-crossing-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="right-crossing-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-15.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-15.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new5.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-15.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 17 </span><span class="caption-text">Results of the simulation for a right-crossing situation with a course of TS of 330° and speed of 3 m/s</span><a class="headerlink" href="#right-crossing-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="right-crossing-3">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-16.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-16.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new6.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-16.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 18 </span><span class="caption-text">Results of the simulation for a right-crossing situation with a course of TS of 20° and speed of 3 m/s</span><a class="headerlink" href="#right-crossing-3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="overtaking-static-obstacle">
+<h2>Overtaking + static obstacle<a class="headerlink" href="#overtaking-static-obstacle" title="Permalink to this heading"></a></h2>
+<p>For the overtaking scenarios two situations are displayed here. One where the TS is moving slower then the OS on the same course over ground and one where the TS is not moving at all and so being a static obstacle.
+According to COLREGs the OS is free to choose on which side to pass the TS on. Due to the <a class="reference internal" href="Introduction.html#cost-function"><span class="std std-ref">cost function</span></a> implemented in the algorithm, the OS will choose the side on which the new course is
+closest to the course to the goal or next waypoint. The two simulations in <a class="reference internal" href="#overtaking-1"><span class="std std-numref">Fig. 19</span></a> and <a class="reference internal" href="#overtaking-2"><span class="std std-numref">Fig. 20</span></a> below show that the OS can perform avoidance maneuvers for overtaking scenarios even
+if the obstacle is not moving. If the obstacle is not moving the OS can also choose on which side to pass. The algorithm can be therefor used for static and dynamic collision avoidance.</p>
+<figure class="sphinx-subfigure align-center" id="overtaking-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-17.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-17.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new7.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-17.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 19 </span><span class="caption-text">Results of the simulation for an overtaking situation with a slow moving TS on the same course as the OS</span><a class="headerlink" href="#overtaking-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="overtaking-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-18.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-18.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new8.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-18.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 20 </span><span class="caption-text">Results of the simulation for an situation with a non-moving/static TS</span><a class="headerlink" href="#overtaking-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="left-crossing">
+<h2>Left-crossing<a class="headerlink" href="#left-crossing" title="Permalink to this heading"></a></h2>
+<p>For the left-crossing scenario three situation are displayed here in which each TS is coming from a different direction towards the OS. In these scenarios we assume, that the TS is not taking action even if it
+is supposed according to COLREGs. The OS will first to try to stand-on course until a threshold is reached and it will act anyways. Because the OS reacts later than usual, you can see in subfigure (B) that the
+speed has to be changed as well to avoid the collision. These avoidance maneuvers are also in accordance with COLREGs. Instead of a time to collision threshold here it is probably a good idea to have a treshhold like:
+if there are are less then ten free velocities with no speed change in the velocity space, take an action. Else it can happen that the OS tries to avoid a collision at a point where already are no free velocity in
+the velocity space.</p>
+<figure class="sphinx-subfigure align-center" id="left-crossing-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-19.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-19.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new9.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-19.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 21 </span><span class="caption-text">Results of the simulation for a left-crossing situation with a course of TS of 180° and speed of 3 m/s</span><a class="headerlink" href="#left-crossing-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="left-crossing-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-110.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-110.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new10.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-110.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 22 </span><span class="caption-text">Results of the simulation for a left-crossing situation with a course of TS of 210° and speed of 3 m/s</span><a class="headerlink" href="#left-crossing-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="left-crossing-3">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-111.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-111.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new11.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-111.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 23 </span><span class="caption-text">Results of the simulation for a left-crossing situation with a course of TS of 160° and speed of 3 m/s</span><a class="headerlink" href="#left-crossing-3" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="being-overtaken">
+<h2>Being-overtaken<a class="headerlink" href="#being-overtaken" title="Permalink to this heading"></a></h2>
+<p>For the being-overtaken scenario two situations are displayed here. Both situations are similar in the course of the OS and TS but differs in the speed of the involved ships. As before in the Lfet-crossing situations,
+the OS is not supposed to take actions but has to do it eventually. Which here also results in a change of speed of the OS to avoid the collision. The phenomenon described in the section before, that the threshold for
+stand-on vessels could result in a fully occupied velocity space is in these scenarios even worse. That is why the speed is changing even more.</p>
+<figure class="sphinx-subfigure align-center" id="being-overtaken-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 0px; grid-gap: 0px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance_new.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory_new.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 24 </span><span class="caption-text">Results of the simulation for a being-overtaken situation with a slow moving OS (1 m/s)</span><a class="headerlink" href="#being-overtaken-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="being-overtaken-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 0px; grid-gap: 0px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance_new1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory_new1.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 25 </span><span class="caption-text">Results of the simulation for a being-overtaken situation with a fast moving OS (3 m/s)</span><a class="headerlink" href="#being-overtaken-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="multiple-ship-encounters">
+<h2>Multiple ship encounters<a class="headerlink" href="#multiple-ship-encounters" title="Permalink to this heading"></a></h2>
+<p>For multiple ship encounters several scenes have been simulated. Head-on scenarios with multiple TSs and Head-on scenarios with additional crossing encounters. These simulations show how the OS reacts to several TSs
+in at the same time. The greater the distance is where the OS can detect obstacle the better it can choose an optimal velocity. Else the maneuvers can look a bit bad as seen in <a class="reference internal" href="#head-on-double"><span class="std std-numref">Fig. 26</span></a>. With a greater
+detection range the OS could have choosen a course further to right from the beginning and would have avoid to turn back where it came from. Anyhow the Os mannaged to avoid all collisions in the simulated situations.</p>
+<figure class="sphinx-subfigure align-center" id="head-on-double">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-112.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-112.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new12.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-112.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 26 </span><span class="caption-text">Results of the simulation for a head-on situation with two TSs besides each other coming in reciprocal courses towards the OS</span><a class="headerlink" href="#head-on-double" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="head-on-double-2">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-113.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-113.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new13.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-113.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 27 </span><span class="caption-text">Results of the simulation for a head-on situation with two TSs besides each other coming in reciprocal courses towards the OS, but with an offset in the starting position</span><a class="headerlink" href="#head-on-double-2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="head-on-left-crossing">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-114.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-114.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new14.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-114.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 28 </span><span class="caption-text">Results of the simulation for a situation with two TSs, one head-on and one in a left-crossing</span><a class="headerlink" href="#head-on-left-crossing" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="head-on-right-crossing">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-115.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-115.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped_new15.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-115.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 29 </span><span class="caption-text">Results of the simulation for a situation with two TSs, one head-on and one in a right-crossing</span><a class="headerlink" href="#head-on-right-crossing" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="sphinx-subfigure align-center" id="head-on-left-right-1">
+<div class="sphinx-subfigure-grid ss-layout-default-AB_CD ss-layout-sm-A_B_C_D" style="display: grid; gap: 2px; grid-gap: 2px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<span class="caption">(A)</span>
+<img alt="(A)" src="_images/Distance-cropped-116.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<span class="caption">(B)</span>
+<img alt="(B)" src="_images/Speed-cropped-116.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: C;">
+<span class="caption">(C)</span>
+<img alt="(C)" src="_images/Orientation-cropped-1.svg" /></div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: D;">
+<span class="caption">(D)</span>
+<img alt="(D)" src="_images/Trajectory-cropped-116.svg" /></div>
+</div>
+<figcaption>
+<p><span class="caption-number">Fig. 30 </span><span class="caption-text">Results of the simulation for a situation with three target ships, pne head-on, one left-crossing and one right-crossing</span><a class="headerlink" href="#head-on-left-right-1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="asv_path_planner.html" class="btn btn-neutral float-right" title="Implementation in python" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Eric Greuel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

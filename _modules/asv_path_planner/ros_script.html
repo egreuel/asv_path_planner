@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>asv_path_planner.ros_script &mdash; Velocity Obstacle 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Velocity Obstacle
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Results.html">Results</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asv_path_planner.html">Implementation in python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Velocity Obstacle</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">asv_path_planner.ros_script</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for asv_path_planner.ros_script</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is the ROS script to use the MARUS simulator and test the collision avoidance algorithm including some simple control algorithms for the OS in the simulation</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#!/usr/bin/env python3</span>
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">rclpy</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">.velobst_class</span> <span class="kn">import</span> <span class="n">VO</span>
+<span class="kn">from</span> <span class="nn">.ts_class</span> <span class="kn">import</span> <span class="n">TS</span>
+<span class="kn">from</span> <span class="nn">rclpy.node</span> <span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">rclpy.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span> <span class="nn">rcl_interfaces.msg</span> <span class="kn">import</span> <span class="n">SetParametersResult</span>
+<span class="kn">from</span> <span class="nn">sensor_msgs.msg</span> <span class="kn">import</span> <span class="n">NavSatFix</span>
+<span class="kn">from</span> <span class="nn">std_msgs.msg</span> <span class="kn">import</span> <span class="n">Float32MultiArray</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter_ns</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span> 
+<span class="kn">from</span> <span class="nn">geopy</span> <span class="kn">import</span> <span class="n">distance</span>
+
+<div class="viewcode-block" id="RosScriptNode"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode">[docs]</a><span class="k">class</span> <span class="nc">RosScriptNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class defines the ROS node which is used to connect to the MARUS simulator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;ros_script&quot;</span><span class="p">)</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exit_handler</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_1&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_3&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;os_max_speed&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;os_des_speed&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;detec_range&#39;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_os&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_os&#39;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_1&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_1&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_2&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_2&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_3&#39;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_3&#39;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kp&#39;</span><span class="p">,</span> <span class="mf">0.36</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ki&#39;</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kd&#39;</span><span class="p">,</span> <span class="mf">0.072</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;head_kp&#39;</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declare_parameter</span><span class="p">(</span><span class="s1">&#39;head_kd&#39;</span><span class="p">,</span> <span class="mf">0.0082</span><span class="p">)</span>
+       
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span> <span class="c1"># input for simulation to move the TS (slow: 1.5, fast: 3.0; Overtaking: slow: 0.3, fast: 0.75, Left crossing: slow: 2.0, fast: 2.0, Right crossing: slow: 2.0, fast: 3.0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span> <span class="c1"># input for simulation to move the TS (slow: 3.0, fast: 6.0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;os_max_speed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;os_des_speed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;detec_range&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_os&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_os&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span> <span class="o">=</span> <span class="n">TS</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;length_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;width_ts_3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="c1"># PID speed control parameters (found with Ziegler-Nichols methode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kp&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ki</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_ki&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;vel_kd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="c1"># PD heading control parameters (found with Ziegler-Nichols methode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;head_kp&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s1">&#39;head_kd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+        
+        <span class="c1"># self.detec_range = 50 # Range in which obstacles can be detected around the OS  </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_pos</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_speed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os_ang</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_3</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_3</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simu_time</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_ang</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter_ns</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.001799636812144</span><span class="p">,</span> <span class="mf">15.002536642856318</span><span class="p">]</span> <span class="c1"># Just for plotting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_1</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_2</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_3</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_1</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Start the algorithm once position of the TSs are recieved</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_2</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Start the algorithm once position of the TSs are recieved</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_3</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_os</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_tp</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Start the algorithm once position of the TSs are recieved</span>
+       
+        <span class="c1"># Variables for the PID and PD control     </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_ang</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_2</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_3</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_3</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># VO(OS length, OS width, OS max speed, max TTC, threshhold, safety factor, speed unc, angle unc, speed res, angle res)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vo</span> <span class="o">=</span> <span class="n">VO</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="c1"># Initalize the VO algorithm</span>
+
+        <span class="c1"># Define publisher and subscriber</span>
+        <span class="c1"># Subscriber for the target/destination the OS should go to</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_sub_tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">NavSatFix</span><span class="p">,</span> <span class="s2">&quot;/target_point&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_callback_tp</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="c1"># Subscriber and publsher for target ship 1 (GPS coordinates, Thruster output)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_sub_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">NavSatFix</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_1/gps&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_callback_ts_1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
+            <span class="n">Float32MultiArray</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_1/pwm_out&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="c1"># Subscriber and publsher for target ship 2 (GPS coordinates, Thruster output)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_sub_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">NavSatFix</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_2/gps&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_callback_ts_2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
+            <span class="n">Float32MultiArray</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_2/pwm_out&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="c1"># Subscriber and publsher for target ship 3 (GPS coordinates, Thruster output)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_sub_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">NavSatFix</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_3/gps&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_callback_ts_3</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
+            <span class="n">Float32MultiArray</span><span class="p">,</span> <span class="s2">&quot;/marus_boat_3/pwm_out&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        
+        <span class="c1"># Subscriber and publsher for owm ship (GPS coordinates, Thruster output)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_sub_os</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">NavSatFix</span><span class="p">,</span> <span class="s2">&quot;/marus_boat/gps&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_callback_os</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_os</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
+            <span class="n">Float32MultiArray</span><span class="p">,</span> <span class="s2">&quot;/marus_boat/pwm_out&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># Callback function for parameter callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_on_set_parameters_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_callback</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Node started!&quot;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="RosScriptNode.param_callback"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.param_callback">[docs]</a>    <span class="k">def</span> <span class="nf">param_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;os_max_speed&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os_max_speed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;os_des_speed&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;detec_range&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_os&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_os&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_1&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_2&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;length_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;width_ts_3&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_kp&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kp</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_ki&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ki</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;vel_kd&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kd</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;head_kp&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;head_kd&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">SetParametersResult</span><span class="p">(</span><span class="n">successful</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="c1"># Calculate the course difference between two courses (new velocity and current velocity)</span>
+<div class="viewcode-block" id="RosScriptNode.angle_diff"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.angle_diff">[docs]</a>    <span class="k">def</span> <span class="nf">angle_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_angle</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that calculates the difference of an orientation angle in respect to another from -180 to 180°</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ref_angle (float[°]): Reference angle to which the difference is calculated</span>
+<span class="sd">            angle (float[°]): Deviating angle from the reference angle</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Angle difference in a range from -180 to 180°</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">-</span> <span class="n">ref_angle</span>
+        <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">:</span>
+            <span class="n">diff</span> <span class="o">-=</span> <span class="mi">360</span>
+        <span class="k">elif</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">:</span>
+            <span class="n">diff</span> <span class="o">+=</span> <span class="mi">360</span>
+        <span class="k">return</span> <span class="n">diff</span></div>
+
+    <span class="c1"># PID speed controller for thruster output</span>
+<div class="viewcode-block" id="RosScriptNode.compute_pid"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for OS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error</span> <span class="o">+=</span> <span class="n">error</span> <span class="o">*</span> <span class="n">time_step</span>
+        <span class="n">der_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">error</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kp</span><span class="o">*</span><span class="n">error</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ki</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">int_error</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd</span><span class="o">*</span><span class="n">der_error</span>
+        <span class="k">if</span> <span class="n">output</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">output</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+    <span class="c1"># PID speed controller for thruster output   </span>
+<div class="viewcode-block" id="RosScriptNode.compute_pid_1"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_1">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for TS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error_1</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_1</span> <span class="o">+=</span> <span class="n">error_1</span> <span class="o">*</span> <span class="n">time_step</span>
+        <span class="n">der_error_1</span> <span class="o">=</span> <span class="p">(</span><span class="n">error_1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_1</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_1</span> <span class="o">=</span> <span class="n">error_1</span>
+        <span class="n">output_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kp</span><span class="o">*</span><span class="n">error_1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ki</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">int_error_1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd</span><span class="o">*</span><span class="n">der_error_1</span>
+        <span class="k">if</span> <span class="n">output_1</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">output_1</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">output_1</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">output_1</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">output_1</span></div>
+    
+     <span class="c1"># PID speed controller for thruster output   </span>
+<div class="viewcode-block" id="RosScriptNode.compute_pid_2"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_2">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for TS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error_2</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_2</span> <span class="o">+=</span> <span class="n">error_2</span> <span class="o">*</span> <span class="n">time_step</span>
+        <span class="n">der_error_2</span> <span class="o">=</span> <span class="p">(</span><span class="n">error_2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_2</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_2</span> <span class="o">=</span> <span class="n">error_2</span>
+        <span class="n">output_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kp</span><span class="o">*</span><span class="n">error_2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ki</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">int_error_2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd</span><span class="o">*</span><span class="n">der_error_2</span>
+        <span class="k">if</span> <span class="n">output_2</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">output_2</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">output_2</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">output_2</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">output_2</span></div>
+    
+     <span class="c1"># PID speed controller for thruster output   </span>
+<div class="viewcode-block" id="RosScriptNode.compute_pid_3"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pid_3">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pid_3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setpoint</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PID controller to maintain a given speed for TS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [m/s]): Desired speed</span>
+<span class="sd">            vel (float [m/s]): Current speed</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from 0 to 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error_3</span> <span class="o">=</span> <span class="n">setpoint</span> <span class="o">-</span> <span class="n">vel</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_error_3</span> <span class="o">+=</span> <span class="n">error_3</span> <span class="o">*</span> <span class="n">time_step</span>
+        <span class="n">der_error_3</span> <span class="o">=</span> <span class="p">(</span><span class="n">error_3</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_3</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_3</span> <span class="o">=</span> <span class="n">error_3</span>
+        <span class="n">output_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kp</span><span class="o">*</span><span class="n">error_3</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ki</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">int_error_3</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd</span><span class="o">*</span><span class="n">der_error_3</span>
+        <span class="k">if</span> <span class="n">output_3</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">output_3</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">output_3</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">output_3</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">output_3</span></div>
+    
+    <span class="c1"># PD heading control for thruster output</span>
+<div class="viewcode-block" id="RosScriptNode.compute_pd"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.compute_pd">[docs]</a>    <span class="k">def</span> <span class="nf">compute_pd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">time_step</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;PD controller for orientation control</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            setpoint (float [°]): Desired orientation</span>
+<span class="sd">            vel (float [°]): Current Orientation</span>
+<span class="sd">            time_step (float [m/s]): Time step between measurments</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Thruster input value from -0.5 to 0.5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error_ang</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="n">der_error_ang</span> <span class="o">=</span> <span class="p">(</span><span class="n">error_ang</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_error_ang</span><span class="p">)</span> <span class="o">/</span> <span class="n">time_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_error_ang</span> <span class="o">=</span> <span class="n">error_ang</span>
+        <span class="n">output_ang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kp_ang</span><span class="o">*</span><span class="n">error_ang</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd_ang</span><span class="o">*</span><span class="n">der_error_ang</span>
+        <span class="k">if</span> <span class="n">output_ang</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">output_ang</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="k">elif</span> <span class="n">output_ang</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">output_ang</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">output_ang</span></div>
+    
+    <span class="c1"># Callback function to receive GPS coordinates of the target point/destination (TP)</span>
+<div class="viewcode-block" id="RosScriptNode.gps_callback_tp"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_tp">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_tp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the target point/destination inside the unity simulation</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_tp</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+    <span class="c1"># Callback function to receive GPS coordinates of target ship 1 (TS 1) to calculate velocity and publish a velocity to the TS</span>
+<div class="viewcode-block" id="RosScriptNode.gps_callback_ts_1"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_1">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">vel_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_1</span>
+        <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
+        <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
+        <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_1</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_1</span> <span class="o">=</span> <span class="n">gps_time</span>
+
+        <span class="c1"># Time difference between two gps measurments</span>
+        <span class="n">gps_time_diff</span> <span class="o">=</span> <span class="n">gps_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_1</span>
+
+        <span class="c1"># Calculate the speed and orientation of the ship from the GPS coordinates        </span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">dist_gps</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">dist_gps</span><span class="o">.</span><span class="n">meters</span> <span class="o">/</span> <span class="n">gps_time_diff</span>
+            <span class="n">ang_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ang_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">ang_x</span><span class="p">,</span> <span class="n">ang_y</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_1</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_1</span> <span class="o">=</span> <span class="n">gps_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span>
+
+        <span class="c1"># Publish the values of the thrusters to move the ship</span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_1</span><span class="p">(</span><span class="n">vel_ts_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_1</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+            
+    <span class="c1"># Callback function to receive GPS coordinates of target ship 2 (TS 2) to calculate velocity and publish a velocity to the TS</span>
+<div class="viewcode-block" id="RosScriptNode.gps_callback_ts_2"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_2">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the first target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">vel_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_2</span>
+        <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
+        <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
+        <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_2</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_2</span> <span class="o">=</span> <span class="n">gps_time</span>
+
+        <span class="c1"># Time difference between two gps measurments</span>
+        <span class="n">gps_time_diff</span> <span class="o">=</span> <span class="n">gps_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_2</span>
+
+        <span class="c1"># Calculate the speed and orientation of the ship from the GPS coordinates    </span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">dist_gps</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">dist_gps</span><span class="o">.</span><span class="n">meters</span> <span class="o">/</span> <span class="n">gps_time_diff</span>
+            <span class="n">ang_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ang_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">ang_x</span><span class="p">,</span> <span class="n">ang_y</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_2</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_2</span> <span class="o">=</span> <span class="n">gps_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span>
+
+       <span class="c1"># Publish the values of the thrusters to move the ship</span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_2</span><span class="p">(</span><span class="n">vel_ts_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_2</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+            
+               
+<div class="viewcode-block" id="RosScriptNode.gps_callback_ts_3"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_ts_3">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_ts_3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the second target ship inside the unity simulation to calculate speed and</span>
+<span class="sd">        orientation and also publishing thruster inputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+       
+        <span class="n">vel_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_ts_3</span>
+        <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
+        <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
+        <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_3</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_3</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_3</span> <span class="o">=</span> <span class="n">gps_time</span>
+
+        <span class="c1"># Time difference between two gps measurments</span>
+        <span class="n">gps_time_diff</span> <span class="o">=</span> <span class="n">gps_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_3</span>
+
+        <span class="c1"># Calculate the speed and orientation of the ship from the GPS coordinates    </span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">dist_gps</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">dist_gps</span><span class="o">.</span><span class="n">meters</span> <span class="o">/</span> <span class="n">gps_time_diff</span>
+            <span class="n">ang_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ang_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">ang_x</span><span class="p">,</span> <span class="n">ang_y</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ang_gps_3</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time_3</span> <span class="o">=</span> <span class="n">gps_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span>
+
+        <span class="c1"># Publish the values of the thrusters to move the ship</span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid_3</span><span class="p">(</span><span class="n">vel_ts_3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_ts_3</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+    <span class="c1"># Main callback function where the VO is calculated and OS control is done </span>
+<div class="viewcode-block" id="RosScriptNode.gps_callback_os"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.gps_callback_os">[docs]</a>    <span class="k">def</span> <span class="nf">gps_callback_os</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="p">:</span> <span class="n">NavSatFix</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Callback function to receive GPS data from the own ship inside the unity simulation to calculate speed and orientation and</span>
+<span class="sd">        unsing the collision avoidance algorithm to find a collision free path through the simulation;it is also used to publish </span>
+<span class="sd">        commands to the thrusters of the OS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pose (NavSatFix): GPS coordinates</span>
+<span class="sd">        # &quot;&quot;&quot;</span>
+        
+        <span class="n">gps_time_sec</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">sec</span>
+        <span class="n">gps_time_nanosec</span> <span class="o">=</span>  <span class="n">pose</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">stamp</span><span class="o">.</span><span class="n">nanosec</span>
+        <span class="n">gps_time</span> <span class="o">=</span> <span class="n">gps_time_sec</span> <span class="o">+</span> <span class="n">gps_time_nanosec</span><span class="o">*</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">gps_lat</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">latitude</span>
+        <span class="n">gps_lon</span> <span class="o">=</span> <span class="n">pose</span><span class="o">.</span><span class="n">longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gps_lat</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_os</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time</span> <span class="o">=</span> <span class="n">gps_time</span>
+
+        <span class="c1"># Calculate the OS course from the GPS data</span>
+        <span class="n">gps_time_diff</span> <span class="o">=</span> <span class="n">gps_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time</span>
+
+        <span class="c1"># Calculate the speed and orientation of the ship from the GPS coordinates         </span>
+        <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">dist_gps</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">dist_gps</span><span class="o">.</span><span class="n">meters</span> <span class="o">/</span> <span class="n">gps_time_diff</span>
+            <span class="n">ang_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ang_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">ang_x</span><span class="p">,</span> <span class="n">ang_y</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps_time</span> <span class="o">=</span> <span class="n">gps_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_gps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_ts_3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_bool_tp</span><span class="p">:</span> <span class="c1"># Only start this callback, if every TS has received GPS data once</span>
+            
+            <span class="c1"># Calculate relative position of TS to OS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">)</span>
+
+            <span class="c1"># Calculate relative position of all vessels to the reference point (for plotting)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ref_os</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_os</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_ts_3</span><span class="p">)</span>
+
+            <span class="c1"># Save the time for each iteration and store it in a list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thetime</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(((</span><span class="n">perf_counter_ns</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span><span class="o">/</span><span class="mi">1000000000</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">simu_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetime</span><span class="p">)</span>
+
+            <span class="c1"># Calculate distance between OS and TS and store it in a list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span><span class="p">)</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span><span class="p">)</span>
+            
+            <span class="c1"># Store speed and orientation of the OS in a list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os_speed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">os_ang</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">)</span>  
+            
+            <span class="c1"># Calculate the relative position of the target point to OS </span>
+            <span class="n">pos_TP_rel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_tp</span><span class="p">)</span>
+            <span class="c1"># Calculate relative bearing of TP to OS for the desired velocity (Pure pursuit guidance)</span>
+            <span class="n">ang_TP</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">pos_TP_rel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">pos_TP_rel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">ang_TP</span> <span class="o">=</span> <span class="p">(</span><span class="n">ang_TP</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+            <span class="n">ang_TP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_ang_n_to_e</span><span class="p">(</span><span class="n">ang_TP</span><span class="p">)</span>
+
+            <span class="c1"># OS velocity calculated from GPS data</span>
+            <span class="n">vel_OS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">])</span>
+
+            <span class="c1"># Desired velocity with desired speed and angle to TP</span>
+            <span class="n">vel_des</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">os_des_speed</span><span class="p">,</span> <span class="n">ang_TP</span><span class="p">])</span>
+            
+            <span class="c1"># Store the parameter that checks if OS is colliding with safety area around TS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">coll_safety</span><span class="p">)</span>
+
+            <span class="c1"># Check wether any of the target ships is within a range of 50 meters and add them to TS_all</span>
+            <span class="n">all_ts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="p">]</span>
+            <span class="n">all_ts_gps</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gps_1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_3</span><span class="p">]</span>
+            <span class="n">TS_all</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ship</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">all_ts</span><span class="p">,</span> <span class="n">all_ts_gps</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">distance</span><span class="o">.</span><span class="n">great_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gps</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">detec_range</span><span class="p">:</span>
+                    <span class="n">TS_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ship</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">TS_all</span> <span class="o">==</span> <span class="p">[]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>
+            
+            <span class="c1"># Array of information of the OS needed by the VO algorithm</span>
+            <span class="n">info_OS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vel_OS</span><span class="p">,</span> <span class="n">vel_des</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+
+            <span class="c1"># for the first 1.5 s do not calculate the VO because the calculated speed and angle is not stabil if the OS is not moving yet (Start up phase)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetime</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vel_des</span>
+                <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+                    <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;häää&quot;</span><span class="p">)</span>
+                    <span class="n">starting_time</span> <span class="o">=</span> <span class="n">perf_counter_ns</span><span class="p">()</span>
+                    <span class="c1"># Calculate the VOs and the new optimal velocity</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_vel_final</span><span class="p">(</span><span class="n">TS_all</span><span class="p">,</span> <span class="n">info_OS</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">perf_counter_ns</span><span class="p">()</span><span class="o">-</span><span class="n">starting_time</span><span class="p">)</span><span class="o">/</span><span class="mi">1000000</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span> <span class="o">=</span> <span class="n">vel_des</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New vel: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">,</span> <span class="s2">&quot;OS vel:&quot;</span><span class="p">,</span> <span class="n">vel_OS</span><span class="p">,</span> <span class="s2">&quot;Time: &quot;</span><span class="p">,(</span><span class="n">perf_counter_ns</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span><span class="o">/</span><span class="mi">1000000</span><span class="p">)</span>
+                                
+                <span class="c1"># Control output for changing the course angle based on the new velocity     </span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+                    <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>   
+                    <span class="n">rot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+                    <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="o">+</span><span class="n">rot</span><span class="p">,</span> <span class="n">thrust</span><span class="o">-</span><span class="n">rot</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span><span class="p">:</span>
+                    <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+                    <span class="n">rot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">angle_diff</span><span class="p">(</span><span class="n">vel_OS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+                    <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="o">+</span><span class="n">rot</span><span class="p">,</span> <span class="n">thrust</span><span class="o">-</span><span class="n">rot</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">thrust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">gps_time_diff</span><span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">Float32MultiArray</span><span class="p">()</span>
+                    <span class="n">msg</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">thrust</span><span class="p">,</span> <span class="n">thrust</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            
+            <span class="c1"># publish the new values for the thrusters to unity</span>
+            <span class="k">if</span> <span class="n">gps_time_diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">thruster_pub_os</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># Store the velocity obtained by the VO algorithm in a list    </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_vel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+    
+<div class="viewcode-block" id="RosScriptNode.exit_handler"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.RosScriptNode.exit_handler">[docs]</a>    <span class="k">def</span> <span class="nf">exit_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># Just for plotting when closing the node with ctrl+c</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function that is only used once when the ROS node is closed, to plot the results of the simulation and store the results in a .csv file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">os_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os_pos</span><span class="p">)</span>
+        <span class="n">ts_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_1</span><span class="p">)</span>
+        <span class="n">ts_position_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_2</span><span class="p">)</span>
+        <span class="n">ts_position_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_pos_3</span><span class="p">)</span>
+
+        <span class="n">os_speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os_speed</span><span class="p">)</span>
+        <span class="n">os_ang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os_ang</span><span class="p">)</span>
+        <span class="n">dist_os_ts_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_1</span><span class="p">)</span>
+        <span class="n">dist_os_ts_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_2</span><span class="p">)</span>
+        <span class="n">dist_os_ts_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dist_os_ts_3</span><span class="p">)</span>
+        <span class="n">simu_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simu_time</span><span class="p">)</span>
+        
+        <span class="c1"># Setup for the csv file</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Sim Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 1&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 2&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance to TS 3&quot;</span><span class="p">,</span> <span class="s2">&quot;Speed Com&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle Com&quot;</span><span class="p">,</span> <span class="s2">&quot;Speed OS&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle OS&quot;</span><span class="p">,</span> <span class="s2">&quot;Run Time&quot;</span><span class="p">,</span> <span class="s2">&quot;OS pos&quot;</span><span class="p">,</span> <span class="s2">&quot;TS pos&quot;</span><span class="p">,</span> <span class="s2">&quot;Coll check&quot;</span><span class="p">]</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_1</span><span class="p">,</span> <span class="n">dist_os_ts_2</span><span class="p">,</span> <span class="n">dist_os_ts_3</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="p">,</span> <span class="n">os_speed</span><span class="p">,</span> <span class="n">os_ang</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="p">,</span> <span class="n">os_position</span><span class="p">,</span> <span class="n">ts_position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="p">]</span>
+        
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;src/asv_path_planner/Simulation output/simulation_results_.csv&quot;</span>
+        <span class="c1"># writing to csv file  </span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>  
+            <span class="c1"># creating a csv writer object  </span>
+            <span class="n">csvwriter</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>  
+                
+            <span class="c1"># writing the fields  </span>
+            <span class="n">csvwriter</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>  
+                
+            <span class="c1"># writing the data rows  </span>
+            <span class="n">csvwriter</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+        <span class="c1"># For plotting all data have to be of the same size     </span>
+        <span class="n">min_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">simu_time</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dist_os_ts_1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dist_os_ts_2</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">os_speed</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">os_ang</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="p">))</span>
+        <span class="c1"># Remove the first 15 measurents because here the ships are still starting up and the speed and orientation calculation from the GPS are not good</span>
+        <span class="n">simu_time</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="n">dist_os_ts_1</span> <span class="o">=</span> <span class="n">dist_os_ts_1</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="n">dist_os_ts_2</span> <span class="o">=</span> <span class="n">dist_os_ts_2</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="n">dist_os_ts_3</span> <span class="o">=</span> <span class="n">dist_os_ts_3</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="n">os_speed</span> <span class="o">=</span> <span class="n">os_speed</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="n">os_ang</span> <span class="o">=</span> <span class="n">os_ang</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="n">min_length</span><span class="p">]</span>
+
+        <span class="c1"># Plot the distance between TS and OS over time</span>
+        <span class="n">fig1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+             
+        <span class="n">min_dist</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_1</span><span class="p">)</span>
+        <span class="n">min_dist</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">ind_min_dist</span> <span class="o">=</span> <span class="n">dist_os_ts_1</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">time_min_dist</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">dist_os_ts_1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Distance between OS and TS 1&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time_min_dist</span><span class="p">,</span> <span class="n">min_dist</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;min. distance to TS 1 = </span><span class="si">{</span><span class="n">min_dist</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="n">min_dist_2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_2</span><span class="p">)</span>
+        <span class="n">min_dist_2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist_2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">ind_min_dist_2</span> <span class="o">=</span> <span class="n">dist_os_ts_2</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">time_min_dist_2</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist_2</span><span class="p">]</span>
+        <span class="c1"># plt.plot(simu_time, dist_os_ts_2, c=&quot;red&quot;, linestyle=&quot;dashed&quot;, label=&quot;Distance between OS and TS 2&quot;, linewidth=2.5)</span>
+        <span class="c1"># plt.scatter(time_min_dist_2, min_dist_2, marker=&quot;+&quot;, c=&quot;green&quot;, zorder=2, label=f&quot;min. distance to TS 2 = {min_dist_2} m&quot;, linewidth=2.5)</span>
+        <span class="n">min_dist_3</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dist_os_ts_3</span><span class="p">)</span>
+        <span class="n">min_dist_3</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">min_dist_3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">ind_min_dist_3</span> <span class="o">=</span> <span class="n">dist_os_ts_3</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">time_min_dist_3</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="n">ind_min_dist_3</span><span class="p">]</span>
+        <span class="c1"># plt.plot(simu_time, dist_os_ts_3, c=&quot;orange&quot;, linestyle=&quot;dotted&quot;, label=&quot;Distance between OS and TS 3&quot;, linewidth=2.5)</span>
+        <span class="c1"># plt.scatter(time_min_dist_3, min_dist_3, marker=&quot;.&quot;, c=&quot;blue&quot;, zorder=2, label=f&quot;min. distance to TS 3 = {min_dist_3} m&quot;, linewidth=2.5)</span>
+
+        <span class="c1"># plt.title(&quot;Distance betweenn OS and TS&quot;)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Distance [m]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax1</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Distance.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot the current speed and the desired speed (calculated by VO algorithm) of the OS</span>
+        <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">os_speed</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;teal&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Current speed (OS)&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed_com</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Desired speed (OS)&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="c1"># plt.title(&quot;Speed OS&quot;)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Speed [m/s]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax2</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Speed.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot the current orientation and the desired orientation (calculated by VO algorithm) of the OS</span>
+        <span class="n">fig3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig3</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">os_ang</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;teal&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Current orientation (OS)&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_com</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Desired orientation (OS)&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="c1"># plt.title(&quot;Orientation OS&quot;)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Orientation [°]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax3</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Orientation.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot of the VO Algorithm run time</span>
+        <span class="c1"># fig4 = plt.figure()</span>
+        <span class="c1"># ax4 = fig4.add_subplot(111)</span>
+        <span class="c1"># plt.plot(simu_time, self.elapsed_time, c=&quot;red&quot;, label=&quot;Run time&quot;)</span>
+        <span class="c1"># # plt.title(&quot;Algorithm run time&quot;)</span>
+        <span class="c1"># plt.xlabel(&quot;Time [s]&quot;)</span>
+        <span class="c1"># plt.ylabel(&quot;Run time [ms]&quot;)</span>
+        <span class="c1"># # plt.legend(loc=&quot;upper left&quot;, fontsize=&quot;10&quot;)</span>
+        <span class="c1"># ax4.set_aspect(1.0/ax4.get_data_ratio(), adjustable=&#39;box&#39;)</span>
+
+        <span class="c1"># Plot the collision check of OS with the safety area (0=no collision, 1=collision)</span>
+        <span class="n">fig5</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax5</span> <span class="o">=</span> <span class="n">fig5</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coll_check</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Collision check with safety domain&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;In/Out safety area&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">ax5</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">(),</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Collision.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot the trajectory of the ships</span>
+        <span class="n">fig6</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="c1"># points_test = []</span>
+        <span class="n">os_timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ts_timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ts_timestamp_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ts_timestamp_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">ref_tp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gps_tp</span><span class="p">)</span>
+        <span class="n">prev_timestamp</span> <span class="o">=</span> <span class="n">simu_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">os_pos</span><span class="p">,</span> <span class="n">ts_pos</span><span class="p">,</span> <span class="n">ts_pos2</span><span class="p">,</span> <span class="n">ts_pos3</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">simu_time</span><span class="p">,</span> <span class="n">os_position</span><span class="p">,</span> <span class="n">ts_position</span><span class="p">,</span> <span class="n">ts_position_2</span><span class="p">,</span> <span class="n">ts_position_3</span><span class="p">):</span>
+            <span class="n">time_diff</span> <span class="o">=</span> <span class="n">timestamp</span> <span class="o">-</span> <span class="n">prev_timestamp</span>
+            <span class="k">if</span> <span class="n">time_diff</span> <span class="o">&gt;=</span> <span class="mf">7.0</span><span class="p">:</span>
+                <span class="n">os_timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">os_timestamp</span><span class="p">,</span> <span class="n">os_pos</span><span class="p">))</span>
+                <span class="n">ts_timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">ts_timestamp</span><span class="p">,</span> <span class="n">ts_pos</span><span class="p">))</span>
+                <span class="n">ts_timestamp_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">ts_timestamp_2</span><span class="p">,</span> <span class="n">ts_pos2</span><span class="p">))</span>
+                <span class="n">ts_timestamp_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">ts_timestamp_3</span><span class="p">,</span> <span class="n">ts_pos3</span><span class="p">))</span>
+                <span class="n">prev_timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">os_timestamp</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">os_timestamp</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;time interval: 7 s&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">os_position</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">os_position</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;teal&quot;</span><span class="p">,</span><span class="n">zorder</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;OS path&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ts_timestamp</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">ts_timestamp</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts_position</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">ts_position</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">zorder</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-.&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;TS 1 path&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="c1"># plt.scatter(ts_timestamp_2[:,0], ts_timestamp_2[:,1], c=&quot;black&quot;, marker=&quot;2&quot;, linewidth=1.5, s=50)</span>
+        <span class="c1"># plt.plot(ts_position_2[:,0], ts_position_2[:,1], c=&quot;red&quot;,zorder=0.05, linestyle=&quot;:&quot;, label=&quot;TS 2 path&quot;)</span>
+        <span class="c1"># plt.scatter(ts_timestamp_3[:,0], ts_timestamp_3[:,1], c=&quot;black&quot;, marker=&quot;2&quot;, linewidth=1.5, s=50)</span>
+        <span class="c1"># plt.plot(ts_position_3[:,0], ts_position_3[:,1], c=&quot;red&quot;,zorder=0.05, linestyle=(0, (1, 10)), label=&quot;TS 3 path&quot;)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="n">os_position</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="n">ref_tp</span><span class="p">[</span><span class="mi">0</span><span class="p">]),(</span><span class="n">os_position</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">ref_tp</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span><span class="n">c</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span><span class="n">zorder</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;global path&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ref_tp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ref_tp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">c</span><span class="o">=</span><span class="s2">&quot;dimgray&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;OS goal&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the vertices of the OS around it</span>
+        <span class="n">vert_OS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">length</span><span class="p">]])</span>
+
+        <span class="c1"># Rotate the vertices in the direction the OS is facing</span>
+        <span class="n">rot_M_OS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">))],</span>
+                            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">ang</span><span class="p">))]])</span>
+    
+        <span class="n">vert_OS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vert_OS</span><span class="p">,</span><span class="n">rot_M_OS</span><span class="p">)</span>
+
+        <span class="c1"># Add the Position of the OS</span>
+        <span class="n">vert_OS</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_OS</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">os_position</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vert_OS</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_OS</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">os_position</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vert_OS</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">vert_OS</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">hatch</span><span class="o">=</span><span class="s2">&quot;----&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;OS&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the vertices of the TS around it</span>
+        <span class="n">vert_TS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">length</span><span class="p">]])</span>
+
+        <span class="c1"># Rotate the vertices in the direction the TS is facing</span>
+        <span class="n">rot_M_TS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span><span class="p">))],</span>
+                            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_1</span><span class="o">.</span><span class="n">ang</span><span class="p">))]])</span>
+
+        <span class="n">vert_TS</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vert_TS</span><span class="p">[:],</span> <span class="n">rot_M_TS</span><span class="p">)</span>
+        
+        <span class="c1"># Add the Position of the TS</span>
+        <span class="n">vert_TS</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vert_TS</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vert_TS</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">vert_TS</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="n">hatch</span><span class="o">=</span><span class="s2">&quot;||||&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;TS 1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the vertices of the TS around it</span>
+        <span class="n">vert_TS_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">length</span><span class="p">]])</span>
+
+        <span class="c1"># Rotate the vertices in the direction the TS is facing</span>
+        <span class="n">rot_M_TS_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span><span class="p">))],</span>
+                            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_2</span><span class="o">.</span><span class="n">ang</span><span class="p">))]])</span>
+
+        <span class="n">vert_TS_2</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vert_TS_2</span><span class="p">[:],</span> <span class="n">rot_M_TS_2</span><span class="p">)</span>
+        
+        <span class="c1"># Add the Position of the TS</span>
+        <span class="n">vert_TS_2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS_2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position_2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vert_TS_2</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS_2</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position_2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># plt.fill(vert_TS_2[:,0],vert_TS_2[:,1], &quot;orange&quot;, hatch=&quot;////&quot;, edgecolor=&quot;black&quot;, linewidth=0.5, label=&quot;TS 2&quot;)</span>
+
+        <span class="c1"># Calculate the vertices of the TS around it</span>
+        <span class="n">vert_TS_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span><span class="p">],</span>
+                            <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">length</span><span class="p">]])</span>
+
+        <span class="c1"># Rotate the vertices in the direction the TS is facing</span>
+        <span class="n">rot_M_TS_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span><span class="p">))],</span>
+                            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_3</span><span class="o">.</span><span class="n">ang</span><span class="p">))]])</span>
+
+        <span class="n">vert_TS_3</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vert_TS_3</span><span class="p">[:],</span> <span class="n">rot_M_TS_3</span><span class="p">)</span>
+        
+        <span class="c1"># Add the Position of the TS</span>
+        <span class="n">vert_TS_3</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS_3</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position_3</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vert_TS_3</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vert_TS_3</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">ts_position_3</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># plt.fill(vert_TS_3[:,0],vert_TS_3[:,1], &quot;orange&quot;, hatch=&quot;----&quot;, edgecolor=&quot;black&quot;, linewidth=0.5, label=&quot;TS 3&quot;)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># velobst.calc_vel_final(self.TS_1, self.OS, True, self.os_pos[-1])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;square&#39;</span><span class="p">)</span>
+        <span class="n">bot_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">45.000899825520364</span><span class="p">,</span> <span class="mf">15.00126830157632</span><span class="p">]))</span>
+        <span class="n">bot_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">45.000899769180805</span><span class="p">,</span> <span class="mf">15.003804904724001</span><span class="p">]))</span>
+        <span class="n">top_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">45.002699490216614</span><span class="p">,</span> <span class="mf">15.001268341281854</span><span class="p">]))</span>
+        <span class="n">top_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vo</span><span class="o">.</span><span class="n">calc_coord_gps_to_xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">45.002699433873545</span><span class="p">,</span> <span class="mf">15.003805023840597</span><span class="p">]))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="n">bot_left</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">bot_right</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span><span class="n">bot_left</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span><span class="n">top_left</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mf">2.5</span><span class="p">])</span>
+       
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x [m]&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y [m]&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;src/asv_path_planner/Simulation output/Trajectory.pdf&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../asv_path_planner.html#asv_path_planner.ros_script.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function where the ROS node is assigned and it the node loops infinite</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">node</span> <span class="o">=</span> <span class="n">RosScriptNode</span><span class="p">()</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">destroy_node</span><span class="p">()</span>
+    <span class="n">rclpy</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Eric Greuel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
