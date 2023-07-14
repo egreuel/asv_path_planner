@@ -31,6 +31,8 @@ extensions = [
     'sphinx_subfigure'
 ]
 
+autodoc_mock_imports = ["rclpy"]
+
 mathjax3_config = {
   "tex": {
     "inlineMath": [['\\(', '\\)']],
