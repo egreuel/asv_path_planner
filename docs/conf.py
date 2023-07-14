@@ -11,7 +11,6 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 import asv_path_planner
 
-
 project = 'Velocity Obstacle'
 copyright = '2023, Eric Greuel'
 author = 'Eric Greuel'
@@ -31,7 +30,7 @@ extensions = [
     'sphinx_subfigure'
 ]
 
-autodoc_mock_imports = ["rclpy"]
+autodoc_mock_imports = ["ros_script"]
 
 mathjax3_config = {
   "tex": {
