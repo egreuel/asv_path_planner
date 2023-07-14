@@ -30,8 +30,6 @@ extensions = [
     'sphinx_subfigure'
 ]
 
-autodoc_mock_imports = ["ros_script"]
-
 mathjax3_config = {
   "tex": {
     "inlineMath": [['\\(', '\\)']],
